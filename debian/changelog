@@ -1,0 +1,5 @@
+pcl (1.6.0-1) unstable; urgency=low
+
+  * Initial release. (Closes: #703579)
+
+ -- Thomas Moulard <thomas.moulard@gmail.com>  Fri, 12 Apr 2013 11:43:15 +0900
