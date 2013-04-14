@@ -1,0 +1,4 @@
+# Doxygen bundles a minified version of jquery.js. No convenient way
+# to rely on the jquery package for now as Doxygen/jquery
+# compatibility is not ensured.
+embedded-javascript-library usr/share/doc/libpcl-doc/html/jquery.js
