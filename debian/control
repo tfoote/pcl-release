@@ -8,15 +8,15 @@ Build-Depends: debhelper (>= 9),
                cmake,
                doxygen,
                doxygen-latex,
-	       libboost1.53-all-dev,
+	       libboost-all-dev,
 	       libeigen3-dev,
 	       libflann-dev,
 	       libvtk5-dev,
 	       libqhull-dev,
 	       libgtest-dev
 Standards-Version: 3.9.4
-Vcs-Browser: https://github.com/thomas-moulard/pcl-deb
-Vcs-Git: git://github.com/thomas-moulard/pcl-deb.git
+Vcs-Browser: http://git.debian.org/?p=debian-science/packages/pcl.git
+Vcs-Git: git://git.debian.org/debian-science/packages/pcl.git
 Homepage: http://www.pointclouds.org/
 
 Package: libpcl-dev
