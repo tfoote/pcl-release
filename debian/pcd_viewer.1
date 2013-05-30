@@ -1,0 +1,77 @@
+.TH PCL 1
+
+.SH NAME
+
+pcd_viewer \- Display point clouds.
+
+.SH SYNOPSIS
+
+.B pcd_viewer [OPTIONS] filenames ...
+
+.SH DESCRIPTION
+
+Display one or several point clouds.
+
+.SH OPTIONS
+
+.TP 5
+\-bc r,g,b
+background color
+
+.TP 5
+\-fc r,g,b
+foreground color
+
+.TP 5
+\-ps X
+point size (1..64) 
+
+.TP 5
+\-opaque X
+rendered point cloud opacity (0..1)
+
+.TP 5
+\-ax n
+enable on-screen display of XYZ axes and scale them to n
+
+.TP 5
+\-ax_pos X,Y,Z
+if axes are enabled, set their X,Y,Z position in space (default 0,0,0)
+
+.TP 5
+\-cam (*)
+use given camera settings as initial view
+ (*) [Clipping Range / Focal Point / Position / ViewUp / Distance /
+ Field of View Y / Window Size / Window Pos] or use a <filename.cam>
+ that contains the same information.
+
+.TP 5
+\-multiview 0/1
+enable/disable auto-multi viewport rendering (default disabled)
+
+.TP 5
+\-normals 0/X
+disable/enable the display of every Xth point's surface normal as lines (default disabled)
+
+.TP 5
+\-normals_scale X
+resize the normal unit vector size to X (default 0.02)
+
+.TP 5
+\-pc 0/X
+disable/enable the display of every Xth point's principal curvatures as lines (default disabled)
+
+.TP 5
+\-pc_scale X
+resize the principal curvatures vectors size to X (default 0.02)
+
+
+.SH SEE ALSO
+
+.TP
+.B Home Page
+http://www.pointclouds.org/
+
+.SH AUTHOR
+
+Willow Garage, Inc. and Open Perception, Inc.

@@ -1,0 +1,53 @@
+.TH PCL 1
+
+.SH NAME
+
+pcd_grabber_viewer \- Grab point cloud data from PCD file.
+
+.SH SYNOPSIS
+
+.B pcd_grabber_viewer [OPTIONS]
+
+.SH DESCRIPTION
+
+Grab point cloud data from PCD file.
+
+.SH OPTIONS
+
+.TP 5
+\-file file_name
+PCD file to be read from
+
+.TP 5
+\-dir directory_path
+directory path to PCD file(s) to be read from
+
+.TP 5
+\-fps frequency
+frames per second
+
+.TP 5
+\-repeat
+optional parameter that tells wheter the PCD file(s) should be "grabbed" in a endless loop.
+
+.TP 5
+\-cam (*)
+use given camera settings as initial view
+ (*) [Clipping Range / Focal Point / Position / ViewUp / Distance /
+ Window Size / Window Pos] or use a <filename.cam> that contains the
+ same information.
+
+.TP 5
+\-h
+display help message
+
+
+.SH SEE ALSO
+
+.TP
+.B Home Page
+http://www.pointclouds.org/
+
+.SH AUTHOR
+
+Willow Garage, Inc. and Open Perception, Inc.
