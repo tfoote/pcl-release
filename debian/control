@@ -13,7 +13,8 @@ Build-Depends: debhelper (>= 9),
 	       libflann-dev,
 	       libvtk5-dev,
 	       libqhull-dev,
-	       libgtest-dev
+	       libgtest-dev,
+	       libopenni-dev
 Standards-Version: 3.9.4
 Vcs-Browser: http://git.debian.org/?p=debian-science/packages/pcl.git
 Vcs-Git: git://git.debian.org/debian-science/packages/pcl.git
@@ -27,6 +28,7 @@ Depends: libboost-all-dev,
 	 libflann-dev,
 	 libvtk5-dev,
 	 libqhull-dev,
+	 libopenni-dev,
          libpcl1.6 (= ${binary:Version}),
          ${misc:Depends}
 Suggests: libpcl-doc
