@@ -70,22 +70,22 @@ We begin the training by assuming that the *objects* are already separated as
 individual clusters (see :ref:`cluster_extraction`), as shown in the figure
 below:
 
-.. image:: images/vfh_recognition/scene_raw.png
+.. image:: images/vfh_recognition/scene_raw.jpg
 
-.. image:: images/vfh_recognition/scene_segmented.png
+.. image:: images/vfh_recognition/scene_segmented.jpg
 
 
 Since we're only trying to cover the explicity training/testing of VFH
 signatures in this tutorial, we provide a set of datasets already collected at:
 `vfh_recognition_tutorial_data.tbz
-<http://svn.pointclouds.org/data/tutorials/vfh_recognition/vfh_recognition_tutorial_data.tbz>`_.
+<https://raw.github.com/PointCloudLibrary/data/master/tutorials/vfh_recognition/vfh_recognition_tutorial_data.tbz>`_.
 The data is a subset of the objects presented in the figure below (left), and
 look like the point clouds on the right. We used the pan-tilt table shown above
 to acquire the data.
 
 .. image:: images/vfh_recognition/objects.jpg
 
-.. image:: images/vfh_recognition/training.png
+.. image:: images/vfh_recognition/training.jpg
 
 Next, copy and paste the following code into your editor and save it as
 ``build_tree.cpp``.
@@ -261,7 +261,7 @@ Create a new ``CMakeLists.txt`` file, and put the following content into it
 The above assumes that your two source files (``build_tree.cpp`` and ``nearest_neighbors.cpp``) are stored into the *src/* subdirectory.
 
 Then, make sure that the datasets you downloaded (`vfh_recognition_tutorial_data.tbz
-<http://svn.pointclouds.org/data/tutorials/vfh_recognition/vfh_recognition_tutorial_data.tbz>`_) are unpacked in this directory, thus creating a *data/* subdirectory.
+<https://raw.github.com/PointCloudLibrary/data/master/tutorials/vfh_recognition/vfh_recognition_tutorial_data.tbz>`_) are unpacked in this directory, thus creating a *data/* subdirectory.
 
 After you have made the executable, you can run them like so::
 

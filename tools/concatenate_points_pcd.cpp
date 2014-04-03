@@ -1,7 +1,10 @@
 /*
  * Software License Agreement (BSD License)
  *
+ *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
+ *
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -14,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -31,21 +34,23 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: pcd_concatenate_points.cpp 28794 2010-04-15 22:48:03Z rusu $
+ * $Id$
  *
  */
 
 /**
-
-\author Radu Bogdan Rusu
 
 @b pcd_concatenate_points exemplifies how to concatenate the points of two PointClouds having the same fields.
 
 **/
 
 #include <iostream>
+#include <pcl/console/time.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
+
+Eigen::Vector4f    translation;
+Eigen::Quaternionf orientation;
 
 ////////////////////////////////////////////////////////////////////////////////
 /** \brief Parse command line arguments for file names. 
@@ -55,7 +60,7 @@
   * \param extension
   */
 std::vector<int>
-  parseFileExtensionArgument (int argc, char** argv, std::string extension)
+parseFileExtensionArgument (int argc, char** argv, std::string extension)
 {
   std::vector<int> indices;
   for (int i = 1; i < argc; ++i)
@@ -82,10 +87,41 @@ std::vector<int>
   return (indices);
 }
 
+bool
+loadCloud (const std::string &filename, pcl::PCLPointCloud2 &cloud)
+{
+  using namespace pcl::console;
+  TicToc tt;
+  print_highlight ("Loading "); print_value ("%s ", filename.c_str ());
+
+  tt.tic ();
+  if (pcl::io::loadPCDFile (filename, cloud, translation, orientation) < 0)
+    return (false);
+  print_info ("[done, "); print_value ("%g", tt.toc ()); print_info (" ms : "); print_value ("%d", cloud.width * cloud.height); print_info (" points]\n");
+  print_info ("Available dimensions: "); print_value ("%s\n", pcl::getFieldsList (cloud).c_str ());
+
+  return (true);
+}
+
+void
+saveCloud (const std::string &filename, const pcl::PCLPointCloud2 &output)
+{
+  using namespace pcl::console;
+  TicToc tt;
+  tt.tic ();
+
+  print_highlight ("Saving "); print_value ("%s ", filename.c_str ());
+
+  pcl::PCDWriter w;
+  w.writeBinaryCompressed (filename, output, translation, orientation);
+  
+  print_info ("[done, "); print_value ("%g", tt.toc ()); print_info (" ms : "); print_value ("%d", output.width * output.height); print_info (" points]\n");
+}
+
 
 /* ---[ */
 int
-  main (int argc, char** argv)
+main (int argc, char** argv)
 {
   if (argc < 2)
   {
@@ -96,17 +132,22 @@ int
 
   std::vector<int> file_indices = parseFileExtensionArgument (argc, argv, ".pcd");
 
-  pcl::PointCloud<pcl::PointXYZ> cloud_all;
+  //pcl::PointCloud<pcl::PointXYZ> cloud_all;
+  pcl::PCLPointCloud2 cloud_all;
   for (size_t i = 0; i < file_indices.size (); ++i)
   {
     // Load the Point Cloud
-    pcl::PointCloud<pcl::PointXYZ> cloud;
-    pcl::io::loadPCDFile (argv[file_indices[i]], cloud);
-    cloud_all += cloud;
+    pcl::PCLPointCloud2 cloud;
+    loadCloud (argv[file_indices[i]], cloud);
+    //pcl::PointCloud<pcl::PointXYZ> cloud;
+    //pcl::io::loadPCDFile (argv[file_indices[i]], cloud);
+    //cloud_all += cloud;
+    pcl::concatenatePointCloud (cloud_all, cloud, cloud_all);
+    PCL_INFO ("Total number of points so far: %u. Total data size: %zu bytes.\n", cloud_all.width * cloud_all.height, cloud_all.data.size ());
   }
 
-  pcl::io::savePCDFile ("output.pcd", cloud_all);
-
+  saveCloud ("output.pcd", cloud_all);
+  
   return (0);
 }
 /* ]--- */

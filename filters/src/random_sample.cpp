@@ -1,7 +1,10 @@
 /*
  * Software License Agreement (BSD License)
  *
+ *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2009, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
+ *
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -14,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -35,14 +38,11 @@
  *
  */
 
-#include <pcl/impl/instantiate.hpp>
-#include <pcl/point_types.h>
-#include <pcl/filters/random_sample.h>
 #include <pcl/filters/impl/random_sample.hpp>
 
 ///////////////////////////////////////////////////////////////////////////////
 void
-pcl::RandomSample<sensor_msgs::PointCloud2>::applyFilter (PointCloud2 &output)
+pcl::RandomSample<pcl::PCLPointCloud2>::applyFilter (PCLPointCloud2 &output)
 {
   unsigned N = input_->width * input_->height;
   // If sample size is 0 or if the sample size is greater then input cloud size
@@ -98,7 +98,7 @@ pcl::RandomSample<sensor_msgs::PointCloud2>::applyFilter (PointCloud2 &output)
 
 ///////////////////////////////////////////////////////////////////////////////
 void
-pcl::RandomSample<sensor_msgs::PointCloud2>::applyFilter (std::vector<int> &indices)
+pcl::RandomSample<pcl::PCLPointCloud2>::applyFilter (std::vector<int> &indices)
 {
   unsigned N = input_->width * input_->height;
   // If sample size is 0 or if the sample size is greater then input cloud size
@@ -142,4 +142,11 @@ pcl::RandomSample<sensor_msgs::PointCloud2>::applyFilter (std::vector<int> &indi
   }
 }
 
+#ifndef PCL_NO_PRECOMPILE
+#include <pcl/impl/instantiate.hpp>
+#include <pcl/point_types.h>
+
 PCL_INSTANTIATE(RandomSample, PCL_POINT_TYPES)
+
+#endif    // PCL_NO_PRECOMPILE
+

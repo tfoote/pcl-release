@@ -16,7 +16,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,7 +33,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: sac_segmentation.h 6155 2012-07-04 23:10:00Z aichim $
+ * $Id$
  *
  */
 
@@ -79,13 +79,26 @@ namespace pcl
       typedef typename SampleConsensus<PointT>::Ptr SampleConsensusPtr;
       typedef typename SampleConsensusModel<PointT>::Ptr SampleConsensusModelPtr;
 
-      /** \brief Empty constructor. */
-      SACSegmentation () :  model_ (), sac_ (), model_type_ (-1), method_type_ (0), 
-                            threshold_ (0), optimize_coefficients_ (true), 
-                            radius_min_ (-std::numeric_limits<double>::max()), radius_max_ (std::numeric_limits<double>::max()), samples_radius_ (0.0), eps_angle_ (0.0),
-                            axis_ (Eigen::Vector3f::Zero ()), max_iterations_ (50), probability_ (0.99)
+      /** \brief Empty constructor. 
+        * \param[in] random if true set the random seed to the current time, else set to 12345 (default: false)
+        */
+      SACSegmentation (bool random = false) 
+        : model_ ()
+        , sac_ ()
+        , model_type_ (-1)
+        , method_type_ (0)
+        , threshold_ (0)
+        , optimize_coefficients_ (true)
+        , radius_min_ (-std::numeric_limits<double>::max ())
+        , radius_max_ (std::numeric_limits<double>::max ())
+        , samples_radius_ (0.0)
+        , samples_radius_search_ ()
+        , eps_angle_ (0.0)
+        , axis_ (Eigen::Vector3f::Zero ())
+        , max_iterations_ (50)
+        , probability_ (0.99)
+        , random_ (random)
       {
-        //srand ((unsigned)time (0)); // set a random seed
       }
 
       /** \brief Empty destructor. */
@@ -281,6 +294,9 @@ namespace pcl
       /** \brief Desired probability of choosing at least one sample free from outliers (user given parameter). */
       double probability_;
 
+      /** \brief Set to true if we need a random seed. */
+      bool random_;
+
       /** \brief Class get name method. */
       virtual std::string 
       getClassName () const { return ("SACSegmentation"); }
@@ -299,6 +315,7 @@ namespace pcl
     using SACSegmentation<PointT>::radius_max_;
     using SACSegmentation<PointT>::eps_angle_;
     using SACSegmentation<PointT>::axis_;
+    using SACSegmentation<PointT>::random_;
 
     public:
       using PCLBase<PointT>::input_;
@@ -316,13 +333,16 @@ namespace pcl
       typedef typename SampleConsensusModel<PointT>::Ptr SampleConsensusModelPtr;
       typedef typename SampleConsensusModelFromNormals<PointT, PointNT>::Ptr SampleConsensusModelFromNormalsPtr;
 
-      /** \brief Empty constructor. */
-      SACSegmentationFromNormals () : 
-        normals_ (), 
-        distance_weight_ (0.1), 
-        distance_from_origin_ (0), 
-        min_angle_ (), 
-        max_angle_ ()
+      /** \brief Empty constructor.
+        * \param[in] random if true set the random seed to the current time, else set to 12345 (default: false)
+        */
+      SACSegmentationFromNormals (bool random = false) 
+        : SACSegmentation<PointT> (random)
+        , normals_ ()
+        , distance_weight_ (0.1)
+        , distance_from_origin_ (0)
+        , min_angle_ ()
+        , max_angle_ ()
       {};
 
       /** \brief Provide a pointer to the input dataset that contains the point normals of 
@@ -403,5 +423,9 @@ namespace pcl
       getClassName () const { return ("SACSegmentationFromNormals"); }
   };
 }
+
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/segmentation/impl/sac_segmentation.hpp>
+#endif
 
 #endif  //#ifndef PCL_SEGMENTATION_SAC_SEGMENTATION_H_

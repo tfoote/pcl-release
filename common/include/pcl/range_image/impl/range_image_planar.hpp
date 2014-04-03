@@ -1,7 +1,10 @@
 /*
  * Software License Agreement (BSD License)
  *
+ *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
+ *
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -14,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -32,6 +35,9 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#ifndef PCL_RANGE_IMAGE_PLANAR_IMPL_HPP_
+#define PCL_RANGE_IMAGE_PLANAR_IMPL_HPP_
 
 #include <pcl/pcl_macros.h>
 #include <pcl/common/eigen.h>
@@ -86,8 +92,8 @@ void
 RangeImagePlanar::calculate3DPoint (float image_x, float image_y, float range, Eigen::Vector3f& point) const
 {
   //cout << __PRETTY_FUNCTION__ << " called.\n";
-  float delta_x = (image_x-center_x_)*focal_length_x_reciprocal_,
-        delta_y = (image_y-center_y_)*focal_length_y_reciprocal_;
+  float delta_x = (image_x+static_cast<float> (image_offset_x_)-center_x_)*focal_length_x_reciprocal_,
+        delta_y = (image_y+static_cast<float> (image_offset_y_)-center_y_)*focal_length_y_reciprocal_;
   point[2] = range / (sqrtf (delta_x*delta_x + delta_y*delta_y + 1));
   point[0] = delta_x*point[2];
   point[1] = delta_y*point[2];
@@ -99,10 +105,18 @@ inline void
 RangeImagePlanar::getImagePoint (const Eigen::Vector3f& point, float& image_x, float& image_y, float& range) const 
 {
   Eigen::Vector3f transformedPoint = to_range_image_system_ * point;
+  if (transformedPoint[2]<=0)  // Behind the observer?
+  {
+    image_x = image_y = range = -1.0f;
+    return;
+  }
   range = transformedPoint.norm ();
   
-  image_x = center_x_ + focal_length_x_*transformedPoint[0]/transformedPoint[2];
-  image_y = center_y_ + focal_length_y_*transformedPoint[1]/transformedPoint[2];
+  image_x = center_x_ + focal_length_x_*transformedPoint[0]/transformedPoint[2] - static_cast<float> (image_offset_x_);
+  image_y = center_y_ + focal_length_y_*transformedPoint[1]/transformedPoint[2] - static_cast<float> (image_offset_y_);
 }
 
 }  // namespace end
+
+#endif
+

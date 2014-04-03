@@ -16,7 +16,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,17 +33,15 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: point_types.h 6126 2012-07-03 20:19:58Z aichim $
+ * $Id$
  *
  */
 #ifndef PCL_DATA_TYPES_H_
 #define PCL_DATA_TYPES_H_
 
 #include <pcl/pcl_macros.h>
-#include <pcl/common/eigen.h>
 #include <bitset>
-#include <vector>
-#include <pcl/ros/register_point_struct.h>
+#include <pcl/register_point_struct.h>
 
 /**
   * \file pcl/point_types.h
@@ -53,19 +51,12 @@
 
 // We're doing a lot of black magic with Boost here, so disable warnings in Maintainer mode, as we will never
 // be able to fix them anyway
-#pragma warning(disable: 4201)
+#if defined _MSC_VER
+  #pragma warning(disable: 4201)
+#endif
 //#pragma warning(push, 1)
-#ifdef BUILD_Maintainer
-#  if defined __GNUC__
-#    include <features.h>
-#    if __GNUC_PREREQ(4, 3)
-#      pragma GCC diagnostic ignored "-Weffc++"
-#      pragma GCC diagnostic ignored "-pedantic"
-#    else
-#      pragma GCC system_header
-#    endif
-//#  elif defined _MSC_VER
-#  endif
+#if defined __GNUC__
+#  pragma GCC system_header
 #endif
 
 /** @{*/
@@ -80,6 +71,21 @@ namespace pcl
     * \ingroup common
     */
   struct RGB;
+
+  /** \brief Members: intensity (float)
+    * \ingroup common
+    */
+  struct Intensity;
+
+  /** \brief Members: intensity (uint8_t)
+    * \ingroup common
+    */
+  struct Intensity8u;
+
+  /** \brief Members: intensity (uint32_t)
+    * \ingroup common
+    */
+  struct Intensity32u;
 
   /** \brief Members: float x, y, z, intensity
     * \ingroup common
@@ -120,6 +126,11 @@ namespace pcl
     * \ingroup common
     */
   struct PointXY;
+
+  /** \brief Members: float u, v
+    * \ingroup common
+    */
+  struct PointUV;
 
   /** \brief Members: float x, y, z, strength
     * \ingroup common
@@ -181,13 +192,6 @@ namespace pcl
     */
   struct PrincipalCurvatures;
 
-  /** \brief Members: std::vector<float> descriptor, rf[9]
-    * \ingroup common
-    * \deprecated USE SHOT352 FOR SHAPE AND SHOT1344 FOR SHAPE+COLOR INSTEAD
-    */
-  struct
-  PCL_DEPRECATED_CLASS (SHOT, "USE SHOT352 FOR SHAPE AND SHOT1344 FOR SHAPE+COLOR INSTEAD");
-
   /** \brief Members: float descriptor[352], rf[9]
     * \ingroup common
     */
@@ -203,10 +207,10 @@ namespace pcl
     */
   struct ReferenceFrame;
 
-  /** \brief Members: std::vector<float> descriptor, rf[9]
+  /** \brief Members: float descriptor[1980], rf[9]
     * \ingroup common
     */
-  struct ShapeContext;
+  struct ShapeContext1980;
 
   /** \brief Members: float pfh[125]
     * \ingroup common
@@ -237,19 +241,25 @@ namespace pcl
     * \ingroup common
     */
   struct FPFHSignature33;
-
+  
   /** \brief Members: float vfh[308]
     * \ingroup common
     */
   struct VFHSignature308;
+  
   /** \brief Members: float esf[640]
     * \ingroup common
     */
   struct ESFSignature640;
-  /** \brief Members: float x, y, z, roll, pitch, yaw; float descriptor[36]
+
+  /** \brief Members: float histogram[16]
     * \ingroup common
     */
+  struct GFPFHSignature16;
 
+   /** \brief Members: float x, y, z, roll, pitch, yaw; float descriptor[36]
+     * \ingroup common
+     */
   struct Narf36;
 
   /** \brief Data type to store extended information about a transition from foreground to backgroundSpecification of the fields for BorderDescription::traits.
@@ -285,7 +295,7 @@ namespace pcl
   template<int N>
   struct Histogram;
 
-  /** \brief Members: float x, y, z, scale
+  /** \brief Members: float x, y, z, scale, angle, response, octave
     * \ingroup common
     */
   struct PointWithScale;
@@ -304,9 +314,26 @@ namespace pcl
 // =====POINT_CLOUD_REGISTER=====
 // ==============================
 
-POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::RGB,
+POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::_RGB,
     (uint32_t, rgba, rgba)
 )
+POINT_CLOUD_REGISTER_POINT_WRAPPER(pcl::RGB, pcl::_RGB)
+
+POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::_Intensity,
+    (float, intensity, intensity)
+)
+POINT_CLOUD_REGISTER_POINT_WRAPPER(pcl::Intensity, pcl::_Intensity)
+
+POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::_Intensity8u,
+    (uint8_t, intensity, intensity)
+)
+POINT_CLOUD_REGISTER_POINT_WRAPPER(pcl::Intensity8u, pcl::_Intensity8u)
+
+POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::_Intensity32u,
+    (uint32_t, intensity, intensity)
+)
+POINT_CLOUD_REGISTER_POINT_WRAPPER(pcl::Intensity32u, pcl::_Intensity32u)
+
 POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::_PointXYZ,
     (float, x, x)
     (float, y, y)
@@ -352,6 +379,11 @@ POINT_CLOUD_REGISTER_POINT_WRAPPER(pcl::PointXYZHSV, pcl::_PointXYZHSV)
 POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::PointXY,
     (float, x, x)
     (float, y, y)
+)
+
+POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::PointUV,
+    (float, u, u)
+    (float, v, v)
 )
 
 POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::InterestPoint,
@@ -496,6 +528,11 @@ POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::NormalBasedSignature12,
     (float[12], values, values)
 )
 
+POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::ShapeContext1980,
+    (float[1980], descriptor, shape_context)
+    (float[9], rf, rf)
+)
+
 POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::SHOT352,
     (float[352], descriptor, shot)
     (float[9], rf, rf)
@@ -513,9 +550,11 @@ POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::FPFHSignature33,
 POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::VFHSignature308,
     (float[308], histogram, vfh)
 )
+
 POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::ESFSignature640,
     (float[640], histogram, esf)
 )
+
 POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::Narf36,
     (float[36], descriptor, descriptor)
 )
@@ -554,27 +593,21 @@ POINT_CLOUD_REGISTER_POINT_STRUCT (pcl::_ReferenceFrame,
     (float[3], x_axis, x_axis)
     (float[3], y_axis, y_axis)
     (float[3], z_axis, z_axis)
-    //(float, confidence, confidence)
 )
 POINT_CLOUD_REGISTER_POINT_WRAPPER(pcl::ReferenceFrame, pcl::_ReferenceFrame)
 
-//POINT_CLOUD_REGISTER_POINT_STRUCT(pcl::BorderDescription,
-//                                  (int, x, x)
-//                                  (int, y, y)
-//                                  (uint32_t, traits, traits)
-//)
-
-namespace pcl {
+namespace pcl 
+{
   // Allow float 'rgb' data to match to the newer uint32 'rgba' tag. This is so
   // you can load old 'rgb' PCD files into e.g. a PointCloud<PointXYZRGBA>.
   template<typename PointT>
   struct FieldMatches<PointT, fields::rgba>
   {
-    bool operator() (const sensor_msgs::PointField& field)
+    bool operator() (const pcl::PCLPointField& field)
     {
       if (field.name == "rgb")
       {
-        return (field.datatype == sensor_msgs::PointField::FLOAT32 &&
+        return (field.datatype == pcl::PCLPointField::FLOAT32 &&
                 field.count == 1);
       }
       else
@@ -585,18 +618,29 @@ namespace pcl {
       }
     }
   };
+  template<typename PointT>
+  struct FieldMatches<PointT, fields::rgb>
+  {
+    bool operator() (const pcl::PCLPointField& field)
+    {
+      if (field.name == "rgba")
+      {
+        return (field.datatype == pcl::PCLPointField::UINT32 &&
+                field.count == 1);
+      }
+      else
+      {
+        return (field.name == traits::name<PointT, fields::rgb>::value &&
+                field.datatype == traits::datatype<PointT, fields::rgb>::value &&
+                field.count == traits::datatype<PointT, fields::rgb>::size);
+      }
+    }
+  };
 } // namespace pcl
 
-#pragma warning(default: 4201)
-//#pragma warning(pop)
-#ifdef BUILD_Maintainer
-#  if defined __GNUC__
-#    if __GNUC_PREREQ(4, 3)
-#      pragma GCC diagnostic warning "-Weffc++"
-#      pragma GCC diagnostic warning "-pedantic"
-#    endif
-//#  elif defined _MSC_VER
-#  endif
+#if defined _MSC_VER
+  #pragma warning(default: 4201)
 #endif
+//#pragma warning(pop)
 
 #endif  //#ifndef PCL_DATA_TYPES_H_

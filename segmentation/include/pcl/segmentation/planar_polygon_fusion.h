@@ -16,7 +16,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -82,5 +82,9 @@ namespace pcl
       std::vector<pcl::PlanarRegion<PointT>, Eigen::aligned_allocator<pcl::PlanarRegion<PointT> > > regions_;
   };
 }
+
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/segmentation/impl/planar_polygon_fusion.hpp>
+#endif
 
 #endif // PCL_SEGMENTATION_PLANAR_POLYGON_FUSION_H_

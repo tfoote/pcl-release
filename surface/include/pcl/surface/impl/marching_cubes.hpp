@@ -72,7 +72,8 @@ pcl::MarchingCubes<PointNT>::getBoundingBox ()
   double max_size =
       (std::max) ((std::max)(bounding_box_size.x (), bounding_box_size.y ()),
           bounding_box_size.z ());
-
+  (void)max_size;
+  // ????
   //  data_size_ = static_cast<uint64_t> (max_size / leaf_size_);
   PCL_DEBUG ("[pcl::MarchingCubesHoppe::getBoundingBox] Lower left point is [%f, %f, %f]\n",
              min_p_.x (), min_p_.y (), min_p_.z ());
@@ -117,9 +118,9 @@ pcl::MarchingCubes<PointNT>::createSurface (std::vector<float> &leaf_node,
 
   //Eigen::Vector4f index_3df (index_3d[0], index_3d[1], index_3d[2], 0.0f);
   Eigen::Vector3f center;// TODO coeff wise product = min_p_ + Eigen::Vector4f (1.0f/res_x_, 1.0f/res_y_, 1.0f/res_z_) * index_3df * (max_p_ - min_p_);
-  center[0] = min_p_[0] + (max_p_[0] - min_p_[0]) * index_3d[0] / res_x_;
-  center[1] = min_p_[1] + (max_p_[1] - min_p_[1]) * index_3d[1] / res_y_;
-  center[2] = min_p_[2] + (max_p_[2] - min_p_[2]) * index_3d[2] / res_z_;
+  center[0] = min_p_[0] + (max_p_[0] - min_p_[0]) * float (index_3d[0]) / float (res_x_);
+  center[1] = min_p_[1] + (max_p_[1] - min_p_[1]) * float (index_3d[1]) / float (res_y_);
+  center[2] = min_p_[2] + (max_p_[2] - min_p_[2]) * float (index_3d[2]) / float (res_z_);
 
   std::vector<Eigen::Vector3f> p;
   p.resize (8);
@@ -259,7 +260,7 @@ pcl::MarchingCubes<PointNT>::performReconstruction (pcl::PolygonMesh &output)
         getNeighborList1D (leaf_node, index_3d);
         createSurface (leaf_node, index_3d, cloud);
       }
-  pcl::toROSMsg (cloud, output.cloud);
+  pcl::toPCLPointCloud2 (cloud, output.cloud);
 
   output.polygons.resize (cloud.size () / 3);
   for (size_t i = 0; i < output.polygons.size (); ++i)

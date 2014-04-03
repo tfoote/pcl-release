@@ -3,6 +3,7 @@
  *
  *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010-2011, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
  *
  *  All rights reserved.
  *
@@ -16,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,18 +34,14 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: TextureMesh.h 5295 2012-03-25 19:03:32Z rusu $
- *
  */
 
 #ifndef PCL_TEXTUREMESH_H_
 #define PCL_TEXTUREMESH_H_
 
-#include <pcl/common/eigen.h>
-#include <std_msgs/Header.h>
-#include <pcl/PolygonMesh.h>
+#include <Eigen/Core>
 #include <string>
-#include <sensor_msgs/PointCloud2.h>
+#include <pcl/PCLPointCloud2.h>
 #include <pcl/Vertices.h>
 
 namespace pcl
@@ -94,10 +91,11 @@ namespace pcl
   struct TextureMesh
   {
     TextureMesh () : 
-      header (), cloud (), tex_polygons (), tex_coordinates (), tex_materials () {}
+      cloud (), tex_polygons (), tex_coordinates (), tex_materials () {}
 
-    std_msgs::Header          header;
-    sensor_msgs::PointCloud2  cloud;
+    pcl::PCLPointCloud2  cloud;
+    pcl::PCLHeader  header;
+
 
     std::vector<std::vector<pcl::Vertices> >    tex_polygons;     // polygon which is mapped with specific texture defined in TexMaterial
     std::vector<std::vector<Eigen::Vector2f> >  tex_coordinates;  // UV coordinates

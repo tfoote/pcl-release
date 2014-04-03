@@ -31,12 +31,12 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: ear_clipping.cpp 5027 2012-03-12 03:10:45Z rusu $
+ * $Id$
  *
  */
 
 #include <pcl/surface/ear_clipping.h>
-#include <pcl/ros/conversions.h>
+#include <pcl/conversions.h>
 #include <pcl/pcl_config.h>
 
 /////////////////////////////////////////////////////////////////////////////////////////////
@@ -47,7 +47,7 @@ pcl::EarClipping::initCompute ()
 
   if (!MeshProcessing::initCompute ())
     return (false);
-  fromROSMsg (input_mesh_->cloud, *points_);
+  fromPCLPointCloud2 (input_mesh_->cloud, *points_);
 
   return (true);
 }

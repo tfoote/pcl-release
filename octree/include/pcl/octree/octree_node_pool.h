@@ -35,14 +35,12 @@
  *
  */
 
-#ifndef OCTREE_NODE_POOL_H
-#define OCTREE_NODE_POOL_H
+#ifndef PCL_OCTREE_NODE_POOL_H
+#define PCL_OCTREE_NODE_POOL_H
 
 #include <vector>
 
 #include <pcl/pcl_macros.h>
-
-using namespace std;
 
 namespace pcl
 {
@@ -72,7 +70,7 @@ namespace pcl
         }
 
         /** \brief Push node to pool
-        *  \param childIdx_arg: pointer of noe
+        *  \param node_arg: add this node to the pool
         *  */
         inline
         void
@@ -122,7 +120,7 @@ namespace pcl
         }
 
       protected:
-        vector<NodeT*> nodePool_;
+        std::vector<NodeT*> nodePool_;
       };
 
   }

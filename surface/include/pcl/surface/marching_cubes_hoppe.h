@@ -36,8 +36,8 @@
 #ifndef PCL_SURFACE_MARCHING_CUBES_HOPPE_H_
 #define PCL_SURFACE_MARCHING_CUBES_HOPPE_H_
 
+#include <pcl/surface/boost.h>
 #include <pcl/surface/marching_cubes.h>
-#include <boost/unordered_map.hpp>
 
 namespace pcl
 {
@@ -52,6 +52,9 @@ namespace pcl
   class MarchingCubesHoppe : public MarchingCubes<PointNT>
   {
     public:
+      typedef boost::shared_ptr<MarchingCubesHoppe<PointNT> > Ptr;
+      typedef boost::shared_ptr<const MarchingCubesHoppe<PointNT> > ConstPtr;
+
       using SurfaceReconstruction<PointNT>::input_;
       using SurfaceReconstruction<PointNT>::tree_;
       using MarchingCubes<PointNT>::grid_;
@@ -82,6 +85,10 @@ namespace pcl
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   };
 }
+
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/surface/impl/marching_cubes_hoppe.hpp>
+#endif
 
 #endif  // PCL_SURFACE_MARCHING_CUBES_HOPPE_H_
 

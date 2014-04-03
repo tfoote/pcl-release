@@ -1,7 +1,10 @@
 /*
  * Software License Agreement (BSD License)
  *
+ *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2009, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
+ *
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -14,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -31,7 +34,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: mlesac.h 4710 2012-02-23 17:51:24Z rusu $
+ * $Id$
  *
  */
 
@@ -43,30 +46,32 @@
 
 namespace pcl
 {
-  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   /** \brief @b MaximumLikelihoodSampleConsensus represents an implementation of the MLESAC (Maximum Likelihood 
     * Estimator SAmple Consensus) algorithm, as described in: "MLESAC: A new robust estimator with application to 
     * estimating image geometry", P.H.S. Torr and A. Zisserman, Computer Vision and Image Understanding, vol 78, 2000.
     * \note MLESAC is useful in situations where most of the data samples belong to the model, and a fast outlier rejection algorithm is needed.
-    * \author Radu Bogdan Rusu
+    * \author Radu B. Rusu
     * \ingroup sample_consensus
     */
   template <typename PointT>
   class MaximumLikelihoodSampleConsensus : public SampleConsensus<PointT>
   {
-    using SampleConsensus<PointT>::max_iterations_;
-    using SampleConsensus<PointT>::threshold_;
-    using SampleConsensus<PointT>::iterations_;
-    using SampleConsensus<PointT>::sac_model_;
-    using SampleConsensus<PointT>::model_;
-    using SampleConsensus<PointT>::model_coefficients_;
-    using SampleConsensus<PointT>::inliers_;
-    using SampleConsensus<PointT>::probability_;
-
     typedef typename SampleConsensusModel<PointT>::Ptr SampleConsensusModelPtr;
     typedef typename SampleConsensusModel<PointT>::PointCloudConstPtr PointCloudConstPtr; 
 
     public:
+      typedef boost::shared_ptr<MaximumLikelihoodSampleConsensus> Ptr;
+      typedef boost::shared_ptr<const MaximumLikelihoodSampleConsensus> ConstPtr;
+
+      using SampleConsensus<PointT>::max_iterations_;
+      using SampleConsensus<PointT>::threshold_;
+      using SampleConsensus<PointT>::iterations_;
+      using SampleConsensus<PointT>::sac_model_;
+      using SampleConsensus<PointT>::model_;
+      using SampleConsensus<PointT>::model_coefficients_;
+      using SampleConsensus<PointT>::inliers_;
+      using SampleConsensus<PointT>::probability_;
+
       /** \brief MLESAC (Maximum Likelihood Estimator SAmple Consensus) main constructor
         * \param[in] model a Sample Consensus model
         */
@@ -151,5 +156,9 @@ namespace pcl
       double sigma_;
   };
 }
+
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/sample_consensus/impl/mlesac.hpp>
+#endif
 
 #endif  //#ifndef PCL_SAMPLE_CONSENSUS_MLESAC_H_

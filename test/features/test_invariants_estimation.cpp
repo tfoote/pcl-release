@@ -16,7 +16,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -92,50 +92,6 @@ TEST (PCL, MomentInvariantsEstimation)
     EXPECT_NEAR (moments->points[i].j3, 0.053917, 1e-4);
   }
 }
-
-#ifndef PCL_ONLY_CORE_POINT_TYPES
-  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  TEST (PCL, MomentInvariantsEstimationEigen)
-  {
-    float j1, j2, j3;
-
-    MomentInvariantsEstimation<PointXYZ, Eigen::MatrixXf> mi;
-
-    // computePointMomentInvariants (indices))
-    mi.computePointMomentInvariants (cloud, indices, j1, j2, j3);
-    EXPECT_NEAR (j1, 1.59244, 1e-4);
-    EXPECT_NEAR (j2, 0.652063, 1e-4);
-    EXPECT_NEAR (j3, 0.053917, 1e-4);
-
-    // computePointMomentInvariants
-    mi.computePointMomentInvariants (cloud, indices, j1, j2, j3);
-    EXPECT_NEAR (j1, 1.59244, 1e-4);
-    EXPECT_NEAR (j2, 0.652063, 1e-4);
-    EXPECT_NEAR (j3, 0.053917, 1e-4);
-
-    // Object
-    PointCloud<Eigen::MatrixXf>::Ptr moments (new PointCloud<Eigen::MatrixXf>);
-
-    // set parameters
-    mi.setInputCloud (cloud.makeShared ());
-    boost::shared_ptr<vector<int> > indicesptr (new vector<int> (indices));
-    mi.setIndices (indicesptr);
-    mi.setSearchMethod (tree);
-    mi.setKSearch (static_cast<int> (indices.size ()));
-
-    // estimate
-    mi.computeEigen (*moments);
-    EXPECT_EQ (moments->points.rows (), indices.size ());
-
-    for (int i = 0; i < moments->points.rows (); ++i)
-    {
-      EXPECT_NEAR (moments->points (i, 0), 1.59244, 1e-4);
-      EXPECT_NEAR (moments->points (i, 1), 0.652063, 1e-4);
-      EXPECT_NEAR (moments->points (i, 2), 0.053917, 1e-4);
-    }
-  }
-#endif
-
 
 /* ---[ */
 int

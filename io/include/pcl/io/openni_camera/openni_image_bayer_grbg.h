@@ -1,7 +1,9 @@
 /*
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2011 Willow Garage, Inc.
+ *  Point Cloud Library (PCL) - www.pointclouds.org
+ *  Copyright (c) 2011, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
  *
  *  All rights reserved.
  *
@@ -15,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -43,42 +45,40 @@
 
 namespace openni_wrapper
 {
-
-  /**
-   * @brief This class provides methods to fill a RGB or Grayscale image buffer from underlying Bayer pattern image.
-   * @author Suat Gedikli
-   * @date 02.january 2011
-   * @ingroup io
-   */
+  /** \brief This class provides methods to fill a RGB or Grayscale image buffer from underlying Bayer pattern image.
+    * \author Suat Gedikli <gedikli@willowgarage.com>
+    * \ingroup io
+    */
   class PCL_EXPORTS ImageBayerGRBG : public Image
   {
-  public:
+    public:
+      typedef enum
+      {
+        Bilinear = 0,
+        EdgeAware,
+        EdgeAwareWeighted
+      } DebayeringMethod;
 
-    typedef enum
-    {
-      Bilinear = 0,
-      EdgeAware,
-      EdgeAwareWeighted
-    } DebayeringMethod;
+      ImageBayerGRBG (boost::shared_ptr<xn::ImageMetaData> image_meta_data, DebayeringMethod method) throw ();
+      virtual ~ImageBayerGRBG () throw ();
 
-    ImageBayerGRBG (boost::shared_ptr<xn::ImageMetaData> image_meta_data, DebayeringMethod method) throw ();
-    virtual ~ImageBayerGRBG () throw ();
+      inline virtual Encoding
+      getEncoding () const
+      {
+        return (BAYER_GRBG);
+      }
 
-    inline virtual Encoding
-    getEncoding () const
-    {
-      return (BAYER_GRBG);
-    }
+      virtual void fillRGB (unsigned width, unsigned height, unsigned char* rgb_buffer, unsigned rgb_line_step = 0) const;
+      virtual void fillGrayscale (unsigned width, unsigned height, unsigned char* gray_buffer, unsigned gray_line_step = 0) const;
+      virtual bool isResizingSupported (unsigned input_width, unsigned input_height, unsigned output_width, unsigned output_height) const;
+      inline void setDebayeringMethod (const DebayeringMethod& method) throw ();
+      inline DebayeringMethod getDebayeringMethod () const throw ();
+      inline static bool resizingSupported (unsigned input_width, unsigned input_height, unsigned output_width, unsigned output_height);
 
-    virtual void fillRGB (unsigned width, unsigned height, unsigned char* rgb_buffer, unsigned rgb_line_step = 0) const;
-    virtual void fillGrayscale (unsigned width, unsigned height, unsigned char* gray_buffer, unsigned gray_line_step = 0) const;
-    virtual bool isResizingSupported (unsigned input_width, unsigned input_height, unsigned output_width, unsigned output_height) const;
-    inline void setDebayeringMethod (const DebayeringMethod& method) throw ();
-    inline DebayeringMethod getDebayeringMethod () const throw ();
-    inline static bool resizingSupported (unsigned input_width, unsigned input_height, unsigned output_width, unsigned output_height);
-  protected:
-    DebayeringMethod debayering_method_;
-  } ;
+
+    protected:
+      DebayeringMethod debayering_method_;
+  };
 
   void
   ImageBayerGRBG::setDebayeringMethod (const ImageBayerGRBG::DebayeringMethod& method) throw ()

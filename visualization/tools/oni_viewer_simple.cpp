@@ -37,12 +37,12 @@
  *         Ethan Rublee (rublee@willowgarage.com)
  */
 
-#include <boost/thread/thread.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/common/time.h> //fps calculations
+#include <pcl/console/parse.h>
 #include <pcl/io/oni_grabber.h>
+#include <pcl/visualization/boost.h>
 #include <pcl/visualization/cloud_viewer.h>
 #include <vector>
 #include <pcl/common/time_trigger.h>
@@ -80,6 +80,8 @@ public:
   SimpleONIViewer(pcl::ONIGrabber& grabber)
     : viewer("PCL OpenNI Viewer")
     , grabber_(grabber)
+    , mtx_ ()
+    , cloud_ ()
   {
   }
 
@@ -148,7 +150,8 @@ void
 usage(char ** argv)
 {
   cout << "usage: " << argv[0] << " <path-to-oni-file> [framerate]\n";
-  cout << argv[0] << " -h | --help : shows this help" << endl;
+  cout << argv[0] << " -h | --help : shows this help\n";
+  cout << argv[0] << " -xyz        : enable just XYZ data display\n";
   return;
 }
 
@@ -187,18 +190,18 @@ main(int argc, char ** argv)
   else
   {
     grabber = new  pcl::ONIGrabber(arg, true, false);
-    trigger.setInterval (1.0 / (double) frame_rate);
+    trigger.setInterval (1.0 / static_cast<double> (frame_rate));
     trigger.registerCallback (boost::bind(&pcl::ONIGrabber::start, grabber));
     trigger.start();
   }
-  if (grabber->providesCallback<pcl::ONIGrabber::sig_cb_openni_point_cloud_rgb > ())
+  if (grabber->providesCallback<pcl::ONIGrabber::sig_cb_openni_point_cloud_rgb > () && !pcl::console::find_switch (argc, argv, "-xyz"))
   {
     SimpleONIViewer<pcl::PointXYZRGBA> v(*grabber);
     v.run();
   }
   else
   {
-    SimpleONIViewer<pcl::PointXYZI> v(*grabber);
+    SimpleONIViewer<pcl::PointXYZ> v(*grabber);
     v.run();
   }
 

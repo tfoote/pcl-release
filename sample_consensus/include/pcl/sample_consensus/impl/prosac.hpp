@@ -1,7 +1,10 @@
 /*
  * Software License Agreement (BSD License)
  *
+ *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2009, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
+ *
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -14,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -31,12 +34,16 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: prosac.hpp 5026 2012-03-12 02:51:44Z rusu $
+ * $Id$
  *
  */
 
 #ifndef PCL_SAMPLE_CONSENSUS_IMPL_PROSAC_H_
 #define PCL_SAMPLE_CONSENSUS_IMPL_PROSAC_H_
+
+#if defined __GNUC__
+#  pragma GCC system_header 
+#endif
 
 #include <boost/math/distributions/binomial.hpp>
 #include <pcl/sample_consensus/prosac.h>
@@ -172,10 +179,9 @@ pcl::ProgressiveSampleConsensus<PointT>::computeModel (int debug_verbosity_level
         // Make sure we have a better epsilon_possible_n_star
         if ((epsilon_possible_n_star > epsilon_n_star) && (epsilon_possible_n_star > epsilon_possible_n_star_best))
         {
-          using namespace boost::math;
           // Typo in Equation 7, not (n-m choose i-m) but (n choose i-m)
           size_t I_possible_n_star_min = m
-                           + static_cast<size_t> (ceil (quantile (complement (binomial_distribution<float>(static_cast<float> (possible_n_star), 0.1f), 0.05))));
+                           + static_cast<size_t> (ceil (boost::math::quantile (boost::math::complement (boost::math::binomial_distribution<float>(static_cast<float> (possible_n_star), 0.1f), 0.05))));
           // If Equation 9 is not verified, exit
           if (I_possible_n_star < I_possible_n_star_min)
             break;
@@ -225,8 +231,6 @@ pcl::ProgressiveSampleConsensus<PointT>::computeModel (int debug_verbosity_level
     return (false);
   }
 
-  // Get the set of inliers that correspond to the best model found so far
-  //sac_model_->selectWithinDistance (model_coefficients_, threshold_, inliers_);
   return (true);
 }
 

@@ -32,7 +32,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: smoothed_surfaces_keypoint.h 2127 2011-08-16 20:00:21Z aichim $
+ * $Id$
  */
 
 #ifndef PCL_SMOOTHEDSURFACESKEYPOINT_H_
@@ -55,6 +55,9 @@ namespace pcl
   class SmoothedSurfacesKeypoint : public Keypoint <PointT, PointT>
   {
     public:
+      typedef boost::shared_ptr<SmoothedSurfacesKeypoint<PointT, PointNT> > Ptr;
+      typedef boost::shared_ptr<const SmoothedSurfacesKeypoint<PointT, PointNT> > ConstPtr;
+
       using PCLBase<PointT>::input_;
       using Keypoint<PointT, PointT>::name_;
       using Keypoint<PointT, PointT>::tree_;

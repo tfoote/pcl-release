@@ -3,6 +3,7 @@
  *
  *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010-2011, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
  *
  *  All rights reserved.
  *
@@ -16,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,7 +34,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: io.hpp 6126 2012-07-03 20:19:58Z aichim $
+ * $Id$
  *
  */
 
@@ -41,12 +42,13 @@
 #define PCL_IO_IMPL_IO_HPP_
 
 #include <pcl/common/concatenate.h>
+#include <pcl/point_types.h>
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 template <typename PointT> int
 pcl::getFieldIndex (const pcl::PointCloud<PointT> &, 
                     const std::string &field_name, 
-                    std::vector<sensor_msgs::PointField> &fields)
+                    std::vector<pcl::PCLPointField> &fields)
 {
   fields.clear ();
   // Get the fields list
@@ -60,7 +62,7 @@ pcl::getFieldIndex (const pcl::PointCloud<PointT> &,
 //////////////////////////////////////////////////////////////////////////////////////////////
 template <typename PointT> int
 pcl::getFieldIndex (const std::string &field_name, 
-                    std::vector<sensor_msgs::PointField> &fields)
+                    std::vector<pcl::PCLPointField> &fields)
 {
   fields.clear ();
   // Get the fields list
@@ -73,7 +75,7 @@ pcl::getFieldIndex (const std::string &field_name,
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 template <typename PointT> void
-pcl::getFields (const pcl::PointCloud<PointT> &, std::vector<sensor_msgs::PointField> &fields)
+pcl::getFields (const pcl::PointCloud<PointT> &, std::vector<pcl::PCLPointField> &fields)
 {
   fields.clear ();
   // Get the fields list
@@ -82,7 +84,7 @@ pcl::getFields (const pcl::PointCloud<PointT> &, std::vector<sensor_msgs::PointF
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 template <typename PointT> void
-pcl::getFields (std::vector<sensor_msgs::PointField> &fields)
+pcl::getFields (std::vector<pcl::PCLPointField> &fields)
 {
   fields.clear ();
   // Get the fields list
@@ -94,7 +96,7 @@ template <typename PointT> std::string
 pcl::getFieldsList (const pcl::PointCloud<PointT> &)
 {
   // Get the fields list
-  std::vector<sensor_msgs::PointField> fields;
+  std::vector<pcl::PCLPointField> fields;
   pcl::for_each_type<typename pcl::traits::fieldList<PointT>::type>(pcl::detail::FieldAdder<PointT>(fields));
   std::string result;
   for (size_t i = 0; i < fields.size () - 1; ++i)
@@ -105,49 +107,100 @@ pcl::getFieldsList (const pcl::PointCloud<PointT> &)
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 template <typename PointInT, typename PointOutT> void
-pcl::copyPointCloud (const pcl::PointCloud<PointInT> &cloud_in, pcl::PointCloud<PointOutT> &cloud_out)
+pcl::copyPointCloud (const pcl::PointCloud<PointInT> &cloud_in, 
+                     pcl::PointCloud<PointOutT> &cloud_out)
 {
-  // Allocate enough space and copy the basics
-  cloud_out.points.resize (cloud_in.points.size ());
-  cloud_out.header   = cloud_in.header;
-  cloud_out.width    = cloud_in.width;
-  cloud_out.height   = cloud_in.height;
-  cloud_out.is_dense = cloud_in.is_dense;
   // Copy all the data fields from the input cloud to the output one
   typedef typename pcl::traits::fieldList<PointInT>::type FieldListInT;
   typedef typename pcl::traits::fieldList<PointOutT>::type FieldListOutT;
   typedef typename pcl::intersect<FieldListInT, FieldListOutT>::type FieldList; 
-  // Iterate over each point
-  for (size_t i = 0; i < cloud_in.points.size (); ++i)
+
+  cloud_out.header   = cloud_in.header;
+  cloud_out.width    = cloud_in.width;
+  cloud_out.height   = cloud_in.height;
+  cloud_out.is_dense = cloud_in.is_dense;
+  cloud_out.sensor_orientation_ = cloud_in.sensor_orientation_;
+  cloud_out.sensor_origin_ = cloud_in.sensor_origin_;
+  cloud_out.points.resize (cloud_in.points.size ());
+
+  // If the point types are the same, don't copy one by one
+  if (isSamePointType<PointInT, PointOutT> ())
   {
-    // Iterate over each dimension
-    pcl::for_each_type <FieldList> (pcl::NdConcatenateFunctor <PointInT, PointOutT> (cloud_in.points[i], cloud_out.points[i]));
+    memcpy (&cloud_out.points[0], &cloud_in.points[0], cloud_in.points.size () * sizeof (PointInT));
+    return;
   }
+
+  std::vector<pcl::PCLPointField> fields_in, fields_out;
+  pcl::for_each_type<FieldListInT> (pcl::detail::FieldAdder<PointInT> (fields_in));
+  pcl::for_each_type<FieldListOutT> (pcl::detail::FieldAdder<PointOutT> (fields_out));
+
+  // RGB vs RGBA is an official missmatch until PCL 2.0, so we need to search for it and 
+  // fix it manually
+  int rgb_idx_in = -1, rgb_idx_out = -1;
+  for (size_t i = 0; i < fields_in.size (); ++i)
+    if (fields_in[i].name == "rgb" || fields_in[i].name == "rgba")
+    {
+      rgb_idx_in = int (i);
+      break;
+    }
+  for (size_t i = 0; i < fields_out.size (); ++i)
+    if (fields_out[i].name == "rgb" || fields_out[i].name == "rgba")
+    {
+      rgb_idx_out = int (i);
+      break;
+    }
+
+  // We have one of the two cases: RGB vs RGBA or RGBA vs RGB
+  if (rgb_idx_in != -1 && rgb_idx_out != -1 && 
+      fields_in[rgb_idx_in].name != fields_out[rgb_idx_out].name)
+  {
+    size_t field_size_in  = getFieldSize (fields_in[rgb_idx_in].datatype),
+           field_size_out = getFieldSize (fields_out[rgb_idx_out].datatype);
+
+    if (field_size_in == field_size_out)
+    {
+      for (size_t i = 0; i < cloud_in.points.size (); ++i)
+      {
+        // Copy the rest
+        pcl::for_each_type<FieldList> (pcl::NdConcatenateFunctor <PointInT, PointOutT> (cloud_in.points[i], cloud_out.points[i]));
+        // Copy RGB<->RGBA
+        memcpy (reinterpret_cast<char*> (&cloud_out.points[i]) + fields_out[rgb_idx_out].offset, reinterpret_cast<const char*> (&cloud_in.points[i]) + fields_in[rgb_idx_in].offset, field_size_in);
+      }
+      return;
+    }
+  }
+
+  // Iterate over each point if no RGB/RGBA or if their size is different
+  for (size_t i = 0; i < cloud_in.points.size (); ++i)
+    // Iterate over each dimension
+    pcl::for_each_type<FieldList> (pcl::NdConcatenateFunctor <PointInT, PointOutT> (cloud_in.points[i], cloud_out.points[i]));
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 template <typename PointT> void
-pcl::copyPointCloud (const pcl::PointCloud<PointT> &cloud_in, const std::vector<int> &indices,
+pcl::copyPointCloud (const pcl::PointCloud<PointT> &cloud_in, 
+                     const std::vector<int> &indices,
                      pcl::PointCloud<PointT> &cloud_out)
 {
+  // Do we want to copy everything?
+  if (indices.size () == cloud_in.points.size ())
+  {
+    cloud_out = cloud_in;
+    return;
+  }
+
   // Allocate enough space and copy the basics
   cloud_out.points.resize (indices.size ());
   cloud_out.header   = cloud_in.header;
   cloud_out.width    = static_cast<uint32_t>(indices.size ());
   cloud_out.height   = 1;
-  if (cloud_in.is_dense)
-    cloud_out.is_dense = true;
-  else
-    // It's not necessarily true that is_dense is false if cloud_in.is_dense is false
-    // To verify this, we would need to iterate over all points and check for NaNs
-    cloud_out.is_dense = false;
+  cloud_out.is_dense = cloud_in.is_dense;
+  cloud_out.sensor_orientation_ = cloud_in.sensor_orientation_;
+  cloud_out.sensor_origin_ = cloud_in.sensor_origin_;
 
-  // Copy all the data fields from the input cloud to the output one
-  typedef typename pcl::traits::fieldList<PointT>::type FieldList;
   // Iterate over each point
   for (size_t i = 0; i < indices.size (); ++i)
-    // Iterate over each dimension
-    pcl::for_each_type <FieldList> (pcl::NdConcatenateFunctor <PointT, PointT> (cloud_in.points[indices[i]], cloud_out.points[i]));
+    cloud_out.points[i] = cloud_in.points[indices[i]];
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -156,48 +209,97 @@ pcl::copyPointCloud (const pcl::PointCloud<PointT> &cloud_in,
                      const std::vector<int, Eigen::aligned_allocator<int> > &indices,
                      pcl::PointCloud<PointT> &cloud_out)
 {
+  // Do we want to copy everything?
+  if (indices.size () == cloud_in.points.size ())
+  {
+    cloud_out = cloud_in;
+    return;
+  }
+
   // Allocate enough space and copy the basics
   cloud_out.points.resize (indices.size ());
   cloud_out.header   = cloud_in.header;
   cloud_out.width    = static_cast<uint32_t> (indices.size ());
   cloud_out.height   = 1;
-  if (cloud_in.is_dense)
-    cloud_out.is_dense = true;
-  else
-    // It's not necessarily true that is_dense is false if cloud_in.is_dense is false
-    // To verify this, we would need to iterate over all points and check for NaNs
-    cloud_out.is_dense = false;
+  cloud_out.is_dense = cloud_in.is_dense;
+  cloud_out.sensor_orientation_ = cloud_in.sensor_orientation_;
+  cloud_out.sensor_origin_ = cloud_in.sensor_origin_;
 
-  // Copy all the data fields from the input cloud to the output one
-  typedef typename pcl::traits::fieldList<PointT>::type FieldList;
   // Iterate over each point
   for (size_t i = 0; i < indices.size (); ++i)
-    // Iterate over each dimension
-    pcl::for_each_type <FieldList> (pcl::NdConcatenateFunctor <PointT, PointT> (cloud_in.points[indices[i]], cloud_out.points[i]));
+    cloud_out.points[i] = cloud_in.points[indices[i]];
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 template <typename PointInT, typename PointOutT> void
-pcl::copyPointCloud (const pcl::PointCloud<PointInT> &cloud_in, const std::vector<int> &indices,
+pcl::copyPointCloud (const pcl::PointCloud<PointInT> &cloud_in, 
+                     const std::vector<int> &indices,
                      pcl::PointCloud<PointOutT> &cloud_out)
 {
   // Allocate enough space and copy the basics
   cloud_out.points.resize (indices.size ());
   cloud_out.header   = cloud_in.header;
-  cloud_out.width    = indices.size ();
+  cloud_out.width    = uint32_t (indices.size ());
   cloud_out.height   = 1;
-  if (cloud_in.is_dense)
-    cloud_out.is_dense = true;
-  else
-    // It's not necessarily true that is_dense is false if cloud_in.is_dense is false
-    // To verify this, we would need to iterate over all points and check for NaNs
-    cloud_out.is_dense = false;
+  cloud_out.is_dense = cloud_in.is_dense;
+  cloud_out.sensor_orientation_ = cloud_in.sensor_orientation_;
+  cloud_out.sensor_origin_ = cloud_in.sensor_origin_;
 
   // Copy all the data fields from the input cloud to the output one
   typedef typename pcl::traits::fieldList<PointInT>::type FieldListInT;
   typedef typename pcl::traits::fieldList<PointOutT>::type FieldListOutT;
   typedef typename pcl::intersect<FieldListInT, FieldListOutT>::type FieldList; 
-  // Iterate over each point
+
+  // If the point types are the same, don't copy one by one
+  if (isSamePointType<PointInT, PointOutT> ())
+  {
+    // Iterate over each point
+    for (size_t i = 0; i < indices.size (); ++i)
+      memcpy (&cloud_out.points[i], &cloud_in.points[indices[i]], sizeof (PointInT));
+    return;
+  }
+
+  std::vector<pcl::PCLPointField> fields_in, fields_out;
+  pcl::for_each_type<FieldListInT> (pcl::detail::FieldAdder<PointInT> (fields_in));
+  pcl::for_each_type<FieldListOutT> (pcl::detail::FieldAdder<PointOutT> (fields_out));
+
+  // RGB vs RGBA is an official missmatch until PCL 2.0, so we need to search for it and 
+  // fix it manually
+  int rgb_idx_in = -1, rgb_idx_out = -1;
+  for (size_t i = 0; i < fields_in.size (); ++i)
+    if (fields_in[i].name == "rgb" || fields_in[i].name == "rgba")
+    {
+      rgb_idx_in = int (i);
+      break;
+    }
+  for (size_t i = 0; int (i) < fields_out.size (); ++i)
+    if (fields_out[i].name == "rgb" || fields_out[i].name == "rgba")
+    {
+      rgb_idx_out = int (i);
+      break;
+    }
+
+  // We have one of the two cases: RGB vs RGBA or RGBA vs RGB
+  if (rgb_idx_in != -1 && rgb_idx_out != -1 && 
+      fields_in[rgb_idx_in].name != fields_out[rgb_idx_out].name)
+  {
+    size_t field_size_in  = getFieldSize (fields_in[rgb_idx_in].datatype),
+           field_size_out = getFieldSize (fields_out[rgb_idx_out].datatype);
+
+    if (field_size_in == field_size_out)
+    {
+      for (size_t i = 0; i < indices.size (); ++i)
+      {
+        // Copy the rest
+        pcl::for_each_type<FieldList> (pcl::NdConcatenateFunctor <PointInT, PointOutT> (cloud_in.points[indices[i]], cloud_out.points[i]));
+        // Copy RGB<->RGBA
+        memcpy (reinterpret_cast<char*> (&cloud_out.points[indices[i]]) + fields_out[rgb_idx_out].offset, reinterpret_cast<const char*> (&cloud_in.points[i]) + fields_in[rgb_idx_in].offset, field_size_in);
+      }
+      return;
+    }
+  }
+
+  // Iterate over each point if no RGB/RGBA or if their size is different
   for (size_t i = 0; i < indices.size (); ++i)
     // Iterate over each dimension
     pcl::for_each_type <FieldList> (pcl::NdConcatenateFunctor <PointInT, PointOutT> (cloud_in.points[indices[i]], cloud_out.points[i]));
@@ -214,18 +316,65 @@ pcl::copyPointCloud (const pcl::PointCloud<PointInT> &cloud_in,
   cloud_out.header   = cloud_in.header;
   cloud_out.width    = static_cast<uint32_t> (indices.size ());
   cloud_out.height   = 1;
-  if (cloud_in.is_dense)
-    cloud_out.is_dense = true;
-  else
-    // It's not necessarily true that is_dense is false if cloud_in.is_dense is false
-    // To verify this, we would need to iterate over all points and check for NaNs
-    cloud_out.is_dense = false;
+  cloud_out.is_dense = cloud_in.is_dense;
+  cloud_out.sensor_orientation_ = cloud_in.sensor_orientation_;
+  cloud_out.sensor_origin_ = cloud_in.sensor_origin_;
 
   // Copy all the data fields from the input cloud to the output one
   typedef typename pcl::traits::fieldList<PointInT>::type FieldListInT;
   typedef typename pcl::traits::fieldList<PointOutT>::type FieldListOutT;
   typedef typename pcl::intersect<FieldListInT, FieldListOutT>::type FieldList; 
-  // Iterate over each point
+
+  // If the point types are the same, don't copy one by one
+  if (isSamePointType<PointInT, PointOutT> ())
+  {
+    // Iterate over each point
+    for (size_t i = 0; i < indices.size (); ++i)
+      memcpy (&cloud_out.points[i], &cloud_in.points[indices[i]], sizeof (PointInT));
+    return;
+  }
+
+  std::vector<pcl::PCLPointField> fields_in, fields_out;
+  pcl::for_each_type<FieldListInT> (pcl::detail::FieldAdder<PointInT> (fields_in));
+  pcl::for_each_type<FieldListOutT> (pcl::detail::FieldAdder<PointOutT> (fields_out));
+
+  // RGB vs RGBA is an official missmatch until PCL 2.0, so we need to search for it and 
+  // fix it manually
+  int rgb_idx_in = -1, rgb_idx_out = -1;
+  for (size_t i = 0; i < fields_in.size (); ++i)
+    if (fields_in[i].name == "rgb" || fields_in[i].name == "rgba")
+    {
+      rgb_idx_in = int (i);
+      break;
+    }
+  for (size_t i = 0; i < fields_out.size (); ++i)
+    if (fields_out[i].name == "rgb" || fields_out[i].name == "rgba")
+    {
+      rgb_idx_out = int (i);
+      break;
+    }
+
+  // We have one of the two cases: RGB vs RGBA or RGBA vs RGB
+  if (rgb_idx_in != -1 && rgb_idx_out != -1 && 
+      fields_in[rgb_idx_in].name != fields_out[rgb_idx_out].name)
+  {
+    size_t field_size_in  = getFieldSize (fields_in[rgb_idx_in].datatype),
+           field_size_out = getFieldSize (fields_out[rgb_idx_out].datatype);
+
+    if (field_size_in == field_size_out)
+    {
+      for (size_t i = 0; i < indices.size (); ++i)
+      {
+        // Copy the rest
+        pcl::for_each_type<FieldList> (pcl::NdConcatenateFunctor <PointInT, PointOutT> (cloud_in.points[indices[i]], cloud_out.points[i]));
+        // Copy RGB<->RGBA
+        memcpy (reinterpret_cast<char*> (&cloud_out.points[i]) + fields_out[rgb_idx_out].offset, reinterpret_cast<const char*> (&cloud_in.points[indices[i]]) + fields_in[rgb_idx_in].offset, field_size_in);
+      }
+      return;
+    }
+  }
+
+  // Iterate over each point if no RGB/RGBA or if their size is different
   for (size_t i = 0; i < indices.size (); ++i)
     // Iterate over each dimension
     pcl::for_each_type <FieldList> (pcl::NdConcatenateFunctor <PointInT, PointOutT> (cloud_in.points[indices[i]], cloud_out.points[i]));
@@ -233,32 +382,35 @@ pcl::copyPointCloud (const pcl::PointCloud<PointInT> &cloud_in,
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 template <typename PointT> void
-pcl::copyPointCloud (const pcl::PointCloud<PointT> &cloud_in, const pcl::PointIndices &indices,
+pcl::copyPointCloud (const pcl::PointCloud<PointT> &cloud_in, 
+                     const pcl::PointIndices &indices,
                      pcl::PointCloud<PointT> &cloud_out)
 {
+  // Do we want to copy everything?
+  if (indices.indices.size () == cloud_in.points.size ())
+  {
+    cloud_out = cloud_in;
+    return;
+  }
+
   // Allocate enough space and copy the basics
   cloud_out.points.resize (indices.indices.size ());
   cloud_out.header   = cloud_in.header;
   cloud_out.width    = indices.indices.size ();
   cloud_out.height   = 1;
-  if (cloud_in.is_dense)
-    cloud_out.is_dense = true;
-  else
-    // It's not necessarily true that is_dense is false if cloud_in.is_dense is false
-    // To verify this, we would need to iterate over all points and check for NaNs
-    cloud_out.is_dense = false;
+  cloud_out.is_dense = cloud_in.is_dense;
+  cloud_out.sensor_orientation_ = cloud_in.sensor_orientation_;
+  cloud_out.sensor_origin_ = cloud_in.sensor_origin_;
 
-  // Copy all the data fields from the input cloud to the output one
-  typedef typename pcl::traits::fieldList<PointT>::type FieldList;
   // Iterate over each point
   for (size_t i = 0; i < indices.indices.size (); ++i)
-    // Iterate over each dimension
-    pcl::for_each_type <FieldList> (pcl::NdConcatenateFunctor <PointT, PointT> (cloud_in.points[indices.indices[i]], cloud_out.points[i]));
+    cloud_out.points[i] = cloud_in.points[indices.indices[i]];
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 template <typename PointInT, typename PointOutT> void
-pcl::copyPointCloud (const pcl::PointCloud<PointInT> &cloud_in, const pcl::PointIndices &indices,
+pcl::copyPointCloud (const pcl::PointCloud<PointInT> &cloud_in, 
+                     const pcl::PointIndices &indices,
                      pcl::PointCloud<PointOutT> &cloud_out)
 {
   // Allocate enough space and copy the basics
@@ -266,18 +418,65 @@ pcl::copyPointCloud (const pcl::PointCloud<PointInT> &cloud_in, const pcl::Point
   cloud_out.header   = cloud_in.header;
   cloud_out.width    = indices.indices.size ();
   cloud_out.height   = 1;
-  if (cloud_in.is_dense)
-    cloud_out.is_dense = true;
-  else
-    // It's not necessarily true that is_dense is false if cloud_in.is_dense is false
-    // To verify this, we would need to iterate over all points and check for NaNs
-    cloud_out.is_dense = false;
+  cloud_out.is_dense = cloud_in.is_dense;
+  cloud_out.sensor_orientation_ = cloud_in.sensor_orientation_;
+  cloud_out.sensor_origin_ = cloud_in.sensor_origin_;
 
   // Copy all the data fields from the input cloud to the output one
   typedef typename pcl::traits::fieldList<PointInT>::type FieldListInT;
   typedef typename pcl::traits::fieldList<PointOutT>::type FieldListOutT;
   typedef typename pcl::intersect<FieldListInT, FieldListOutT>::type FieldList; 
-  // Iterate over each point
+
+  // If the point types are the same, don't copy one by one
+  if (isSamePointType<PointInT, PointOutT> ())
+  {
+    // Iterate over each point
+    for (size_t i = 0; i < indices.indices.size (); ++i)
+      memcpy (&cloud_out.points[i], &cloud_in.points[indices.indices[i]], sizeof (PointInT));
+    return;
+  }
+  
+  std::vector<pcl::PCLPointField> fields_in, fields_out;
+  pcl::for_each_type<FieldListInT> (pcl::detail::FieldAdder<PointInT> (fields_in));
+  pcl::for_each_type<FieldListOutT> (pcl::detail::FieldAdder<PointOutT> (fields_out));
+
+  // RGB vs RGBA is an official missmatch until PCL 2.0, so we need to search for it and 
+  // fix it manually
+  int rgb_idx_in = -1, rgb_idx_out = -1;
+  for (size_t i = 0; i < fields_in.size (); ++i)
+    if (fields_in[i].name == "rgb" || fields_in[i].name == "rgba")
+    {
+      rgb_idx_in = int (i);
+      break;
+    }
+  for (size_t i = 0; i < fields_out.size (); ++i)
+    if (fields_out[i].name == "rgb" || fields_out[i].name == "rgba")
+    {
+      rgb_idx_out = int (i);
+      break;
+    }
+
+  // We have one of the two cases: RGB vs RGBA or RGBA vs RGB
+  if (rgb_idx_in != -1 && rgb_idx_out != -1 && 
+      fields_in[rgb_idx_in].name != fields_out[rgb_idx_out].name)
+  {
+    size_t field_size_in  = getFieldSize (fields_in[rgb_idx_in].datatype),
+           field_size_out = getFieldSize (fields_out[rgb_idx_out].datatype);
+
+    if (field_size_in == field_size_out)
+    {
+      for (size_t i = 0; i < indices.indices.size (); ++i)
+      {
+        // Copy the rest
+        pcl::for_each_type<FieldList> (pcl::NdConcatenateFunctor <PointInT, PointOutT> (cloud_in.points[indices.indices[i]], cloud_out.points[i]));
+        // Copy RGB<->RGBA
+        memcpy (reinterpret_cast<char*> (&cloud_out.points[indices.indices[i]]) + fields_out[rgb_idx_out].offset, reinterpret_cast<const char*> (&cloud_in.points[i]) + fields_in[rgb_idx_in].offset, field_size_in);
+      }
+      return;
+    }
+  }
+
+  // Iterate over each point if no RGB/RGBA or if their size is different
   for (size_t i = 0; i < indices.indices.size (); ++i)
     // Iterate over each dimension
     pcl::for_each_type <FieldList> (pcl::NdConcatenateFunctor <PointInT, PointOutT> (cloud_in.points[indices.indices[i]], cloud_out.points[i]));
@@ -285,27 +484,30 @@ pcl::copyPointCloud (const pcl::PointCloud<PointInT> &cloud_in, const pcl::Point
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 template <typename PointT> void
-pcl::copyPointCloud (const pcl::PointCloud<PointT> &cloud_in, const std::vector<pcl::PointIndices> &indices,
+pcl::copyPointCloud (const pcl::PointCloud<PointT> &cloud_in, 
+                     const std::vector<pcl::PointIndices> &indices,
                      pcl::PointCloud<PointT> &cloud_out)
 {
   int nr_p = 0;
   for (size_t i = 0; i < indices.size (); ++i)
     nr_p += indices[i].indices.size ();
 
+  // Do we want to copy everything? Remember we assume UNIQUE indices
+  if (nr_p == cloud_in.points.size ())
+  {
+    cloud_out = cloud_in;
+    return;
+  }
+
   // Allocate enough space and copy the basics
   cloud_out.points.resize (nr_p);
   cloud_out.header   = cloud_in.header;
   cloud_out.width    = nr_p;
   cloud_out.height   = 1;
-  if (cloud_in.is_dense)
-    cloud_out.is_dense = true;
-  else
-    // It's not necessarily true that is_dense is false if cloud_in.is_dense is false
-    // To verify this, we would need to iterate over all points and check for NaNs
-    cloud_out.is_dense = false;
+  cloud_out.is_dense = cloud_in.is_dense;
+  cloud_out.sensor_orientation_ = cloud_in.sensor_orientation_;
+  cloud_out.sensor_origin_ = cloud_in.sensor_origin_;
 
-  // Copy all the data fields from the input cloud to the output one
-  typedef typename pcl::traits::fieldList<PointT>::type FieldList;
   // Iterate over each cluster
   int cp = 0;
   for (size_t cc = 0; cc < indices.size (); ++cc)
@@ -314,7 +516,7 @@ pcl::copyPointCloud (const pcl::PointCloud<PointT> &cloud_in, const std::vector<
     for (size_t i = 0; i < indices[cc].indices.size (); ++i)
     {
       // Iterate over each dimension
-      pcl::for_each_type <FieldList> (pcl::NdConcatenateFunctor <PointT, PointT> (cloud_in.points[indices[cc].indices[i]], cloud_out.points[cp]));
+      cloud_out.points[cp] = cloud_in.points[indices[cc].indices[i]];
       cp++;
     }
   }
@@ -322,29 +524,99 @@ pcl::copyPointCloud (const pcl::PointCloud<PointT> &cloud_in, const std::vector<
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 template <typename PointInT, typename PointOutT> void
-pcl::copyPointCloud (const pcl::PointCloud<PointInT> &cloud_in, const std::vector<pcl::PointIndices> &indices,
+pcl::copyPointCloud (const pcl::PointCloud<PointInT> &cloud_in, 
+                     const std::vector<pcl::PointIndices> &indices,
                      pcl::PointCloud<PointOutT> &cloud_out)
 {
   int nr_p = 0;
   for (size_t i = 0; i < indices.size (); ++i)
     nr_p += indices[i].indices.size ();
 
+  // Do we want to copy everything? Remember we assume UNIQUE indices
+  if (nr_p == cloud_in.points.size ())
+  {
+    copyPointCloud<PointInT, PointOutT> (cloud_in, cloud_out);
+    return;
+  }
+
   // Allocate enough space and copy the basics
   cloud_out.points.resize (nr_p);
   cloud_out.header   = cloud_in.header;
   cloud_out.width    = nr_p;
   cloud_out.height   = 1;
-  if (cloud_in.is_dense)
-    cloud_out.is_dense = true;
-  else
-    // It's not necessarily true that is_dense is false if cloud_in.is_dense is false
-    // To verify this, we would need to iterate over all points and check for NaNs
-    cloud_out.is_dense = false;
+  cloud_out.is_dense = cloud_in.is_dense;
+  cloud_out.sensor_orientation_ = cloud_in.sensor_orientation_;
+  cloud_out.sensor_origin_ = cloud_in.sensor_origin_;
 
   // Copy all the data fields from the input cloud to the output one
   typedef typename pcl::traits::fieldList<PointInT>::type FieldListInT;
   typedef typename pcl::traits::fieldList<PointOutT>::type FieldListOutT;
   typedef typename pcl::intersect<FieldListInT, FieldListOutT>::type FieldList; 
+
+  // If the point types are the same, don't copy one by one
+  if (isSamePointType<PointInT, PointOutT> ())
+  {
+    // Iterate over each cluster
+    int cp = 0;
+    for (size_t cc = 0; cc < indices.size (); ++cc)
+    {
+      // Iterate over each idx
+      for (size_t i = 0; i < indices[cc].indices.size (); ++i)
+      {
+        cloud_out.points[cp] = cloud_in.points[indices[cc].indices[i]];
+        ++cp;
+      }
+    }
+    return;
+  }
+
+  std::vector<pcl::PCLPointField> fields_in, fields_out;
+  pcl::for_each_type<FieldListInT> (pcl::detail::FieldAdder<PointInT> (fields_in));
+  pcl::for_each_type<FieldListOutT> (pcl::detail::FieldAdder<PointOutT> (fields_out));
+
+  // RGB vs RGBA is an official missmatch until PCL 2.0, so we need to search for it and 
+  // fix it manually
+  int rgb_idx_in = -1, rgb_idx_out = -1;
+  for (size_t i = 0; i < fields_in.size (); ++i)
+    if (fields_in[i].name == "rgb" || fields_in[i].name == "rgba")
+    {
+      rgb_idx_in = int (i);
+      break;
+    }
+  for (size_t i = 0; i < fields_out.size (); ++i)
+    if (fields_out[i].name == "rgb" || fields_out[i].name == "rgba")
+    {
+      rgb_idx_out = int (i);
+      break;
+    }
+
+  // We have one of the two cases: RGB vs RGBA or RGBA vs RGB
+  if (rgb_idx_in != -1 && rgb_idx_out != -1 && 
+      fields_in[rgb_idx_in].name != fields_out[rgb_idx_out].name)
+  {
+    size_t field_size_in  = getFieldSize (fields_in[rgb_idx_in].datatype),
+           field_size_out = getFieldSize (fields_out[rgb_idx_out].datatype);
+
+    if (field_size_in == field_size_out)
+    {
+      // Iterate over each cluster
+      int cp = 0;
+      for (size_t cc = 0; cc < indices.size (); ++cc)
+      {
+        // Iterate over each idx
+        for (size_t i = 0; i < indices[cc].indices.size (); ++i)
+        {
+          // Iterate over each dimension
+          pcl::for_each_type <FieldList> (pcl::NdConcatenateFunctor <PointInT, PointOutT> (cloud_in.points[indices[cc].indices[i]], cloud_out.points[cp]));
+          // Copy RGB<->RGBA
+          memcpy (reinterpret_cast<char*> (&cloud_out.points[cp]) + fields_out[rgb_idx_out].offset, reinterpret_cast<const char*> (&cloud_in.points[indices[cp].indices[i]]) + fields_in[rgb_idx_in].offset, field_size_in);
+          ++cp;
+        }
+      }
+      return;
+    }
+  }
+
   // Iterate over each cluster
   int cp = 0;
   for (size_t cc = 0; cc < indices.size (); ++cc)

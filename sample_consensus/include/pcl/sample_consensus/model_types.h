@@ -1,7 +1,10 @@
 /*
  * Software License Agreement (BSD License)
  *
+ *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2009, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
+ *
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -14,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -31,7 +34,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: model_types.h 4777 2012-02-27 00:51:27Z rusu $
+ * $Id$
  *
  */
 
@@ -58,6 +61,7 @@ namespace pcl
     SACMODEL_NORMAL_PLANE,
     SACMODEL_NORMAL_SPHERE,
     SACMODEL_REGISTRATION,
+    SACMODEL_REGISTRATION_2D,
     SACMODEL_PARALLEL_PLANE,
     SACMODEL_NORMAL_PARALLEL_PLANE,
     SACMODEL_STICK
@@ -69,7 +73,7 @@ typedef std::map<pcl::SacModel, unsigned int>::value_type SampleSizeModel;
 const static SampleSizeModel sample_size_pairs[] = {SampleSizeModel (pcl::SACMODEL_PLANE, 3),
                                                     SampleSizeModel (pcl::SACMODEL_LINE, 2),
                                                     SampleSizeModel (pcl::SACMODEL_CIRCLE2D, 3),
-                                                    //SampleSizeModel (pcl::SACMODEL_CIRCLE3D, 3),
+                                                    SampleSizeModel (pcl::SACMODEL_CIRCLE3D, 3),
                                                     SampleSizeModel (pcl::SACMODEL_SPHERE, 4),
                                                     SampleSizeModel (pcl::SACMODEL_CYLINDER, 2),
                                                     SampleSizeModel (pcl::SACMODEL_CONE, 3),
@@ -80,6 +84,7 @@ const static SampleSizeModel sample_size_pairs[] = {SampleSizeModel (pcl::SACMOD
                                                     SampleSizeModel (pcl::SACMODEL_NORMAL_PLANE, 3),
                                                     SampleSizeModel (pcl::SACMODEL_NORMAL_SPHERE, 4),
                                                     SampleSizeModel (pcl::SACMODEL_REGISTRATION, 3),
+                                                    SampleSizeModel (pcl::SACMODEL_REGISTRATION_2D, 3),
                                                     SampleSizeModel (pcl::SACMODEL_PARALLEL_PLANE, 3),
                                                     SampleSizeModel (pcl::SACMODEL_NORMAL_PARALLEL_PLANE, 3),
                                                     SampleSizeModel (pcl::SACMODEL_STICK, 2)};

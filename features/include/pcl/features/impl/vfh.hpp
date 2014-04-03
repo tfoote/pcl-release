@@ -34,7 +34,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: vfh.hpp 6089 2012-07-02 18:38:08Z rusu $
+ * $Id$
  *
  */
 
@@ -42,8 +42,9 @@
 #define PCL_FEATURES_IMPL_VFH_H_
 
 #include <pcl/features/vfh.h>
-#include <pcl/features/pfh.h>
+#include <pcl/features/pfh_tools.h>
 #include <pcl/common/common.h>
+#include <pcl/common/centroid.h>
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 template<typename PointInT, typename PointNT, typename PointOutT> bool

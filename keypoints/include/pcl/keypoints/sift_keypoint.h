@@ -94,6 +94,9 @@ namespace pcl
   class SIFTKeypoint : public Keypoint<PointInT, PointOutT>
   {
     public:
+      typedef boost::shared_ptr<SIFTKeypoint<PointInT, PointOutT> > Ptr;
+      typedef boost::shared_ptr<const SIFTKeypoint<PointInT, PointOutT> > ConstPtr;
+
       typedef typename Keypoint<PointInT, PointOutT>::PointCloudIn PointCloudIn;
       typedef typename Keypoint<PointInT, PointOutT>::PointCloudOut PointCloudOut;
       typedef typename Keypoint<PointInT, PointOutT>::KdTree KdTree;
@@ -192,7 +195,7 @@ namespace pcl
       int scale_idx_;
 
       /** \brief The list of fields present in the output point cloud data. */
-      std::vector<sensor_msgs::PointField> out_fields_;
+      std::vector<pcl::PCLPointField> out_fields_;
 
       SIFTKeypointFieldSelector<PointInT> getFieldValue_;
   };

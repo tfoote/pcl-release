@@ -1,7 +1,10 @@
 /*
  * Software License Agreement (BSD License)
  *
+ *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
+ *
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -14,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -31,19 +34,16 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: statistical_outlier_removal.cpp 5026 2012-03-12 02:51:44Z rusu $
+ * $Id$
  *
  */
 
-#include <pcl/impl/instantiate.hpp>
-#include <pcl/point_types.h>
-#include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl/filters/impl/statistical_outlier_removal.hpp>
-#include <pcl/ros/conversions.h>
+#include <pcl/conversions.h>
 
-//////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////
 void
-pcl::StatisticalOutlierRemoval<sensor_msgs::PointCloud2>::applyFilter (PointCloud2 &output)
+pcl::StatisticalOutlierRemoval<pcl::PCLPointCloud2>::applyFilter (PCLPointCloud2 &output)
 {
   output.is_dense = true;
   // If fields x/y/z are not present, we cannot filter
@@ -64,7 +64,7 @@ pcl::StatisticalOutlierRemoval<sensor_msgs::PointCloud2>::applyFilter (PointClou
   }
   // Send the input dataset to the spatial locator
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::fromROSMsg (*input_, *cloud);
+  pcl::fromPCLPointCloud2 (*input_, *cloud);
 
   // Initialize the spatial locator
   if (!tree_)
@@ -82,11 +82,12 @@ pcl::StatisticalOutlierRemoval<sensor_msgs::PointCloud2>::applyFilter (PointClou
   std::vector<float> nn_dists (mean_k_);
 
   std::vector<float> distances (indices_->size ());
+  int valid_distances = 0;
   // Go over all the points and calculate the mean or smallest distance
   for (size_t cp = 0; cp < indices_->size (); ++cp)
   {
-    if (!pcl_isfinite (cloud->points[(*indices_)[cp]].x) || !pcl_isfinite (cloud->points[(*indices_)[cp]].y)
-        ||
+    if (!pcl_isfinite (cloud->points[(*indices_)[cp]].x) || 
+        !pcl_isfinite (cloud->points[(*indices_)[cp]].y) ||
         !pcl_isfinite (cloud->points[(*indices_)[cp]].z))
     {
       distances[cp] = 0;
@@ -105,11 +106,21 @@ pcl::StatisticalOutlierRemoval<sensor_msgs::PointCloud2>::applyFilter (PointClou
     for (int j = 1; j < mean_k_; ++j)
       dist_sum += sqrt (nn_dists[j]);
     distances[cp] = static_cast<float> (dist_sum / (mean_k_ - 1));
+    valid_distances++;
   }
 
   // Estimate the mean and the standard deviation of the distance vector
-  double mean, stddev;
-  getMeanStd (distances, mean, stddev);
+  double sum = 0, sq_sum = 0;
+  for (size_t i = 0; i < distances.size (); ++i)
+  {
+    sum += distances[i];
+    sq_sum += distances[i] * distances[i];
+  }
+  double mean = sum / static_cast<double>(valid_distances);
+  double variance = (sq_sum - sum * sum / static_cast<double>(valid_distances)) / (static_cast<double>(valid_distances) - 1);
+  double stddev = sqrt (variance);
+  //getMeanStd (distances, mean, stddev);
+
   double distance_threshold = mean + std_mul_ * stddev; // a distance that is bigger than this signals an outlier
 
   // Copy the common fields
@@ -160,6 +171,13 @@ pcl::StatisticalOutlierRemoval<sensor_msgs::PointCloud2>::applyFilter (PointClou
 
   removed_indices_->resize (nr_removed_p);
 }
+
+#ifndef PCL_NO_PRECOMPILE
+#include <pcl/impl/instantiate.hpp>
+#include <pcl/point_types.h>
+
 // Instantiations of specific point types
 PCL_INSTANTIATE(StatisticalOutlierRemoval, PCL_XYZ_POINT_TYPES)
+
+#endif    // PCL_NO_PRECOMPILE
 

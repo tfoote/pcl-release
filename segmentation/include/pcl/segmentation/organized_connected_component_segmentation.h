@@ -16,7 +16,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -147,5 +147,9 @@ namespace pcl
       };
   };
 }
+
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/segmentation/impl/organized_connected_component_segmentation.hpp>
+#endif
 
 #endif //#ifndef PCL_ORGANIZED_CONNECTED_COMPONENT_SEGMENTATION_H_

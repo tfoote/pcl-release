@@ -16,7 +16,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,7 +33,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: organized.hpp 6124 2012-07-03 19:04:27Z aichim $
+ * $Id$
  *
  */
 
@@ -88,7 +88,11 @@ pcl::search::OrganizedNeighbor<PointT>::radiusSearch (const               PointT
       if (!mask_[idx] || !isFinite (input_->points[idx]))
         continue;
 
-      squared_distance = (input_->points[idx].getVector3fMap () - query.getVector3fMap ()).squaredNorm ();
+      float dist_x = input_->points[idx].x - query.x;
+      float dist_y = input_->points[idx].y - query.y;
+      float dist_z = input_->points[idx].z - query.z;
+      squared_distance = dist_x * dist_x + dist_y * dist_y + dist_z * dist_z;
+      //squared_distance = (input_->points[idx].getVector3fMap () - query.getVector3fMap ()).squaredNorm ();
       if (squared_distance <= squared_radius)
       {
         k_indices.push_back (idx);
@@ -123,8 +127,10 @@ pcl::search::OrganizedNeighbor<PointT>::nearestKSearch (const PointT &query,
     return (0);
   }
 
+  Eigen::Vector3f queryvec (query.x, query.y, query.z);
   // project query point on the image plane
-  Eigen::Vector3f q = KR_ * query.getVector3fMap () + projection_matrix_.block <3, 1> (0, 3);
+  //Eigen::Vector3f q = KR_ * query.getVector3fMap () + projection_matrix_.block <3, 1> (0, 3);
+  Eigen::Vector3f q (KR_ * queryvec + projection_matrix_.block <3, 1> (0, 3));
   int xBegin = int(q [0] / q [2] + 0.5f);
   int yBegin = int(q [1] / q [2] + 0.5f);
   int xEnd   = xBegin + 1; // end is the pixel that is not used anymore, like in iterators
@@ -271,7 +277,9 @@ pcl::search::OrganizedNeighbor<PointT>::getProjectedRadiusSearchBox (const Point
                                                                      unsigned &minY,
                                                                      unsigned &maxY) const
 {
-  Eigen::Vector3f q = KR_ * point.getVector3fMap () + projection_matrix_.block <3, 1> (0, 3);
+  Eigen::Vector3f queryvec (point.x, point.y, point.z);
+  //Eigen::Vector3f q = KR_ * point.getVector3fMap () + projection_matrix_.block <3, 1> (0, 3);
+  Eigen::Vector3f q (KR_ * queryvec + projection_matrix_.block <3, 1> (0, 3));
 
   float a = squared_radius * KR_KRT_.coeff (8) - q [2] * q [2];
   float b = squared_radius * KR_KRT_.coeff (7) - q [1] * q [2];
@@ -286,8 +294,8 @@ pcl::search::OrganizedNeighbor<PointT>::getProjectedRadiusSearchBox (const Point
   }
   else
   {
-    float y1 = (b - sqrt (det)) / a;
-    float y2 = (b + sqrt (det)) / a;
+    float y1 = static_cast<float> ((b - sqrt (det)) / a);
+    float y2 = static_cast<float> ((b + sqrt (det)) / a);
 
     min = std::min (static_cast<int> (floor (y1)), static_cast<int> (floor (y2)));
     max = std::max (static_cast<int> (ceil (y1)), static_cast<int> (ceil (y2)));
@@ -306,8 +314,8 @@ pcl::search::OrganizedNeighbor<PointT>::getProjectedRadiusSearchBox (const Point
   }
   else
   {
-    float x1 = (b - sqrt (det)) / a;
-    float x2 = (b + sqrt (det)) / a;
+    float x1 = static_cast<float> ((b - sqrt (det)) / a);
+    float x2 = static_cast<float> ((b + sqrt (det)) / a);
 
     min = std::min (static_cast<int> (floor (x1)), static_cast<int> (floor (x2)));
     max = std::max (static_cast<int> (ceil (x1)), static_cast<int> (ceil (x2)));
@@ -316,55 +324,12 @@ pcl::search::OrganizedNeighbor<PointT>::getProjectedRadiusSearchBox (const Point
   }
 }
 
-//////////////////////////////////////////////////////////////////////////////////////////////
-template<typename PointT> template <typename MatrixType> void
-pcl::search::OrganizedNeighbor<PointT>::makeSymmetric (MatrixType& matrix, bool use_upper_triangular) const
-{
-  if (use_upper_triangular && (MatrixType::Flags & Eigen::RowMajorBit) )
-  {
-    matrix.coeffRef (4) = matrix.coeff (1);
-    matrix.coeffRef (8) = matrix.coeff (2);
-    matrix.coeffRef (9) = matrix.coeff (6);
-    matrix.coeffRef (12) = matrix.coeff (3);
-    matrix.coeffRef (13) = matrix.coeff (7);
-    matrix.coeffRef (14) = matrix.coeff (11);
-  }
-  else
-  {
-    matrix.coeffRef (1) = matrix.coeff (4);
-    matrix.coeffRef (2) = matrix.coeff (8);
-    matrix.coeffRef (6) = matrix.coeff (9);
-    matrix.coeffRef (3) = matrix.coeff (12);
-    matrix.coeffRef (7) = matrix.coeff (13);
-    matrix.coeffRef (11) = matrix.coeff (14);
-  }
-}
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 template<typename PointT> void
 pcl::search::OrganizedNeighbor<PointT>::computeCameraMatrix (Eigen::Matrix3f& camera_matrix) const
 {
-  Eigen::Matrix3f cam = KR_KRT_ / KR_KRT_.coeff (8);
-
-  memset (&(camera_matrix.coeffRef (0)), 0, sizeof (Eigen::Matrix3f::Scalar) * 9);
-  camera_matrix.coeffRef (8) = 1.0;
-  
-  if (camera_matrix.Flags & Eigen::RowMajorBit)
-  {
-    camera_matrix.coeffRef (2) = cam.coeff (2);
-    camera_matrix.coeffRef (5) = cam.coeff (5);
-    camera_matrix.coeffRef (4) = sqrt (cam.coeff (4) - cam.coeff (5) * cam.coeff (5));
-    camera_matrix.coeffRef (1) = (cam.coeff (1) - cam.coeff (2) * cam.coeff (5)) / camera_matrix.coeff (4);
-    camera_matrix.coeffRef (0) = sqrt (cam.coeff (0) - camera_matrix.coeff (1) * camera_matrix.coeff (1) - cam.coeff (2) * cam.coeff (2));
-  }
-  else
-  {
-    camera_matrix.coeffRef (6) = cam.coeff (2);
-    camera_matrix.coeffRef (7) = cam.coeff (5);
-    camera_matrix.coeffRef (4) = sqrt (cam.coeff (4) - cam.coeff (5) * cam.coeff (5));
-    camera_matrix.coeffRef (3) = (cam.coeff (1) - cam.coeff (2) * cam.coeff (5)) / camera_matrix.coeff (4);
-    camera_matrix.coeffRef (0) = sqrt (cam.coeff (0) - camera_matrix.coeff (3) * camera_matrix.coeff (3) - cam.coeff (2) * cam.coeff (2));
-  }
+  pcl::getCameraMatrixFromProjectionMatrix (projection_matrix_, camera_matrix);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -372,7 +337,6 @@ template<typename PointT> void
 pcl::search::OrganizedNeighbor<PointT>::estimateProjectionMatrix ()
 {
   // internally we calculate with double but store the result into float matrices.
-  typedef double Scalar;
   projection_matrix_.setZero ();
   if (input_->height == 1 || input_->width == 1)
   {
@@ -380,13 +344,12 @@ pcl::search::OrganizedNeighbor<PointT>::estimateProjectionMatrix ()
     return;
   }
   
-  const unsigned ySkip = (input_->height >> pyramid_level_);
-  const unsigned xSkip = (input_->width >> pyramid_level_);
-  Eigen::Matrix<Scalar, 4, 4, Eigen::RowMajor> A = Eigen::Matrix<Scalar, 4, 4, Eigen::RowMajor>::Zero ();
-  Eigen::Matrix<Scalar, 4, 4, Eigen::RowMajor> B = Eigen::Matrix<Scalar, 4, 4, Eigen::RowMajor>::Zero ();
-  Eigen::Matrix<Scalar, 4, 4, Eigen::RowMajor> C = Eigen::Matrix<Scalar, 4, 4, Eigen::RowMajor>::Zero ();
-  Eigen::Matrix<Scalar, 4, 4, Eigen::RowMajor> D = Eigen::Matrix<Scalar, 4, 4, Eigen::RowMajor>::Zero ();
+  const unsigned ySkip = (std::max) (input_->height >> pyramid_level_, unsigned (1));
+  const unsigned xSkip = (std::max) (input_->width >> pyramid_level_, unsigned (1));
 
+  std::vector<int> indices;
+  indices.reserve (input_->size () >> (pyramid_level_ << 1));
+  
   for (unsigned yIdx = 0, idx = 0; yIdx < input_->height; yIdx += ySkip, idx += input_->width * (ySkip - 1))
   {
     for (unsigned xIdx = 0; xIdx < input_->width; xIdx += xSkip, idx += xSkip)
@@ -394,115 +357,17 @@ pcl::search::OrganizedNeighbor<PointT>::estimateProjectionMatrix ()
       if (!mask_ [idx])
         continue;
 
-      const PointT& point = input_->points[idx];
-      if (pcl_isfinite (point.x))
-      {
-        Scalar xx = point.x * point.x;
-        Scalar xy = point.x * point.y;
-        Scalar xz = point.x * point.z;
-        Scalar yy = point.y * point.y;
-        Scalar yz = point.y * point.z;
-        Scalar zz = point.z * point.z;
-        Scalar xx_yy = xIdx * xIdx + yIdx * yIdx;
-
-        A.coeffRef (0) += xx;
-        A.coeffRef (1) += xy;
-        A.coeffRef (2) += xz;
-        A.coeffRef (3) += point.x;
-
-        A.coeffRef (5) += yy;
-        A.coeffRef (6) += yz;
-        A.coeffRef (7) += point.y;
-
-        A.coeffRef (10) += zz;
-        A.coeffRef (11) += point.z;
-        A.coeffRef (15) += 1.0;
-
-        B.coeffRef (0) -= xx * xIdx;
-        B.coeffRef (1) -= xy * xIdx;
-        B.coeffRef (2) -= xz * xIdx;
-        B.coeffRef (3) -= point.x * static_cast<double>(xIdx);
-
-        B.coeffRef (5) -= yy * xIdx;
-        B.coeffRef (6) -= yz * xIdx;
-        B.coeffRef (7) -= point.y * static_cast<double>(xIdx);
-
-        B.coeffRef (10) -= zz * xIdx;
-        B.coeffRef (11) -= point.z * static_cast<double>(xIdx);
-
-        B.coeffRef (15) -= xIdx;
-
-        C.coeffRef (0) -= xx * yIdx;
-        C.coeffRef (1) -= xy * yIdx;
-        C.coeffRef (2) -= xz * yIdx;
-        C.coeffRef (3) -= point.x * static_cast<double>(yIdx);
-
-        C.coeffRef (5) -= yy * yIdx;
-        C.coeffRef (6) -= yz * yIdx;
-        C.coeffRef (7) -= point.y * static_cast<double>(yIdx);
-
-        C.coeffRef (10) -= zz * yIdx;
-        C.coeffRef (11) -= point.z * static_cast<double>(yIdx);
-
-        C.coeffRef (15) -= yIdx;
-
-        D.coeffRef (0) += xx * xx_yy;
-        D.coeffRef (1) += xy * xx_yy;
-        D.coeffRef (2) += xz * xx_yy;
-        D.coeffRef (3) += point.x * xx_yy;
-
-        D.coeffRef (5) += yy * xx_yy;
-        D.coeffRef (6) += yz * xx_yy;
-        D.coeffRef (7) += point.y * xx_yy;
-
-        D.coeffRef (10) += zz * xx_yy;
-        D.coeffRef (11) += point.z * xx_yy;
-
-        D.coeffRef (15) += xx_yy;
-      }
+      indices.push_back (idx);
     }
   }
 
-  makeSymmetric(A);
-  makeSymmetric(B);
-  makeSymmetric(C);
-  makeSymmetric(D);
-
-  Eigen::Matrix<Scalar, 12, 12, Eigen::RowMajor> X = Eigen::Matrix<Scalar, 12, 12, Eigen::RowMajor>::Zero ();
-  X.topLeftCorner<4,4> () = A;
-  X.block<4,4> (0, 8) = B;
-  X.block<4,4> (8, 0) = B;
-  X.block<4,4> (4, 4) = A;
-  X.block<4,4> (4, 8) = C;
-  X.block<4,4> (8, 4) = C;
-  X.block<4,4> (8, 8) = D;
-
-  Eigen::SelfAdjointEigenSolver<Eigen::Matrix<Scalar, 12, 12, Eigen::RowMajor> > ei_symm(X);
-  Eigen::Matrix<Scalar, 12, 12, Eigen::RowMajor> eigen_vectors = ei_symm.eigenvectors();
-
-  // check whether the residual MSE is low. If its high, the cloud was not captured from a projective device.
-  Eigen::Matrix<Scalar, 1, 1> residual_sqr = eigen_vectors.col (0).transpose () * X *  eigen_vectors.col (0);
-  if ( fabs (residual_sqr.coeff (0)) > eps_ * A.coeff (15))
+  double residual_sqr = pcl::estimateProjectionMatrix<PointT> (input_, projection_matrix_, indices);
+  
+  if (fabs (residual_sqr) > eps_ * float (indices.size ()))
   {
-    PCL_ERROR ("[pcl::%s::radiusSearch] Input dataset is not from a projective device!\nResidual (MSE) %f, using %d valid points\n", this->getName ().c_str (), residual_sqr.coeff (0) / A.coeff (15), static_cast<int> (A.coeff (15)));
+    PCL_ERROR ("[pcl::%s::radiusSearch] Input dataset is not from a projective device!\nResidual (MSE) %f, using %d valid points\n", this->getName ().c_str (), residual_sqr / double (indices.size()), indices.size ());
     return;
   }
-
-  projection_matrix_.coeffRef (0) = static_cast <float> (eigen_vectors.coeff (0));
-  projection_matrix_.coeffRef (1) = static_cast <float> (eigen_vectors.coeff (12));
-  projection_matrix_.coeffRef (2) = static_cast <float> (eigen_vectors.coeff (24));
-  projection_matrix_.coeffRef (3) = static_cast <float> (eigen_vectors.coeff (36));
-  projection_matrix_.coeffRef (4) = static_cast <float> (eigen_vectors.coeff (48));
-  projection_matrix_.coeffRef (5) = static_cast <float> (eigen_vectors.coeff (60));
-  projection_matrix_.coeffRef (6) = static_cast <float> (eigen_vectors.coeff (72));
-  projection_matrix_.coeffRef (7) = static_cast <float> (eigen_vectors.coeff (84));
-  projection_matrix_.coeffRef (8) = static_cast <float> (eigen_vectors.coeff (96));
-  projection_matrix_.coeffRef (9) = static_cast <float> (eigen_vectors.coeff (108));
-  projection_matrix_.coeffRef (10) = static_cast <float> (eigen_vectors.coeff (120));
-  projection_matrix_.coeffRef (11) = static_cast <float> (eigen_vectors.coeff (132));
-
-  if (projection_matrix_.coeff (0) < 0)
-    projection_matrix_ *= -1.0;
 
   // get left 3x3 sub matrix, which contains K * R, with K = camera matrix = [[fx s cx] [0 fy cy] [0 0 1]]
   // and R being the rotation matrix

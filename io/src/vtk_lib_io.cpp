@@ -31,12 +31,16 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: vtk_lib_io.cpp 6141 2012-07-04 20:28:01Z rusu $
+ * $Id$
  *
  */
 
 #include <pcl/io/vtk_lib_io.h>
 #include <pcl/io/impl/vtk_lib_io.hpp>
+#include <pcl/PCLPointCloud2.h>
+#include <vtkCellArray.h>
+#include <vtkCellData.h>
+#include <vtkDoubleArray.h>
 #include <vtkImageData.h>
 #include <vtkImageShiftScale.h>
 #include <vtkPNGWriter.h>
@@ -45,27 +49,21 @@
 int
 pcl::io::loadPolygonFile (const std::string &file_name, pcl::PolygonMesh& mesh)
 {
-  if (!boost::filesystem::exists(file_name) || boost::filesystem::is_directory(file_name))
-  {
-    PCL_ERROR ("[pcl::io::loadPolygonFile]: No such file or directory.\n");
-    return (0);
-  }
+  std::string extension = file_name.substr (file_name.find_last_of (".") + 1);
 
-  // TODO: how to adequately catch exceptions thrown by the vtk readers?!
-  std::string extension = boost::filesystem::extension(file_name);
-  if ( extension == ".pcd" ) // no Polygon, but only a point cloud
+  if (extension == "pcd") // no Polygon, but only a point cloud
   {
     pcl::io::loadPCDFile (file_name, mesh.cloud);
     mesh.polygons.resize (0);
     return (static_cast<int> (mesh.cloud.width * mesh.cloud.height));
   }
-  else if (extension == ".vtk")
+  else if (extension == "vtk")
    return (pcl::io::loadPolygonFileVTK (file_name, mesh));
-  else if (extension == ".ply")
+  else if (extension == "ply")
    return (pcl::io::loadPolygonFilePLY (file_name, mesh));
-  else if (extension == ".obj")
+  else if (extension == "obj")
     return (pcl::io::loadPolygonFileOBJ (file_name, mesh));
-  else if (extension == ".stl" )
+  else if (extension == "stl" )
     return (pcl::io::loadPolygonFileSTL (file_name, mesh));
   else
   {
@@ -80,10 +78,8 @@ pcl::io::savePolygonFile (const std::string &file_name, const pcl::PolygonMesh& 
 {
   // TODO: what about binary/ASCII modes?!?!?!
   // TODO: what about sensor position and orientation?!?!?!?
-
   // TODO: how to adequately catch exceptions thrown by the vtk writers?!
-
-  std::string extension = boost::filesystem::extension (file_name);
+  std::string extension = file_name.substr (file_name.find_last_of (".") + 1);
   if (extension == ".pcd") // no Polygon, but only a point cloud
   {
     int error_code = pcl::io::savePCDFile (file_name, mesh.cloud);
@@ -147,6 +143,20 @@ pcl::io::loadPolygonFileOBJ (const std::string &file_name, pcl::PolygonMesh& mes
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 int
+pcl::io::loadPolygonFileOBJ (const std::string &file_name, pcl::TextureMesh& mesh)
+{
+  vtkSmartPointer<vtkOBJReader> ply_reader = vtkSmartPointer<vtkOBJReader>::New ();
+  ply_reader->SetFileName (file_name.c_str ());
+  ply_reader->Update ();
+
+  vtkSmartPointer<vtkPolyData> poly_data = ply_reader->GetOutput ();
+
+  return (pcl::io::vtk2mesh (poly_data, mesh));
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+int
 pcl::io::loadPolygonFileSTL (const std::string &file_name, pcl::PolygonMesh& mesh)
 {
   vtkSmartPointer<vtkPolyData> poly_data = vtkSmartPointer<vtkPolyData>::New ();
@@ -172,7 +182,7 @@ pcl::io::savePolygonFileVTK (const std::string &file_name, const pcl::PolygonMes
   poly_writer->SetFileName (file_name.c_str ());
   poly_writer->Write ();
 
-  return (static_cast<int> (mesh.cloud.width * mesh.cloud.width));
+  return (static_cast<int> (mesh.cloud.width * mesh.cloud.height));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -189,7 +199,7 @@ pcl::io::savePolygonFilePLY (const std::string &file_name, const pcl::PolygonMes
 	poly_writer->SetArrayName ("Colors");
   poly_writer->Write ();
 
-  return (static_cast<int> (mesh.cloud.width * mesh.cloud.width));
+  return (static_cast<int> (mesh.cloud.width * mesh.cloud.height));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -199,13 +209,13 @@ pcl::io::savePolygonFileSTL (const std::string &file_name, const pcl::PolygonMes
   vtkSmartPointer<vtkPolyData> poly_data = vtkSmartPointer<vtkPolyData>::New ();
 
   pcl::io::mesh2vtk (mesh, poly_data);
-
+  poly_data->Update ();
   vtkSmartPointer<vtkSTLWriter> poly_writer = vtkSmartPointer<vtkSTLWriter>::New ();
   poly_writer->SetInput (poly_data);
   poly_writer->SetFileName (file_name.c_str ());
   poly_writer->Write ();
 
-  return (static_cast<int> (mesh.cloud.width * mesh.cloud.width));
+  return (static_cast<int> (mesh.cloud.width * mesh.cloud.height));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -224,6 +234,26 @@ pcl::io::vtk2mesh (const vtkSmartPointer<vtkPolyData>& poly_data, pcl::PolygonMe
   if (nr_points == 0)
     return (0);
 
+
+  // First get the xyz information
+  pcl::PointCloud<pcl::PointXYZ>::Ptr xyz_cloud (new pcl::PointCloud<pcl::PointXYZ> ());
+  xyz_cloud->points.resize (nr_points);
+  xyz_cloud->width = static_cast<uint32_t> (xyz_cloud->points.size ());
+  xyz_cloud->height = 1;
+  xyz_cloud->is_dense = true;
+  double point_xyz[3];
+  for (vtkIdType i = 0; i < mesh_points->GetNumberOfPoints (); i++)
+  {
+    mesh_points->GetPoint (i, &point_xyz[0]);
+    xyz_cloud->points[i].x = static_cast<float> (point_xyz[0]);
+    xyz_cloud->points[i].y = static_cast<float> (point_xyz[1]);
+    xyz_cloud->points[i].z = static_cast<float> (point_xyz[2]);
+  }
+  // And put it in the mesh cloud
+  pcl::toPCLPointCloud2 (*xyz_cloud, mesh.cloud);
+
+
+  // Then the color information, if any
   vtkUnsignedCharArray* poly_colors = NULL;
   if (poly_data->GetPointData() != NULL)
     poly_colors = vtkUnsignedCharArray::SafeDownCast (poly_data->GetPointData ()->GetScalars ("Colors"));
@@ -238,47 +268,60 @@ pcl::io::vtk2mesh (const vtkSmartPointer<vtkPolyData>& poly_data, pcl::PolygonMe
   // TODO: currently only handles rgb values with 3 components
   if (poly_colors && (poly_colors->GetNumberOfComponents () == 3))
   {
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_temp (new pcl::PointCloud<pcl::PointXYZRGB> ());
-    cloud_temp->points.resize (nr_points);
-    double point_xyz[3];
+    pcl::PointCloud<pcl::RGB>::Ptr rgb_cloud (new pcl::PointCloud<pcl::RGB> ());
+    rgb_cloud->points.resize (nr_points);
+    rgb_cloud->width = static_cast<uint32_t> (rgb_cloud->points.size ());
+    rgb_cloud->height = 1;
+    rgb_cloud->is_dense = true;
+
     unsigned char point_color[3];
     for (vtkIdType i = 0; i < mesh_points->GetNumberOfPoints (); i++)
     {
-      mesh_points->GetPoint (i, &point_xyz[0]);
-      cloud_temp->points[i].x = static_cast<float> (point_xyz[0]);
-      cloud_temp->points[i].y = static_cast<float> (point_xyz[1]);
-      cloud_temp->points[i].z = static_cast<float> (point_xyz[2]);
-
       poly_colors->GetTupleValue (i, &point_color[0]);
-      cloud_temp->points[i].r = point_color[0];
-      cloud_temp->points[i].g = point_color[1];
-      cloud_temp->points[i].b = point_color[2];
+      rgb_cloud->points[i].r = point_color[0];
+      rgb_cloud->points[i].g = point_color[1];
+      rgb_cloud->points[i].b = point_color[2];
     }
-    cloud_temp->width = static_cast<uint32_t> (cloud_temp->points.size ());
-    cloud_temp->height = 1;
-    cloud_temp->is_dense = true;
 
-    pcl::toROSMsg (*cloud_temp, mesh.cloud);
+    pcl::PCLPointCloud2 rgb_cloud2;
+    pcl::toPCLPointCloud2 (*rgb_cloud, rgb_cloud2);
+    pcl::PCLPointCloud2 aux;
+    pcl::concatenateFields (rgb_cloud2, mesh.cloud, aux);
+    mesh.cloud = aux;
   }
-  else // in case points do not have color information:
+
+
+  // Then handle the normals, if any
+  vtkFloatArray* normals = NULL;
+  if (poly_data->GetPointData () != NULL)
+    normals = vtkFloatArray::SafeDownCast (poly_data->GetPointData ()->GetNormals ());
+  if (normals != NULL)
   {
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_temp (new pcl::PointCloud<pcl::PointXYZ> ());
-    cloud_temp->points.resize (nr_points);
-    double point_xyz[3];
+    pcl::PointCloud<pcl::Normal>::Ptr normal_cloud (new pcl::PointCloud<pcl::Normal> ());
+    normal_cloud->resize (nr_points);
+    normal_cloud->width = static_cast<uint32_t> (xyz_cloud->points.size ());
+    normal_cloud->height = 1;
+    normal_cloud->is_dense = true;
+
     for (vtkIdType i = 0; i < mesh_points->GetNumberOfPoints (); i++)
     {
-      mesh_points->GetPoint (i, &point_xyz[0]);
-      cloud_temp->points[i].x = static_cast<float> (point_xyz[0]);
-      cloud_temp->points[i].y = static_cast<float> (point_xyz[1]);
-      cloud_temp->points[i].z = static_cast<float> (point_xyz[2]);
+      float normal[3];
+      normals->GetTupleValue (i, normal);
+      normal_cloud->points[i].normal_x = normal[0];
+      normal_cloud->points[i].normal_y = normal[1];
+      normal_cloud->points[i].normal_z = normal[2];
     }
-    cloud_temp->width = static_cast<uint32_t> (cloud_temp->points.size ());
-    cloud_temp->height = 1;
-    cloud_temp->is_dense = true;
 
-    pcl::toROSMsg (*cloud_temp, mesh.cloud);
+    pcl::PCLPointCloud2 normal_cloud2;
+    pcl::toPCLPointCloud2 (*normal_cloud, normal_cloud2);
+    pcl::PCLPointCloud2 aux;
+    pcl::concatenateFields (normal_cloud2, mesh.cloud, aux);
+    mesh.cloud = aux;
   }
 
+
+
+  // Now handle the polygons
   mesh.polygons.resize (nr_polygons);
   vtkIdType* cell_points;
   vtkIdType nr_cell_points;
@@ -292,6 +335,47 @@ pcl::io::vtk2mesh (const vtkSmartPointer<vtkPolyData>& poly_data, pcl::PolygonMe
       mesh.polygons[id_poly].vertices[i] = static_cast<int> (cell_points[i]);
     ++id_poly;
   }
+
+  return (static_cast<int> (nr_points));
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+int
+pcl::io::vtk2mesh (const vtkSmartPointer<vtkPolyData>& poly_data, pcl::TextureMesh& mesh)
+{
+  /// TODO avoid copying here
+  PolygonMesh polygon_mesh;
+  vtk2mesh (poly_data, polygon_mesh);
+
+  mesh.cloud = polygon_mesh.cloud;
+  mesh.header = polygon_mesh.header;
+  /// TODO check for sub-meshes
+  mesh.tex_polygons.push_back (polygon_mesh.polygons);
+
+  // Add dummy material
+  mesh.tex_materials.push_back (pcl::TexMaterial ());
+  std::vector<Eigen::Vector2f> dummy;
+  mesh.tex_coordinates.push_back (dummy);
+
+  vtkIdType nr_points = poly_data->GetNumberOfPoints ();
+
+  // Handle the texture coordinates
+  vtkFloatArray* texture_coords = NULL;
+  if (poly_data->GetPointData () != NULL)
+    texture_coords = vtkFloatArray::SafeDownCast (poly_data->GetPointData ()->GetTCoords ());
+
+  if (texture_coords != NULL)
+  {
+    for (vtkIdType i = 0; i < nr_points; ++i)
+    {
+      float tex[2];
+      texture_coords->GetTupleValue (i, tex);
+      mesh.tex_coordinates.front ().push_back (Eigen::Vector2f (tex[0], tex[1]));
+    }
+  }
+  else
+    PCL_ERROR ("Could not find texture coordinates in the polydata\n");
 
   return (static_cast<int> (nr_points));
 }
@@ -429,4 +513,108 @@ pcl::io::saveRangeImagePlanarFilePNG (
   writer->SetFileName(file_name.c_str());
   writer->SetInputConnection(shiftScaleFilter->GetOutputPort());
   writer->Write();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void
+pcl::io::pointCloudTovtkPolyData(const pcl::PCLPointCloud2Ptr& cloud, vtkSmartPointer<vtkPolyData>& poly_data)
+{
+  if (!poly_data.GetPointer())
+    poly_data = vtkSmartPointer<vtkPolyData>::New (); // OR poly_data->Reset();
+
+
+  // Add Points
+  size_t x_idx = pcl::getFieldIndex (*cloud, std::string ("x") );
+  vtkSmartPointer<vtkPoints> cloud_points = vtkSmartPointer<vtkPoints>::New ();
+  vtkSmartPointer<vtkCellArray> cloud_vertices = vtkSmartPointer<vtkCellArray>::New ();
+
+  vtkIdType pid[1];
+  for (size_t point_idx = 0; point_idx < cloud->width * cloud->height; point_idx ++)
+  {
+    float point[3];
+
+    int point_offset = (int (point_idx) * cloud->point_step);
+    int offset = point_offset + cloud->fields[x_idx].offset;
+    memcpy (&point, &cloud->data[offset], sizeof (float)*3);
+
+    pid[0] = cloud_points->InsertNextPoint (point);
+    cloud_vertices->InsertNextCell (1, pid);
+  }
+
+  //set the points and vertices we created as the geometry and topology of the polydata
+  poly_data->SetPoints (cloud_points);
+  poly_data->SetVerts (cloud_vertices);
+
+  // Add RGB
+  int rgb_idx = pcl::getFieldIndex (*cloud, "rgb");
+  if (rgb_idx != -1)
+  {
+    //std::cout << "Adding rgb" << std::endl;
+    vtkSmartPointer<vtkUnsignedCharArray> colors = vtkSmartPointer<vtkUnsignedCharArray>::New ();
+
+    colors->SetNumberOfComponents (3);
+    colors->SetName ("rgb");
+
+    for (size_t point_idx = 0; point_idx < cloud->width * cloud->height; point_idx ++)
+    {
+      unsigned char bgr[3];
+
+      int point_offset = (int (point_idx) * cloud->point_step);
+      int offset = point_offset + cloud->fields[rgb_idx].offset;
+      memcpy (&bgr, &cloud->data[offset], sizeof (unsigned char)*3);
+
+      colors->InsertNextTuple3(bgr[2], bgr[1], bgr[0]);
+    }
+
+    poly_data->GetCellData()->SetScalars(colors);
+  }
+
+  // Add Intensity
+  int intensity_idx = pcl::getFieldIndex (*cloud, "intensity");
+  if (intensity_idx != -1)
+  {
+    //std::cout << "Adding intensity" << std::endl;
+    vtkSmartPointer<vtkFloatArray> cloud_intensity = vtkSmartPointer<vtkFloatArray>::New ();
+    cloud_intensity->SetNumberOfComponents (1);
+    cloud_intensity->SetName("intensity");
+
+    for (size_t point_idx = 0; point_idx < cloud->width * cloud->height; point_idx ++)
+    {
+      float intensity;
+
+      int point_offset = (int (point_idx) * cloud->point_step);
+      int offset = point_offset + cloud->fields[intensity_idx].offset;
+      memcpy (&intensity, &cloud->data[offset], sizeof(float));
+
+      cloud_intensity->InsertNextValue(intensity);
+    }
+
+    poly_data->GetCellData()->AddArray(cloud_intensity);
+    if (rgb_idx == -1)
+      poly_data->GetCellData()->SetActiveAttribute("intensity", vtkDataSetAttributes::SCALARS);
+  }
+
+  // Add Normals
+  int normal_x_idx = pcl::getFieldIndex (*cloud, std::string ("normal_x") );
+  if (normal_x_idx != -1)
+  {
+    //std::cout << "Adding normals" << std::endl;
+    vtkSmartPointer<vtkFloatArray> normals = vtkSmartPointer<vtkFloatArray>::New();
+    normals->SetNumberOfComponents(3); //3d normals (ie x,y,z)
+    normals->SetName("normals");
+
+    for (size_t point_idx = 0; point_idx < cloud->width * cloud->height; point_idx ++)
+    {
+      float normal[3];
+
+      int point_offset = (int (point_idx) * cloud->point_step);
+      int offset = point_offset + cloud->fields[normal_x_idx].offset;
+      memcpy (&normal, &cloud->data[offset], sizeof (float)*3);
+
+      normals->InsertNextTuple(normal);
+    }
+
+    poly_data->GetCellData()->SetNormals(normals);
+    //poly_data->GetCellData()->SetActiveAttribute("normals", vtkDataSetAttributes::SCALARS);
+  }
 }

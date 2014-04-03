@@ -36,8 +36,8 @@
 #ifndef PCL_SURFACE_MARCHING_CUBES_H_
 #define PCL_SURFACE_MARCHING_CUBES_H_
 
+#include <pcl/surface/boost.h>
 #include <pcl/surface/reconstruction.h>
-#include <boost/unordered_map.hpp>
 
 namespace pcl
 {
@@ -363,6 +363,9 @@ namespace pcl
   class MarchingCubes : public SurfaceReconstruction<PointNT>
   {
     public:
+      typedef boost::shared_ptr<MarchingCubes<PointNT> > Ptr;
+      typedef boost::shared_ptr<const MarchingCubes<PointNT> > ConstPtr;
+
       using SurfaceReconstruction<PointNT>::input_;
       using SurfaceReconstruction<PointNT>::tree_;
 
@@ -376,7 +379,7 @@ namespace pcl
       MarchingCubes ();
 
       /** \brief Destructor. */
-      ~MarchingCubes ();
+      virtual ~MarchingCubes ();
 
 
       /** \brief Method that sets the iso level of the surface to be extracted.
@@ -427,19 +430,19 @@ namespace pcl
       getPercentageExtendGrid ()
       { return percentage_extend_grid_; }
 
-protected:
+    protected:
       /** \brief The data structure storing the 3D grid */
       std::vector<float> grid_;
 
       /** \brief The grid resolution */
       int res_x_, res_y_, res_z_;
 
+      /** \brief Min and max data points. */
+      Eigen::Vector4f min_p_, max_p_;
+
       /** \brief Parameter that defines how much free space should be left inside the grid between
         * the bounding box of the point cloud and the grid limits, as a percentage of the bounding box.*/
       float percentage_extend_grid_;
-
-      /** \brief Min and max data points. */
-      Eigen::Vector4f min_p_, max_p_;
 
       /** \brief The iso level to be extracted. */
       float iso_level_;
@@ -477,7 +480,7 @@ protected:
       /** \brief Method that returns the scalar value at the given grid position.
         * \param[in] pos The 3D position in the grid
         */
-      float
+      virtual float
       getGridValue (Eigen::Vector3i pos);
 
       /** \brief Method that returns the scalar values of the neighbors of a given 3D position in the grid.
@@ -494,14 +497,14 @@ protected:
       /** \brief Extract the surface.
         * \param[out] output the resultant polygonal mesh
         */
-       void
+       virtual void
        performReconstruction (pcl::PolygonMesh &output);
 
        /** \brief Extract the surface.
          * \param[out] points the points of the extracted mesh
          * \param[out] polygons the connectivity between the point of the extracted mesh.
          */
-       void
+       virtual void
        performReconstruction (pcl::PointCloud<PointNT> &points,
                               std::vector<pcl::Vertices> &polygons);
 
@@ -509,6 +512,10 @@ protected:
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   };
 }
+
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/surface/impl/marching_cubes.hpp>
+#endif
 
 #endif  // PCL_SURFACE_MARCHING_CUBES_H_
 

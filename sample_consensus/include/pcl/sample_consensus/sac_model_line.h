@@ -3,6 +3,7 @@
  *
  *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010-2011, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
  * 
  *  All rights reserved.
  *
@@ -16,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,7 +34,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: sac_model_line.h 6144 2012-07-04 22:06:28Z rusu $
+ * $Id$
  *
  */
 
@@ -61,10 +62,11 @@ namespace pcl
   template <typename PointT>
   class SampleConsensusModelLine : public SampleConsensusModel<PointT>
   {
-    using SampleConsensusModel<PointT>::input_;
-    using SampleConsensusModel<PointT>::indices_;
-
     public:
+      using SampleConsensusModel<PointT>::input_;
+      using SampleConsensusModel<PointT>::indices_;
+      using SampleConsensusModel<PointT>::error_sqr_dists_;
+
       typedef typename SampleConsensusModel<PointT>::PointCloud PointCloud;
       typedef typename SampleConsensusModel<PointT>::PointCloudPtr PointCloudPtr;
       typedef typename SampleConsensusModel<PointT>::PointCloudConstPtr PointCloudConstPtr;
@@ -73,14 +75,23 @@ namespace pcl
 
       /** \brief Constructor for base SampleConsensusModelLine.
         * \param[in] cloud the input point cloud dataset
+        * \param[in] random if true set the random seed to the current time, else set to 12345 (default: false)
         */
-      SampleConsensusModelLine (const PointCloudConstPtr &cloud) : SampleConsensusModel<PointT> (cloud) {};
+      SampleConsensusModelLine (const PointCloudConstPtr &cloud, bool random = false) 
+        : SampleConsensusModel<PointT> (cloud, random) {};
 
       /** \brief Constructor for base SampleConsensusModelLine.
         * \param[in] cloud the input point cloud dataset
         * \param[in] indices a vector of point indices to be used from \a cloud
+        * \param[in] random if true set the random seed to the current time, else set to 12345 (default: false)
         */
-      SampleConsensusModelLine (const PointCloudConstPtr &cloud, const std::vector<int> &indices) : SampleConsensusModel<PointT> (cloud, indices) {};
+      SampleConsensusModelLine (const PointCloudConstPtr &cloud, 
+                                const std::vector<int> &indices,
+                                bool random = false) 
+        : SampleConsensusModel<PointT> (cloud, indices, random) {};
+      
+      /** \brief Empty destructor */
+      virtual ~SampleConsensusModelLine () {}
 
       /** \brief Check whether the given index samples can form a valid line model, compute the model coefficients from
         * these samples and store them internally in model_coefficients_. The line coefficients are represented by a
@@ -181,5 +192,9 @@ namespace pcl
       isSampleGood (const std::vector<int> &samples) const;
   };
 }
+
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/sample_consensus/impl/sac_model_line.hpp>
+#endif
 
 #endif  //#ifndef PCL_SAMPLE_CONSENSUS_MODEL_LINE_H_

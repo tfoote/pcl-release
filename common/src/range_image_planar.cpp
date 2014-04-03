@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -246,6 +246,18 @@ namespace pcl
     BaseClass::getSubImage (sub_image_image_offset_x, sub_image_image_offset_y, sub_image_width,
                            sub_image_height, combine_pixels, ret);
     ret.image_offset_x_ = ret.image_offset_y_ = 0;
+  }
+
+  /////////////////////////////////////////////////////////////////////////
+  void
+  RangeImagePlanar::copyTo (RangeImage& other) const
+  {
+    bool ERROR_GIVEN_RANGE_IMAGE_IS_NOT_A_RangeImagePlanar = typeid (*this) == typeid (other);
+    if (!ERROR_GIVEN_RANGE_IMAGE_IS_NOT_A_RangeImagePlanar) {
+      std::cerr << PVARC(typeid (*this).name())<<PVARN(typeid (other).name());
+    }
+    assert (ERROR_GIVEN_RANGE_IMAGE_IS_NOT_A_RangeImagePlanar);
+    *static_cast<RangeImagePlanar*> (&other) = *this;
   }
 
 }  // namespace end

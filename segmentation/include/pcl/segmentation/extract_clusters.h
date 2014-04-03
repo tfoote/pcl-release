@@ -16,7 +16,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,7 +33,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: extract_clusters.h 6155 2012-07-04 23:10:00Z aichim $
+ * $Id$
  *
  */
 
@@ -127,7 +127,7 @@ namespace pcl
 
       std::vector<unsigned int> seed_queue;
       int sq_idx = 0;
-      seed_queue.push_back (i);
+      seed_queue.push_back (static_cast<int> (i));
 
       processed[i] = true;
 
@@ -420,5 +420,9 @@ namespace pcl
     return (a.indices.size () < b.indices.size ());
   }
 }
+
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/segmentation/impl/extract_clusters.hpp>
+#endif
 
 #endif  //#ifndef PCL_EXTRACT_CLUSTERS_H_

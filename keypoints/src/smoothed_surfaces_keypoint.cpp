@@ -32,7 +32,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: smoothed_surfaces_keypoint.cpp 2008 2011-08-10 19:34:52Z aichim $
+ * $Id$
  */
 
 #include <pcl/keypoints/smoothed_surfaces_keypoint.h>

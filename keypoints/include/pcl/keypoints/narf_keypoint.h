@@ -51,12 +51,18 @@ class RangeImageBorderExtractor;
 
 /** \brief @b NARF (Normal Aligned Radial Feature) keypoints. Input is a range image,
   *           output the indices of the keypoints
+  * See B. Steder, R. B. Rusu, K. Konolige, and W. Burgard
+  *     Point Feature Extraction on 3D Range Scans Taking into Account Object Boundaries
+  *     In Proc. of the IEEE Int. Conf. on Robotics &Automation (ICRA). 2011. 
   * \author Bastian Steder
   * \ingroup keypoints
   */
 class PCL_EXPORTS NarfKeypoint : public Keypoint<PointWithRange, int>
 {
   public:
+    typedef boost::shared_ptr<NarfKeypoint> Ptr;
+    typedef boost::shared_ptr<const NarfKeypoint> ConstPtr;
+
     // =====TYPEDEFS=====
     typedef Keypoint<PointWithRange, int> BaseClass;
     
@@ -111,7 +117,7 @@ class PCL_EXPORTS NarfKeypoint : public Keypoint<PointWithRange, int>
     
     // =====CONSTRUCTOR & DESTRUCTOR=====
     NarfKeypoint (RangeImageBorderExtractor* range_image_border_extractor=NULL, float support_size=-1.0f);
-    ~NarfKeypoint ();
+    virtual ~NarfKeypoint ();
     
     // =====PUBLIC METHODS=====
     //! Erase all data calculated for the current range image

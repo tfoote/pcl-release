@@ -3,6 +3,8 @@
  *
  *  Copyright (c) 2011, Alexandru-Eugen Ichim
  *                      Willow Garage, Inc
+ *  Copyright (c) 2012-, Open Perception, Inc.
+ *
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -15,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -32,7 +34,8 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: pyramid_feature_matching.h 4866 2012-03-01 02:45:17Z rusu $
+ * $Id$
+ *
  */
 
 #ifndef PCL_PYRAMID_FEATURE_MATCHING_H_
@@ -192,4 +195,8 @@ namespace pcl
   };
 }
 
-#endif /* PCL_PYRAMID_FEATURE_MATCHING_H_ */
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/registration/impl/pyramid_feature_matching.hpp>
+#endif
+
+#endif    // PCL_PYRAMID_FEATURE_MATCHING_H_

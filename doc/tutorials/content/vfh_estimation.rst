@@ -14,7 +14,7 @@ query/test the model. The matched results in order from best to worst go from
 left to right starting at bottom left. For more information please see
 :ref:`vfh_recognition` and/or [VFH]_.
 
-.. image:: images/vfh_estimation/vfh_example.png
+.. image:: images/vfh_estimation/vfh_example.jpg
    :align: center
 
 Theoretical primer
@@ -32,7 +32,7 @@ viewpoint direction and the normals estimated at each point. To do this, we
 used the key idea of mixing the viewpoint direction directly into the relative
 normal angle calculation in the FPFH.
 
-.. image:: images/vfh_estimation/first_component.png
+.. image:: images/vfh_estimation/first_component.jpg
    :align: center
 
 The viewpoint component is computed by collecting a histogram of the angles
@@ -43,7 +43,7 @@ normal. The second component measures the relative pan, tilt and yaw angles as
 described in :ref:`fpfh_estimation` but now measured between the viewpoint
 direction at the central point and each of the normals on the surface.
 
-.. image:: images/vfh_estimation/second_component.png
+.. image:: images/vfh_estimation/second_component.jpg
    :align: center
 
 The new assembled feature is therefore called the Viewpoint Feature Histogram (VFH). The figure below presents this idea with the new feature consisting of two parts:
@@ -52,7 +52,7 @@ The new assembled feature is therefore called the Viewpoint Feature Histogram (V
 
   2. a surface shape component comprised of an extended FPFH.
 
-.. image:: images/vfh_estimation/vfh_histogram.png
+.. image:: images/vfh_estimation/vfh_histogram.jpg
    :align: center
 
 Estimating VFH features
@@ -92,11 +92,11 @@ points in the input dataset.
      pcl::VFHEstimation<pcl::PointXYZ, pcl::Normal, pcl::VFHSignature308> vfh;
      vfh.setInputCloud (cloud);
      vfh.setInputNormals (normals);
-     // alternatively, if cloud is of tpe PointNormal, do vfh.setInputNormals (cloud);
+     // alternatively, if cloud is of type PointNormal, do vfh.setInputNormals (cloud);
 
      // Create an empty kdtree representation, and pass it to the FPFH estimation object.
      // Its content will be filled inside the object, based on the given input dataset (as no other search surface is given).
-     pcl::KdTreeFLANN<pcl::PointXYZ>::Ptr tree (new pcl::KdTreeFLANN<pcl::PointXYZ> ());
+     pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ> ());
      vfh.setSearchMethod (tree);
 
      // Output datasets
@@ -112,11 +112,11 @@ Visualizing VFH signatures
 --------------------------
 
 *libpcl_visualization* contains a special **PCLHistogramVisualization** class,
-which is also used by **pcd_viewer** to automaticall display the VFH
+which is also used by **pcl_viewer** to automaticall display the VFH
 descriptors as a histogram of float values. For more information, please see
 http://www.pointclouds.org/documentation/overview/visualization.php.
 
-.. image:: images/vfh_estimation/vfh_histogram_visualized.png
+.. image:: images/vfh_estimation/vfh_histogram_visualized.jpg
    :align: center
 
 .. [VFH] http://www.willowgarage.com/sites/default/files/Rusu10IROS.pdf

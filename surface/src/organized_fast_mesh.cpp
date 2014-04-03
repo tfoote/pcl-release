@@ -31,10 +31,11 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: organized_fast_mesh.cpp 5026 2012-03-12 02:51:44Z rusu $
+ * $Id$
  *
  */
 
+#include <pcl/surface/impl/marching_cubes.hpp>
 #include <pcl/surface/impl/organized_fast_mesh.hpp>
 #include <pcl/impl/instantiate.hpp>
 #include <pcl/point_types.h>

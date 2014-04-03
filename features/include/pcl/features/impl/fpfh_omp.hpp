@@ -3,6 +3,7 @@
  *
  *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010-2011, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
  *
  *  All rights reserved.
  *
@@ -16,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,7 +34,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: fpfh_omp.hpp 5026 2012-03-12 02:51:44Z rusu $
+ * $Id$
  *
  */
 
@@ -83,17 +84,20 @@ pcl::FPFHEstimationOMP<PointInT, PointNT, PointOutT>::computeFeature (PointCloud
   hist_f2_.setZero (data_size, nr_bins_f2_);
   hist_f3_.setZero (data_size, nr_bins_f3_);
 
+  std::vector<int> nn_indices (k_); // \note These resizes are irrelevant for a radiusSearch ().
+  std::vector<float> nn_dists (k_); 
+
   // Compute SPFH signatures for every point that needs them
-  
-#pragma omp parallel for schedule (dynamic, threads_)
+
+#ifdef _OPENMP
+#pragma omp parallel for shared (spfh_hist_lookup) private (nn_indices, nn_dists) num_threads(threads_)
+#endif
   for (int i = 0; i < static_cast<int> (spfh_indices_vec.size ()); ++i)
   {
     // Get the next point index
     int p_idx = spfh_indices_vec[i];
 
     // Find the neighborhood around p_idx
-    std::vector<int> nn_indices (k_); // \note These resizes are irrelevant for a radiusSearch ().
-    std::vector<float> nn_dists (k_); 
     if (this->searchForNeighbors (*surface_, p_idx, search_parameter_, nn_indices, nn_dists) == 0)
       continue;
 
@@ -107,13 +111,16 @@ pcl::FPFHEstimationOMP<PointInT, PointNT, PointOutT>::computeFeature (PointCloud
   // Intialize the array that will store the FPFH signature
   int nr_bins = nr_bins_f1_ + nr_bins_f2_ + nr_bins_f3_;
 
+  nn_indices.clear();
+  nn_dists.clear();
+
   // Iterate over the entire index vector
-#pragma omp parallel for schedule (dynamic, threads_)
+#ifdef _OPENMP
+#pragma omp parallel for shared (output) private (nn_indices, nn_dists) num_threads(threads_)
+#endif
   for (int idx = 0; idx < static_cast<int> (indices_->size ()); ++idx)
   {
     // Find the indices of point idx's neighbors...
-    std::vector<int> nn_indices (k_); // \note These resizes are irrelevant for a radiusSearch ().
-    std::vector<float> nn_dists (k_); 
     if (!isFinite ((*input_)[(*indices_)[idx]]) ||
         this->searchForNeighbors ((*indices_)[idx], search_parameter_, nn_indices, nn_dists) == 0)
     {

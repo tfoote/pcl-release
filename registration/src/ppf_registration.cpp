@@ -32,7 +32,8 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: ppf_registration.cpp 1457 2011-06-22 21:46:18Z aichim $
+ * $Id$
+ *
  */
 
 /** Re-enable these once all of registration is separated into H/HPP correctly. */

@@ -1,7 +1,10 @@
 /*
  * Software License Agreement (BSD License)
  *
+ *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
+ *
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -14,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -36,8 +39,7 @@
 #ifndef PCL_NARF_H_
 #define PCL_NARF_H_
 
-#include <vector>
-#include <Eigen/Geometry>
+#include <pcl/features/eigen.h>
 #include <pcl/common/common_headers.h>
 #include <pcl/point_representation.h>
 
@@ -50,11 +52,14 @@ namespace pcl
 #define NARF_DEFAULT_SURFACE_PATCH_PIXEL_SIZE 10
 
   /**
-   * \brief NARF (Normal Aligned Radial Features) is a point feature descriptor type for 3D data.
-   *        Please refer to pcl/features/narf_descriptor.h if you want the class derived from pcl Feature.
-   * \author Bastian Steder
-   * \ingroup features
-   */
+    * \brief NARF (Normal Aligned Radial Features) is a point feature descriptor type for 3D data.
+    * Please refer to pcl/features/narf_descriptor.h if you want the class derived from pcl Feature.
+    * See B. Steder, R. B. Rusu, K. Konolige, and W. Burgard
+    *     Point Feature Extraction on 3D Range Scans Taking into Account Object Boundaries
+    *     In Proc. of the IEEE Int. Conf. on Robotics &Automation (ICRA). 2011. 
+    * \author Bastian Steder
+    * \ingroup features
+    */
   class PCL_EXPORTS Narf
   {
     public:
@@ -233,6 +238,8 @@ namespace pcl
       {
         typedef Narf* PointT;
         FeaturePointRepresentation(int nr_dimensions) { this->nr_dimensions_ = nr_dimensions; }
+        /** \brief Empty destructor */
+        virtual ~FeaturePointRepresentation () {}
         virtual void copyToFloatArray (const PointT& p, float* out) const { memcpy(out, p->getDescriptor(), sizeof(*p->getDescriptor())*this->nr_dimensions_); }
       };
       

@@ -33,7 +33,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: concave_hull.h 6126 2012-07-03 20:19:58Z aichim $
+ * $Id$
  *
  */
 
@@ -56,6 +56,9 @@ namespace pcl
   class ConcaveHull : public MeshConstruction<PointInT>
   {
     protected:
+      typedef boost::shared_ptr<ConcaveHull<PointInT> > Ptr;
+      typedef boost::shared_ptr<const ConcaveHull<PointInT> > ConstPtr;
+
       using PCLBase<PointInT>::input_;
       using PCLBase<PointInT>::indices_;
       using PCLBase<PointInT>::initCompute;
@@ -72,6 +75,9 @@ namespace pcl
       ConcaveHull () : alpha_ (0), keep_information_ (false), voronoi_centers_ (), dim_(0)
       {
       };
+      
+      /** \brief Empty destructor */
+      virtual ~ConcaveHull () {}
 
       /** \brief Compute a concave hull for all points given 
         *
@@ -128,17 +134,13 @@ namespace pcl
       }
 
       /** \brief Returns the dimensionality (2 or 3) of the calculated hull. */
-      inline int
-      getDim () const
-      {
-        return dim_;
-      }
+      PCL_DEPRECATED (int getDim () const, "[pcl::ConcaveHull::getDim] This method is deprecated. Please use getDimension () instead.");
 
       /** \brief Returns the dimensionality (2 or 3) of the calculated hull. */
       inline int
       getDimension () const
       {
-        return dim_;
+        return (dim_);
       }
 
       /** \brief Sets the dimension on the input data, 2D or 3D.
@@ -195,6 +197,10 @@ namespace pcl
       int dim_;
   };
 }
+
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/surface/impl/concave_hull.hpp>
+#endif
 
 #endif  //#ifndef PCL_CONCAVE_HULL
 #endif

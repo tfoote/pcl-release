@@ -3,6 +3,7 @@
  *
  *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010-2012, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
  *
  *  All rights reserved.
  *
@@ -16,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -65,11 +66,16 @@ namespace pcl
   class SHOTLocalReferenceFrameEstimation : public Feature<PointInT, PointOutT>
   {
     public:
+      typedef boost::shared_ptr<SHOTLocalReferenceFrameEstimation<PointInT, PointOutT> > Ptr;
+      typedef boost::shared_ptr<const SHOTLocalReferenceFrameEstimation<PointInT, PointOutT> > ConstPtr;
       /** \brief Constructor */
       SHOTLocalReferenceFrameEstimation ()
       {
         feature_name_ = "SHOTLocalReferenceFrameEstimation";
       }
+      
+      /** \brief Empty destructor */
+      virtual ~SHOTLocalReferenceFrameEstimation () {}
 
     protected:
       using Feature<PointInT, PointOutT>::feature_name_;
@@ -100,14 +106,12 @@ namespace pcl
         */
       virtual void
       computeFeature (PointCloudOut &output);
-
-      /** \brief Feature estimation method.
-        * \param[out] output the resultant features
-        */
-      virtual void
-      computeFeatureEigen (pcl::PointCloud<Eigen::MatrixXf> &output);
   };
 }
+
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/features/impl/shot_lrf.hpp>
+#endif
 
 #endif    // PCL_FEATURES_SHOT_LRF_H_
 

@@ -1,7 +1,10 @@
 /*
  * Software License Agreement (BSD License)
  *
+ *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2009, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
+ *
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -14,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -31,7 +34,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: fpfh_omp.h 4864 2012-03-01 01:11:22Z rusu $
+ * $Id$
  *
  */
 
@@ -72,6 +75,8 @@ namespace pcl
   class FPFHEstimationOMP : public FPFHEstimation<PointInT, PointNT, PointOutT>
   {
     public:
+      typedef boost::shared_ptr<FPFHEstimationOMP<PointInT, PointNT, PointOutT> > Ptr;
+      typedef boost::shared_ptr<const FPFHEstimationOMP<PointInT, PointNT, PointOutT> > ConstPtr;
       using Feature<PointInT, PointOutT>::feature_name_;
       using Feature<PointInT, PointOutT>::getClassName;
       using Feature<PointInT, PointOutT>::indices_;
@@ -87,30 +92,19 @@ namespace pcl
 
       typedef typename Feature<PointInT, PointOutT>::PointCloudOut PointCloudOut;
 
-      /** \brief Empty constructor. */
-      FPFHEstimationOMP () : nr_bins_f1_ (11), nr_bins_f2_ (11), nr_bins_f3_ (11), threads_ (1) 
+      /** \brief Initialize the scheduler and set the number of threads to use.
+        * \param[in] nr_threads the number of hardware threads to use (0 sets the value back to automatic)
+        */
+      FPFHEstimationOMP (unsigned int nr_threads = 0) : nr_bins_f1_ (11), nr_bins_f2_ (11), nr_bins_f3_ (11), threads_ (nr_threads)
       {
         feature_name_ = "FPFHEstimationOMP";
-      };
-
-      /** \brief Initialize the scheduler and set the number of threads to use.
-        * \param[in] nr_threads the number of hardware threads to use (-1 sets the value back to automatic)
-        */
-      FPFHEstimationOMP (unsigned int nr_threads) : nr_bins_f1_ (11), nr_bins_f2_ (11), nr_bins_f3_ (11), threads_ (0)
-      {
-        setNumberOfThreads (nr_threads);
       }
 
       /** \brief Initialize the scheduler and set the number of threads to use.
-        * \param[in] nr_threads the number of hardware threads to use (-1 sets the value back to automatic)
+        * \param[in] nr_threads the number of hardware threads to use (0 sets the value back to automatic)
         */
       inline void 
-      setNumberOfThreads (unsigned int nr_threads) 
-      { 
-        if (nr_threads == 0)
-          nr_threads = 1;
-        threads_ = nr_threads; 
-      }
+      setNumberOfThreads (unsigned int nr_threads = 0) { threads_ = nr_threads; }
 
     private:
       /** \brief Estimate the Fast Point Feature Histograms (FPFH) descriptors at a set of points given by
@@ -127,15 +121,11 @@ namespace pcl
     private:
       /** \brief The number of threads the scheduler should use. */
       unsigned int threads_;
-
-      /** \brief Make the computeFeature (&Eigen::MatrixXf); inaccessible from outside the class
-        * \param[out] output the output point cloud 
-        */
-      void 
-      computeFeatureEigen (pcl::PointCloud<Eigen::MatrixXf> &) {}
   };
 }
 
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/features/impl/fpfh_omp.hpp>
+#endif
+
 #endif  //#ifndef PCL_FPFH_OMP_H_
-
-

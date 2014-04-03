@@ -1,8 +1,10 @@
 /*
  * Software License Agreement (BSD License)
  *
+ *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2011, Alexandru-Eugen Ichim
- *                      Willow Garage, Inc
+ *  Copyright (c) 2012-, Open Perception, Inc.
+ *
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -15,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -32,26 +34,23 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- *  $Id: pfhrgb.h 4961 2012-03-07 23:44:07Z rusu $
+ *  $Id$
  */
 
 #ifndef PCL_PFHRGB_H_
 #define PCL_PFHRGB_H_
 
 #include <pcl/features/feature.h>
+#include <pcl/features/pfh_tools.h>
 
 namespace pcl
 {
-  PCL_EXPORTS bool
-  computeRGBPairFeatures (const Eigen::Vector4f &p1, const Eigen::Vector4f &n1, const Eigen::Vector4i &colors1,
-                          const Eigen::Vector4f &p2, const Eigen::Vector4f &n2, const Eigen::Vector4i &colors2,
-                          float &f1, float &f2, float &f3, float &f4, float &f5, float &f6, float &f7);
-
-
   template <typename PointInT, typename PointNT, typename PointOutT = pcl::PFHRGBSignature250>
   class PFHRGBEstimation : public FeatureFromNormals<PointInT, PointNT, PointOutT>
   {
     public:
+      typedef boost::shared_ptr<PFHRGBEstimation<PointInT, PointNT, PointOutT> > Ptr;
+      typedef boost::shared_ptr<const PFHRGBEstimation<PointInT, PointNT, PointOutT> > ConstPtr;
       using PCLBase<PointInT>::indices_;
       using Feature<PointInT, PointOutT>::feature_name_;
       using Feature<PointInT, PointOutT>::surface_;
@@ -95,13 +94,11 @@ namespace pcl
 
       /** \brief Float constant = 1.0 / (2.0 * M_PI) */
       float d_pi_;
-
-      /** \brief Make the computeFeature (&Eigen::MatrixXf); inaccessible from outside the class
-        * \param[out] output the output point cloud 
-        */
-      void 
-      computeFeatureEigen (pcl::PointCloud<Eigen::MatrixXf> &) {}
   };
 }
+
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/features/impl/pfhrgb.hpp>
+#endif
 
 #endif /* PCL_PFHRGB_H_ */

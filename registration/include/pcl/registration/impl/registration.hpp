@@ -3,6 +3,7 @@
  *
  *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010-2011, Willow Garage, Inc
+ *  Copyright (c) 2012-, Open Perception, Inc.
  *
  *  All rights reserved.
  *
@@ -16,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,33 +34,92 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: registration.hpp 5044 2012-03-12 21:32:58Z rusu $
+ * $Id$
  *
  */
 
-//////////////////////////////////////////////////////////////////////////////////////////////
-template <typename PointSource, typename PointTarget> inline void
-pcl::Registration<PointSource, PointTarget>::setInputTarget (const PointCloudTargetConstPtr &cloud)
+///////////////////////////////////////////////////////////////////////////////////////////
+template <typename PointSource, typename PointTarget, typename Scalar> void
+pcl::Registration<PointSource, PointTarget, Scalar>::setInputCloud (
+    const typename pcl::Registration<PointSource, PointTarget, Scalar>::PointCloudSourceConstPtr &cloud)
+{
+  setInputSource (cloud);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////
+template <typename PointSource, typename PointTarget, typename Scalar> typename pcl::Registration<PointSource, PointTarget, Scalar>::PointCloudSourceConstPtr const
+pcl::Registration<PointSource, PointTarget, Scalar>::getInputCloud ()
+{
+  return (getInputSource ());
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////
+template <typename PointSource, typename PointTarget, typename Scalar> inline void
+pcl::Registration<PointSource, PointTarget, Scalar>::setInputTarget (const PointCloudTargetConstPtr &cloud)
 {
   if (cloud->points.empty ())
   {
     PCL_ERROR ("[pcl::%s::setInputTarget] Invalid or empty point cloud dataset given!\n", getClassName ().c_str ());
     return;
   }
-  PointCloudTarget target = *cloud;
-  // Set all the point.data[3] values to 1 to aid the rigid transformation
-  for (size_t i = 0; i < target.points.size (); ++i)
-    target.points[i].data[3] = 1.0;
+  target_ = cloud;
+  target_cloud_updated_ = true;
+}
 
-  //target_ = cloud;
-  target_ = target.makeShared ();
-  tree_->setInputCloud (target_);
+///////////////////////////////////////////////////////////////////////////////////////////
+template <typename PointSource, typename PointTarget, typename Scalar> bool
+pcl::Registration<PointSource, PointTarget, Scalar>::initCompute ()
+{
+  if (!target_)
+  {
+    PCL_ERROR ("[pcl::registration::%s::compute] No input target dataset was given!\n", getClassName ().c_str ());
+    return (false);
+  }
+
+  // Only update target kd-tree if a new target cloud was set
+  if (target_cloud_updated_ && !force_no_recompute_)
+  {
+    tree_->setInputCloud (target_);
+    target_cloud_updated_ = false;
+  }
+
+  
+  // Update the correspondence estimation
+  if (correspondence_estimation_)
+  {
+    correspondence_estimation_->setSearchMethodTarget (tree_, force_no_recompute_);
+    correspondence_estimation_->setSearchMethodSource (tree_reciprocal_, force_no_recompute_reciprocal_);
+  }
+  
+  // Note: we /cannot/ update the search method on all correspondence rejectors, because we know 
+  // nothing about them. If they should be cached, they must be cached individually.
+
+  return (PCLBase<PointSource>::initCompute ());
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////
+template <typename PointSource, typename PointTarget, typename Scalar> bool
+pcl::Registration<PointSource, PointTarget, Scalar>::initComputeReciprocal ()
+{
+  if (!input_)
+  {
+    PCL_ERROR ("[pcl::registration::%s::compute] No input source dataset was given!\n", getClassName ().c_str ());
+    return (false);
+  }
+
+  if (source_cloud_updated_ && !force_no_recompute_reciprocal_)
+  {
+    tree_reciprocal_->setInputCloud (input_);
+    source_cloud_updated_ = false;
+  }
+  return (true);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
-template <typename PointSource, typename PointTarget> inline double
-pcl::Registration<PointSource, PointTarget>::getFitnessScore (const std::vector<float> &distances_a, 
-                                                              const std::vector<float> &distances_b)
+template <typename PointSource, typename PointTarget, typename Scalar> inline double
+pcl::Registration<PointSource, PointTarget, Scalar>::getFitnessScore (
+    const std::vector<float> &distances_a,
+    const std::vector<float> &distances_b)
 {
   unsigned int nr_elem = static_cast<unsigned int> (std::min (distances_a.size (), distances_b.size ()));
   Eigen::VectorXf map_a = Eigen::VectorXf::Map (&distances_a[0], nr_elem);
@@ -68,14 +128,24 @@ pcl::Registration<PointSource, PointTarget>::getFitnessScore (const std::vector<
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
-template <typename PointSource, typename PointTarget> inline double
-pcl::Registration<PointSource, PointTarget>::getFitnessScore (double max_range)
+template <typename PointSource, typename PointTarget, typename Scalar> inline double
+pcl::Registration<PointSource, PointTarget, Scalar>::getFitnessScore (double max_range)
 {
+
   double fitness_score = 0.0;
 
   // Transform the input dataset using the final transformation
   PointCloudSource input_transformed;
-  transformPointCloud (*input_, input_transformed, final_transformation_);
+  //transformPointCloud (*input_, input_transformed, final_transformation_);
+  input_transformed.resize (input_->size ());
+  for (size_t i = 0; i < input_->size (); ++i)
+  {
+    const PointSource &src = input_->points[i];
+    PointTarget &tgt = input_transformed.points[i];
+    tgt.x = static_cast<float> (final_transformation_ (0, 0) * src.x + final_transformation_ (0, 1) * src.y + final_transformation_ (0, 2) * src.z + final_transformation_ (0, 3));
+    tgt.y = static_cast<float> (final_transformation_ (1, 0) * src.x + final_transformation_ (1, 1) * src.y + final_transformation_ (1, 2) * src.z + final_transformation_ (1, 3));
+    tgt.z = static_cast<float> (final_transformation_ (2, 0) * src.x + final_transformation_ (2, 1) * src.y + final_transformation_ (2, 2) * src.z + final_transformation_ (2, 3));
+  }
 
   std::vector<int> nn_indices (1);
   std::vector<float> nn_dists (1);
@@ -106,26 +176,22 @@ pcl::Registration<PointSource, PointTarget>::getFitnessScore (double max_range)
     return (fitness_score / nr);
   else
     return (std::numeric_limits<double>::max ());
+
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
-template <typename PointSource, typename PointTarget> inline void
-pcl::Registration<PointSource, PointTarget>::align (PointCloudSource &output)
+template <typename PointSource, typename PointTarget, typename Scalar> inline void
+pcl::Registration<PointSource, PointTarget, Scalar>::align (PointCloudSource &output)
 {
-  align (output, Eigen::Matrix4f::Identity());
+  align (output, Matrix4::Identity ());
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
-template <typename PointSource, typename PointTarget> inline void
-pcl::Registration<PointSource, PointTarget>::align (PointCloudSource &output, const Eigen::Matrix4f& guess)
+template <typename PointSource, typename PointTarget, typename Scalar> inline void
+pcl::Registration<PointSource, PointTarget, Scalar>::align (PointCloudSource &output, const Matrix4& guess)
 {
-  if (!initCompute ()) return;
-
-  if (!target_)
-  {
-    PCL_WARN ("[pcl::%s::compute] No input target dataset was given!\n", getClassName ().c_str ());
+  if (!initCompute ()) 
     return;
-  }
 
   // Resize the output dataset
   if (output.points.size () != indices_->size ())
@@ -149,13 +215,13 @@ pcl::Registration<PointSource, PointTarget>::align (PointCloudSource &output, co
   for (size_t i = 0; i < indices_->size (); ++i)
     output.points[i] = input_->points[(*indices_)[i]];
 
-  // Set the internal point representation of choice
-  if (point_representation_)
+  // Set the internal point representation of choice unless otherwise noted
+  if (point_representation_ && !force_no_recompute_) 
     tree_->setPointRepresentation (point_representation_);
 
   // Perform the actual transformation computation
   converged_ = false;
-  final_transformation_ = transformation_ = previous_transformation_ = Eigen::Matrix4f::Identity ();
+  final_transformation_ = transformation_ = previous_transformation_ = Matrix4::Identity ();
 
   // Right before we estimate the transformation, we set all the point.data[3] values to 1 to aid the rigid 
   // transformation

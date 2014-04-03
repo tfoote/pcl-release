@@ -31,16 +31,13 @@
   *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
   *  POSSIBILITY OF SUCH DAMAGE.
   *
-  * $Id: cloud_viewer.cpp 6161 2012-07-05 17:37:29Z rusu $
+  * $Id$
   *
   */
 
 #include <pcl/visualization/cloud_viewer.h>
 #include <pcl/visualization/pcl_visualizer.h>
-
-#include <boost/thread.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/foreach.hpp>
+#include <pcl/visualization/boost.h>
 
 namespace pcl
 {

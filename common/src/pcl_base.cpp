@@ -3,6 +3,7 @@
  *
  *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010-2011, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
  *
  *  All rights reserved.
  *
@@ -16,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,15 +34,29 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: pcl_base.cpp 5026 2012-03-12 02:51:44Z rusu $
- *
  */
 
-#include <pcl/pcl_base.h>
+#include <pcl/impl/pcl_base.hpp>
 
-//////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////
+pcl::PCLBase<pcl::PCLPointCloud2>::PCLBase ()
+  : input_ ()
+  , indices_ ()
+  , use_indices_ (false)
+  , fake_indices_ (false)
+  , field_sizes_ (0)
+  , x_idx_ (-1)
+  , y_idx_ (-1)
+  , z_idx_ (-1)
+  , x_field_name_ ("x")
+  , y_field_name_ ("y")
+  , z_field_name_ ("z")
+{
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////
 void
-pcl::PCLBase<sensor_msgs::PointCloud2>::setInputCloud (const PointCloud2ConstPtr &cloud)
+pcl::PCLBase<pcl::PCLPointCloud2>::setInputCloud (const PCLPointCloud2ConstPtr &cloud)
 {
   input_ = cloud;
 
@@ -62,29 +77,29 @@ pcl::PCLBase<sensor_msgs::PointCloud2>::setInputCloud (const PointCloud2ConstPtr
     int fsize;
     switch (input_->fields[d].datatype)
     {
-      case sensor_msgs::PointField::INT8:
-      case sensor_msgs::PointField::UINT8:
+      case pcl::PCLPointField::INT8:
+      case pcl::PCLPointField::UINT8:
       {
         fsize = 1;
         break;
       }
 
-      case sensor_msgs::PointField::INT16:
-      case sensor_msgs::PointField::UINT16:
+      case pcl::PCLPointField::INT16:
+      case pcl::PCLPointField::UINT16:
       {
         fsize = 2;
         break;
       }
 
-      case sensor_msgs::PointField::INT32:
-      case sensor_msgs::PointField::UINT32:
-      case sensor_msgs::PointField::FLOAT32:
+      case pcl::PCLPointField::INT32:
+      case pcl::PCLPointField::UINT32:
+      case pcl::PCLPointField::FLOAT32:
       {
         fsize = 4;
         break;
       }
 
-      case sensor_msgs::PointField::FLOAT64:
+      case pcl::PCLPointField::FLOAT64:
       {
         fsize = 8;
         break;
@@ -101,16 +116,16 @@ pcl::PCLBase<sensor_msgs::PointCloud2>::setInputCloud (const PointCloud2ConstPtr
   }
 }
 
-//////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////
 bool
-pcl::PCLBase<sensor_msgs::PointCloud2>::deinitCompute ()
+pcl::PCLBase<pcl::PCLPointCloud2>::deinitCompute ()
 {
   return (true);
 }
 
-//////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////
 bool
-pcl::PCLBase<sensor_msgs::PointCloud2>::initCompute ()
+pcl::PCLBase<pcl::PCLPointCloud2>::initCompute ()
 {
   // Check if input was set
   if (!input_)
@@ -141,4 +156,28 @@ pcl::PCLBase<sensor_msgs::PointCloud2>::initCompute ()
 
   return (true);
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////
+void
+pcl::PCLBase<pcl::PCLPointCloud2>::setIndices (const IndicesPtr &indices)
+{
+  indices_ = indices;
+  fake_indices_ = false;
+  use_indices_  = true;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////
+void
+pcl::PCLBase<pcl::PCLPointCloud2>::setIndices (const PointIndicesConstPtr &indices)
+{
+  indices_.reset (new std::vector<int> (indices->indices));
+  fake_indices_ = false;
+  use_indices_  = true;
+}
+
+#ifndef PCL_NO_PRECOMPILE
+#include <pcl/impl/instantiate.hpp>
+#include <pcl/point_types.h>
+PCL_INSTANTIATE(PCLBase, PCL_POINT_TYPES)
+#endif    // PCL_NO_PRECOMPILE
 

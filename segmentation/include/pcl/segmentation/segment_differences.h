@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -31,7 +31,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: segment_differences.h 5026 2012-03-12 02:51:44Z rusu $
+ * $Id$
  *
  */
 
@@ -154,5 +154,9 @@ namespace pcl
       getClassName () const { return ("SegmentDifferences"); }
   };
 }
+
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/segmentation/impl/segment_differences.hpp>
+#endif
 
 #endif  //#ifndef PCL_SEGMENT_DIFFERENCES_H_

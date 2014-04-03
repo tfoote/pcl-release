@@ -3,6 +3,7 @@
  *
  *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010-2011, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
  *
  *  All rights reserved.
  *
@@ -16,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,6 +34,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
+ * $Id$
  *
  */
 
@@ -42,8 +44,9 @@
 #include <pcl/registration/correspondence_types.h>
 #include <pcl/registration/correspondence_sorting.h>
 #include <pcl/console/print.h>
+#include <pcl/common/transforms.h>
 #include <pcl/point_cloud.h>
-#include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/search/kdtree.h>
 
 namespace pcl
 {
@@ -56,8 +59,14 @@ namespace pcl
     class CorrespondenceRejector
     {
       public:
+        typedef boost::shared_ptr<CorrespondenceRejector> Ptr;
+        typedef boost::shared_ptr<const CorrespondenceRejector> ConstPtr;
+
         /** \brief Empty constructor. */
-        CorrespondenceRejector () : rejection_name_ (), input_correspondences_ () {};
+        CorrespondenceRejector () 
+          : rejection_name_ ()
+          , input_correspondences_ () 
+        {}
 
         /** \brief Empty destructor. */
         virtual ~CorrespondenceRejector () {}
@@ -114,12 +123,16 @@ namespace pcl
         {
           if (!input_correspondences_ || input_correspondences_->empty ())
           {
-            PCL_WARN ("[pcl::%s::getRejectedQueryIndices] Input correspondences not set (lookup of rejected correspondences _not_ possible).\n", getClassName ().c_str ());
+            PCL_WARN ("[pcl::registration::%s::getRejectedQueryIndices] Input correspondences not set (lookup of rejected correspondences _not_ possible).\n", getClassName ().c_str ());
             return;
           }
 
           pcl::getRejectedQueryIndices(*input_correspondences_, correspondences, indices);
         }
+
+        /** \brief Get a string representation of the name of this class. */
+        inline const std::string& 
+        getClassName () const { return (rejection_name_); }
 
       protected:
 
@@ -128,10 +141,6 @@ namespace pcl
 
         /** \brief The input correspondences. */
         CorrespondencesConstPtr input_correspondences_;
-
-        /** \brief Get a string representation of the name of this class. */
-        inline const std::string& 
-        getClassName () const { return (rejection_name_); }
 
         /** \brief Abstract rejection method. */
         virtual void 
@@ -148,88 +157,145 @@ namespace pcl
         virtual ~DataContainerInterface () {}
         virtual double getCorrespondenceScore (int index) = 0;
         virtual double getCorrespondenceScore (const pcl::Correspondence &) = 0;
-    };
+     };
 
     /** @b DataContainer is a container for the input and target point clouds and implements the interface 
       * to compute correspondence scores between correspondent points in the input and target clouds
       * \ingroup registration
       */
-    template <typename PointT, typename NormalT=pcl::PointNormal>
-      class DataContainer : public DataContainerInterface
+    template <typename PointT, typename NormalT = pcl::PointNormal>
+    class DataContainer : public DataContainerInterface
     {
-      typedef typename pcl::PointCloud<PointT>::ConstPtr PointCloudConstPtr;
-      typedef typename pcl::KdTree<PointT>::Ptr KdTreePtr;
-      typedef typename pcl::PointCloud<NormalT>::ConstPtr NormalsPtr;
+      typedef pcl::PointCloud<PointT> PointCloud;
+      typedef typename PointCloud::Ptr PointCloudPtr;
+      typedef typename PointCloud::ConstPtr PointCloudConstPtr;
+
+      typedef typename pcl::search::KdTree<PointT>::Ptr KdTreePtr;
+      
+      typedef pcl::PointCloud<NormalT> Normals;
+      typedef typename Normals::Ptr NormalsPtr;
+      typedef typename Normals::ConstPtr NormalsConstPtr;
 
       public:
 
-      /** \brief Empty constructor. */
-      DataContainer () : input_ (), target_ ()
-      {
-        tree_.reset (new pcl::KdTreeFLANN<PointT>);
-      }
+        /** \brief Empty constructor. */
+        DataContainer (bool needs_normals = false) 
+          : input_ ()
+          , input_transformed_ ()
+          , target_ ()
+          , input_normals_ ()
+          , input_normals_transformed_ ()
+          , target_normals_ ()
+          , tree_ (new pcl::search::KdTree<PointT>)
+          , class_name_ ("DataContainer")
+          , needs_normals_ (needs_normals)
+          , target_cloud_updated_ (true)
+          , force_no_recompute_ (false)
+        {
+        }
+      
+        /** \brief Empty destructor */
+        virtual ~DataContainer () {}
 
-      /** \brief Provide a source point cloud dataset (must contain XYZ
-       * data!), used to compute the correspondence distance.  
-       * \param[in] cloud a cloud containing XYZ data
-       */
-      inline void 
-        setInputCloud (const PointCloudConstPtr &cloud)
+        /** \brief Provide a source point cloud dataset (must contain XYZ
+          * data!), used to compute the correspondence distance.  
+          * \param[in] cloud a cloud containing XYZ data
+          */
+        PCL_DEPRECATED (void setInputCloud (const PointCloudConstPtr &cloud), "[pcl::registration::DataContainer::setInputCloud] setInputCloud is deprecated. Please use setInputSource instead.");
+
+        /** \brief Get a pointer to the input point cloud dataset target. */
+        PCL_DEPRECATED (PointCloudConstPtr const getInputCloud (), "[pcl::registration::DataContainer::getInputCloud] getInputCloud is deprecated. Please use getInputSource instead.");
+
+        /** \brief Provide a source point cloud dataset (must contain XYZ
+          * data!), used to compute the correspondence distance.  
+          * \param[in] cloud a cloud containing XYZ data
+          */
+        inline void 
+        setInputSource (const PointCloudConstPtr &cloud)
         {
           input_ = cloud;
         }
 
-      /** \brief Provide a target point cloud dataset (must contain XYZ
-       * data!), used to compute the correspondence distance.  
-       * \param[in] target a cloud containing XYZ data
-       */
-      inline void 
+        /** \brief Get a pointer to the input point cloud dataset target. */
+        inline PointCloudConstPtr const 
+        getInputSource () { return (input_); }
+
+        /** \brief Provide a target point cloud dataset (must contain XYZ
+          * data!), used to compute the correspondence distance.  
+          * \param[in] target a cloud containing XYZ data
+          */
+        inline void 
         setInputTarget (const PointCloudConstPtr &target)
         {
           target_ = target;
-          tree_->setInputCloud (target_);
+          target_cloud_updated_ = true;
         }
 
-      /** \brief Set the normals computed on the input point cloud
-        * \param[in] normals the normals computed for the input cloud
-        */
-      inline void
-      setInputNormals (const NormalsPtr &normals) { input_normals_ = normals; }
+        /** \brief Get a pointer to the input point cloud dataset target. */
+        inline PointCloudConstPtr const 
+        getInputTarget () { return (target_); }
+        
+        /** \brief Provide a pointer to the search object used to find correspondences in
+          * the target cloud.
+          * \param[in] tree a pointer to the spatial search object.
+          * \param[in] force_no_recompute If set to true, this tree will NEVER be 
+          * recomputed, regardless of calls to setInputTarget. Only use if you are 
+          * confident that the tree will be set correctly.
+          */
+        inline void
+        setSearchMethodTarget (const KdTreePtr &tree, 
+                               bool force_no_recompute = false) 
+        { 
+          tree_ = tree; 
+          if (force_no_recompute)
+          {
+            force_no_recompute_ = true;
+          }
+          target_cloud_updated_ = true;
+        }
 
-      /** \brief Set the normals computed on the target point cloud
-        * \param[in] normals the normals computed for the input cloud
-        */
-      inline void
-      setTargetNormals (const NormalsPtr &normals) { target_normals_ = normals; }
-      
-      /** \brief Get the normals computed on the input point cloud */
-      inline NormalsPtr
-      getInputNormals () { return input_normals_; }
+        /** \brief Set the normals computed on the input point cloud
+          * \param[in] normals the normals computed for the input cloud
+          */
+        inline void
+        setInputNormals (const NormalsConstPtr &normals) { input_normals_ = normals; }
 
-      /** \brief Get the normals computed on the target point cloud */
-      inline NormalsPtr
-      getTargetNormals () { return target_normals_; }
+        /** \brief Get the normals computed on the input point cloud */
+        inline NormalsConstPtr
+        getInputNormals () { return (input_normals_); }
 
-      /** \brief Get the correspondence score for a point in the input cloud
-       *  \param[index] index of the point in the input cloud
-       */
-      inline double 
+        /** \brief Set the normals computed on the target point cloud
+          * \param[in] normals the normals computed for the input cloud
+          */
+        inline void
+        setTargetNormals (const NormalsConstPtr &normals) { target_normals_ = normals; }
+        
+        /** \brief Get the normals computed on the target point cloud */
+        inline NormalsConstPtr
+        getTargetNormals () { return (target_normals_); }
+
+        /** \brief Get the correspondence score for a point in the input cloud
+          * \param[in] index index of the point in the input cloud
+          */
+        inline double 
         getCorrespondenceScore (int index)
         {
+          if ( target_cloud_updated_ && !force_no_recompute_ )
+          {
+            tree_->setInputCloud (target_);
+          }
           std::vector<int> indices (1);
           std::vector<float> distances (1);
           if (tree_->nearestKSearch (input_->points[index], 1, indices, distances))
-          {
             return (distances[0]);
-          }
           else
             return (std::numeric_limits<double>::max ());
         }
 
-      /** \brief Get the correspondence score for a given pair of correspondent points
-       *  \param[corr] Correspondent points
-       */
-      inline double 
+        /** \brief Get the correspondence score for a given pair of correspondent points
+          * \param[in] corr Correspondent points
+          */
+        inline double 
         getCorrespondenceScore (const pcl::Correspondence &corr)
         {
           // Get the source and the target feature from the list
@@ -238,41 +304,68 @@ namespace pcl
 
           return ((src.getVector4fMap () - tgt.getVector4fMap ()).squaredNorm ());
         }
-      
-      /** \brief Get the correspondence score for a given pair of correspondent points based on 
-        * the angle betweeen the normals. The normmals for the in put and target clouds must be 
-        * set before using this function
-        * \param[in] corr Correspondent points
-        */
-      double
-      getCorrespondenceScoreFromNormals (const pcl::Correspondence &corr)
-      {
-        //assert ( (input_normals_->points.size () != 0) && (target_normals_->points.size () != 0) && "Normals are not set for the input and target point clouds");
-        assert ( input_normals_ && target_normals_ && "Normals are not set for the input and target point clouds");
-        const NormalT &src = input_normals_->points[corr.index_query];
-        const NormalT &tgt = target_normals_->points[corr.index_match];
-        double score = (src.normal[0] * tgt.normal[0]) + (src.normal[1] * tgt.normal[1]) + (src.normal[2] * tgt.normal[2]);
-        return score;
-      }
-      private:
+        
+        /** \brief Get the correspondence score for a given pair of correspondent points based on 
+          * the angle betweeen the normals. The normmals for the in put and target clouds must be 
+          * set before using this function
+          * \param[in] corr Correspondent points
+          */
+        inline double
+        getCorrespondenceScoreFromNormals (const pcl::Correspondence &corr)
+        {
+          //assert ( (input_normals_->points.size () != 0) && (target_normals_->points.size () != 0) && "Normals are not set for the input and target point clouds");
+          assert (input_normals_ && target_normals_ && "Normals are not set for the input and target point clouds");
+          const NormalT &src = input_normals_->points[corr.index_query];
+          const NormalT &tgt = target_normals_->points[corr.index_match];
+          return (double ((src.normal[0] * tgt.normal[0]) + (src.normal[1] * tgt.normal[1]) + (src.normal[2] * tgt.normal[2])));
+        }
 
+     private:
         /** \brief The input point cloud dataset */
         PointCloudConstPtr input_;
+
+        /** \brief The input transformed point cloud dataset */
+        PointCloudPtr input_transformed_;
 
         /** \brief The target point cloud datase. */
         PointCloudConstPtr target_;
 
         /** \brief Normals to the input point cloud */
-        NormalsPtr input_normals_;
+        NormalsConstPtr input_normals_;
+
+        /** \brief Normals to the input point cloud */
+        NormalsPtr input_normals_transformed_;
 
         /** \brief Normals to the target point cloud */
-        NormalsPtr target_normals_;
+        NormalsConstPtr target_normals_;
 
         /** \brief A pointer to the spatial search object. */
         KdTreePtr tree_;
+
+        /** \brief The name of the rejection method. */
+        std::string class_name_;
+
+        /** \brief Should the current data container use normals? */
+        bool needs_normals_;
+
+        /** \brief Variable that stores whether we have a new target cloud, meaning we need to pre-process it again.
+         * This way, we avoid rebuilding the kd-tree */
+        bool target_cloud_updated_;
+
+        /** \brief A flag which, if set, means the tree operating on the target cloud 
+         * will never be recomputed*/
+        bool force_no_recompute_;
+
+
+
+        /** \brief Get a string representation of the name of this class. */
+        inline const std::string& 
+        getClassName () const { return (class_name_); }
     };
   }
 }
+
+#include <pcl/registration/impl/correspondence_rejection.hpp>
 
 #endif /* PCL_REGISTRATION_CORRESPONDENCE_REJECTION_H_ */
 

@@ -32,11 +32,26 @@ Table of contents
   * :ref:`surface_tutorial`
   * :ref:`visualization_tutorial`
 
-
 .. _basic_usage:
 
 Basic Usage
 -----------
+
+  * :ref:`walkthrough`
+
+     ======  ======
+     |mi_0|  Title: **PCL Functionality Walkthrough**
+
+             Author: *Razvan G. Mihalyi*
+
+             Compatibility: > PCL 1.6
+
+             Takes the reader through all of the PCL modules and offers basic explanations on their functionalities.
+     ======  ======
+
+     .. |mi_0| image:: images/pcl_logo.png
+               :height: 75px
+
 
   * :ref:`basic_structures`
 
@@ -46,7 +61,7 @@ Basic Usage
              Author: *Radu B. Rusu*
 
              Compatibility: > PCL 1.0
-             
+
              Presents the basic data structures in PCL and discusses their usage with a simple code example.
      ======  ======
 
@@ -61,7 +76,7 @@ Basic Usage
              Author: *Nizar Sallem*
 
              Compatibility: > PCL 1.0
-             
+
              In this tutorial, we will learn how to link your own project to PCL using cmake.
      ======  ======
 
@@ -76,7 +91,7 @@ Basic Usage
              Author: *Nizar Sallem*
 
              Compatibility: > PCL 1.0
-             
+
              In this tutorial, we will explain the basic PCL cmake options, and ways to tweak them to fit your project.
      ======  ======
 
@@ -91,7 +106,7 @@ Basic Usage
              Authors: *Alessio Placitelli* and *Mourad Boufarguine*
 
              Compatibility: > PCL 1.0
-             
+
              In this tutorial, we will explain how to compile PCL's 3rd party dependencies from source on Microsoft Windows.
      ======  ======
 
@@ -106,7 +121,7 @@ Basic Usage
              Author: *Mourad Boufarguine*
 
              Compatibility: > PCL 1.0 
-             
+
              In this tutorial, we will explain how to compile PCL on Microsoft Windows.
      ======  ======
 
@@ -121,7 +136,7 @@ Basic Usage
              Author: *Justin Rosen*
 
              Compatibility: > PCL 1.0
-             
+
              This tutorial explains how to build the Point Cloud Library **from MacPorts and source** on Mac OS X platforms.
      ======  ======
 
@@ -143,6 +158,21 @@ Basic Usage
      .. |mi_6| image:: images/macosx_logo.png
                :height: 100px
 
+  * :ref:`using_pcl_with_eclipse`
+
+     ======  ======
+     |mi_7|  Title: **Using Eclipse as your PCL trunk editor**
+
+             Author: *Koen Buys*
+
+             Compatibility: > PCL 1.7
+
+             This tutorial shows you how to get your PCL trunk as a project in Eclipse.
+     ======  ======
+
+     .. |mi_7| image:: images/pcl_logo.png
+               :height: 75px
+
 .. _advanced_usage:
 
 Advanced Usage
@@ -156,7 +186,7 @@ Advanced Usage
              Author: *Radu B. Rusu*
 
              Compatibility: > PCL 0.9, < PCL 2.0
-             
+
              This document explains what templated point types are in PCL, why do they exist, and how to create and use your own `PointT` point type.
      ======  ======
 
@@ -171,7 +201,7 @@ Advanced Usage
              Author: *Radu B. Rusu, Luca Penasa*
 
              Compatibility: > PCL 0.9, < PCL 2.0
-             
+
              This short guide is to serve as both a HowTo and a FAQ for writing new PCL classes, either from scratch, or by adapting old code.
      ======  ======
 
@@ -184,7 +214,7 @@ Features
 --------
 
   * :ref:`how_3d_features_work`
-    
+
      ======  ======
      |fe_1|  Title: **How 3D features work**
 
@@ -195,7 +225,7 @@ Features
              This document presents a basic introduction to the 3D feature estimation methodologies in PCL.
      ======  ======
      
-     .. |fe_1| image:: images/good_features_small.png
+     .. |fe_1| image:: images/good_features_small.jpg
                :height: 100px
 
   * :ref:`normal_estimation`
@@ -289,21 +319,6 @@ Features
      .. |fe_7| image:: images/narf_keypoint_extraction.png
                :height: 100px
 
-  * :ref:`feature_evaluation_framework`
-    
-     ======  ======
-     |fe_8|  Title: **How to benchmark feature descriptor algorithms**
-
-             Author: *Pararth Shah*
-
-             Compatibility: > PCL 1.0
-
-             In this tutorial, we will go over how to use the FeatureEvaluationFramework class to benchmark various feature descriptor algorithms.
-     ======  ======
-     
-     .. |fe_8| image:: images/feature_evaluation/class_hierarchy.png
-               :height: 100px
-               
 .. _filtering_tutorial:
 
 Filtering
@@ -480,6 +495,37 @@ I/O
      .. |i_o4| image:: images/openni_grabber.png
                :height: 100px
 
+  * :ref:`hdl_grabber`
+
+     ======  ======
+     |i_o5|  Title: **Grabbing Point Clouds from a Velodyne High Definition LiDAR (HDL)**
+
+             Author: *Keven Ring*
+
+             Compatibility: >= PCL 1.7
+
+             In this tutorial, we will learn how to acquire point cloud data from a Velodyne HDL.
+     ======  ======
+
+     .. |i_o5| image:: images/hdl_grabber.png
+               :height: 100px
+               
+  * :ref:`dinast_grabber`
+
+     ======  ======
+     |i_o6|  Title: **Grabbing Point Clouds from Dinast Cameras**
+
+             Author: *Marco A. Gutierrez*
+
+             Compatibility: >= PCL 1.7
+
+             In this tutorial, we will learn how to acquire point cloud data from a Dinast camera.
+     ======  ======
+
+     .. |i_o6| image:: images/dinast_cyclopes.png
+               :height: 100px
+
+
 .. _keypoints_tutorial:
 
 Keypoints
@@ -605,6 +651,41 @@ Range Images
      .. |ri_2| image:: images/range_image_border_points.png
                :height: 100px
 
+.. _recognition_tutorial:
+
+Recognition
+-----------
+
+  * :ref:`correspondence_grouping`
+
+     ======  ======
+     |rc_1|  Title: **The PCL Recognition API**
+
+             Author: *Tommaso Cavallari, Federico Tombari*
+
+             Compatibility: > PCL 1.6
+
+             This tutorial aims at explaining how to perform 3D Object Recognition based on the pcl_recognition module.
+     ======  ======
+
+     .. |rc_1| image:: images/correspondence_grouping/correspondence_grouping.jpg
+               :height: 100px
+
+  * :ref:`implicit_shape_model`
+
+     ======  ======
+     |rc_2|  Title: **Implicit Shape Model**
+
+             Author: *Sergey Ushakov*
+
+             Compatibility: > PCL 1.7
+
+             In this tutorial we will learn how the Implicit Shape Model algorithm works and how to use it for finding objects centers.
+     ======  ======
+
+     .. |rc_2| image:: images/implicit_shape_model.png
+               :height: 100px
+
 .. _registration_tutorial:
 
 Registration
@@ -639,6 +720,68 @@ Registration
 
      .. |re_2| image:: images/iterative_closest_point.gif
                :height: 100px
+
+  * :ref:`pairwise_incremental_registration`
+
+     ======  ======
+     |re_3|  Title: **How to incrementally register pairs of clouds**
+
+             Author: *Raphael Favier*
+
+             Compatibility: > PCL 1.4
+
+             This document demonstrates using the Iterative Closest Point algorithm in order to incrementally register a series of point clouds two by two.
+     ======  ======
+
+     .. |re_3| image:: images/iterative_closest_point.gif
+               :height: 100px
+
+  * :ref:`normal_distributions_transform`
+
+     ======  ======
+     |re_4|  Title: **How to use the Normal Distributions Transform algorithm**
+
+             Author: *Brian Okorn*
+
+             Compatibility: > PCL 1.6
+
+             This document demonstrates using the Normal Distributions Transform algorithm to register two large point clouds.
+     ======  ======
+
+     .. |re_4| image:: images/normal_distributions_transform.gif
+               :height: 100px
+
+  * :ref:`in_hand_scanner`
+
+     ======  ======
+     |re_5|  Title: **How to use the In-hand scanner for small objects**
+
+             Author: *Martin Saelzle*
+
+             Compatibility: > PCL 1.7
+
+             This document shows how to use the In-hand scanner applications to obtain colored models of small objects with RGB-D cameras.
+     ======  ======
+
+     .. |re_5| image:: images/ihs_lion_model.png
+               :height: 100px
+
+  * :ref:`alignment_prerejective`
+
+     ======  ======
+     |re_6|  Title: **Robust pose estimation of rigid objects**
+
+             Author: *Anders Glent Buch*
+
+             Compatibility: >= PCL 1.7
+
+             In this tutorial, we show how to find the alignment pose of a rigid object in a scene with clutter and occlusions.
+
+     ======  ======
+
+     .. |re_6| image:: images/alignment_prerejective_1.png
+               :height: 100px
+
 
 .. _sample_consensus:
 
@@ -710,6 +853,97 @@ Segmentation
      .. |se_3| image:: images/cluster_extraction.jpg
                :height: 100px
 
+  * :ref:`region_growing_segmentation`
+
+     ======  ======
+     |se_4|  Title: **Region Growing Segmentation**
+
+             Author: *Sergey Ushakov*
+
+             Compatibility: > PCL 1.7
+
+             In this tutorial we will learn how to use region growing segmentation algorithm.
+     ======  ======
+
+     .. |se_4| image:: images/region_growing_segmentation.jpg
+               :height: 100px
+
+  * :ref:`region_growing_rgb_segmentation`
+
+     ======  ======
+     |se_5|  Title: **Color-based Region Growing Segmentation**
+
+             Author: *Sergey Ushakov*
+
+             Compatibility: > PCL 1.7
+
+             In this tutorial we will learn how to use color-based region growing segmentation algorithm.
+     ======  ======
+
+     .. |se_5| image:: images/region_growing_rgb_segmentation.jpg
+               :height: 100px
+
+  * :ref:`min_cut_segmentation`
+
+     ======  ======
+     |se_6|  Title: **Min-Cut Based Segmentation**
+
+             Author: *Sergey Ushakov*
+
+             Compatibility: > PCL 1.7
+
+             In this tutorial we will learn how to use min-cut based segmentation algorithm.
+     ======  ======
+
+     .. |se_6| image:: images/min_cut_segmentation.jpg
+               :height: 100px
+
+  * :ref:`conditional_euclidean_clustering`
+
+     ======  ======
+     |se_7|  Title: **Conditional Euclidean Clustering**
+
+             Author: *Frits Florentinus*
+
+             Compatibility: > PCL 1.7
+
+             This tutorial describes how to use the Conditional Euclidean Clustering class in PCL:
+             A segmentation algorithm that clusters points based on Euclidean distance and a user-customizable condition that needs to hold.
+     ======  ======
+
+     .. |se_7| image:: images/conditional_euclidean_clustering.jpg
+               :height: 100px
+
+  * :ref:`don_segmentation`
+
+     ======  ======
+     |se_8|  Title: **Difference of Normals Based Segmentation**
+
+             Author: *Yani Ioannou*
+
+             Compatibility: > PCL 1.7
+
+             In this tutorial we will learn how to use the difference of normals feature for segmentation.
+     ======  ======
+
+     .. |se_8| image:: images/don_segmentation.png
+               :height: 100px
+
+  * :ref:`supervoxel_clustering`
+
+     ======  ======
+     |se_9|  Title: **Supervoxel Clustering**
+
+             Author: *Jeremie Papon*
+
+             Compatibility: > PCL 1.7
+
+             In this tutorial, we show to break a pointcloud into the mid-level supervoxel representation.
+     ======  ======
+
+     .. |se_9| image:: images/supervoxel_clustering_small.png
+               :height: 100px
+               
 .. _surface_tutorial:
 
 Surface
@@ -720,9 +954,9 @@ Surface
      ======  ======
      |su_1|  Title: **Smoothing and normal estimation based on polynomial reconstruction**
 
-             Author: *Zoltan-Csaba Marton*
+             Author: *Zoltan-Csaba Marton, Alexandru E. Ichim*
 
-             Compatibility: > PCL 1.3
+             Compatibility: > PCL 1.6
 
              In this tutorial, we will learn how to construct and run a Moving Least Squares (MLS) algorithm to obtain smoothed XYZ coordinates and normals.
      ======  ======
@@ -809,6 +1043,21 @@ Visualization
 
      .. |vi_3| image:: images/pcl_visualizer_viewports.png
                :height: 100px
+ 
+  * :ref:`pcl_plotter`
+
+     ======  ======
+     |vi_4|  Title: **PCLPlotter**
+
+             Author: *Kripasindhu Sarkar*
+
+             Compatibility: > PCL 1.7
+
+             This tutorial demonstrates how to use the PCLPlotter class for powerful visualisation of plots, charts and histograms of raw data and explicit functions.
+     ======  ======
+
+     .. |vi_4| image:: images/pcl_plotter_comprational.png
+               :height: 100px               
 
 .. _applications_tutorial:
 
@@ -827,7 +1076,7 @@ Applications
              This tutorial gives an example of how some of the tools covered in the previous tutorials can be combined to solve a higher level problem --- aligning a previously captured model of an object to some newly captured data.
      ======  ======
 
-     .. |ap_1| image:: images/template_alignment_1.png
+     .. |ap_1| image:: images/template_alignment_1.jpg
                :height: 100px
 
   * :ref:`vfh_recognition`
@@ -845,6 +1094,50 @@ Applications
      .. |ap_2| image:: images/vfh_recognition.jpg
                :height: 100px
 
+  * :ref:`mobile_streaming`
+    
+     ======  ======
+     |ap_3|  Title: **Point Cloud Streaming to Mobile Devices with Real-time Visualization**
+
+             Author: *Pat Marion*
+
+             Compatibility: > PCL 1.3
+
+             This tutorial describes how to send point cloud data over the network from a desktop server to a client running on a mobile device.
+     ======  ======
+     
+     .. |ap_3| image:: images/mobile_streaming_1.jpg
+               :height: 100px
+               
+  * :ref:`using_kinfu_large_scale`
+     
+     ======  ======
+     |ap_4|  Title: **Using Kinfu Large Scale to generate a textured mesh**
+
+             Author: *Francisco Heredia and Raphael Favier*
+
+             Compatibility: > PCL 1.5
+
+             This tutorial demonstrates how to use KinFu Large Scale to produce a mesh from a room, and apply texture information in post-processing for a more appealing visual result.
+     ======  ======
+     
+     .. |ap_4| image:: images/using_kinfu_large_scale.jpg
+               :height: 100px
+
+  * :ref:`ground_based_rgbd_people_detection`
+     
+     ======  ======
+     |ap_5|  Title: **Detecting people on a ground plane with RGB-D data**
+
+             Author: *Matteo Munaro*
+
+             Compatibility: > PCL 1.7 trunk
+
+             This tutorial presents a method for detecting people on a ground plane with RGB-D data.
+     ======  ======
+     
+     .. |ap_5| image:: images/ground_based_rgbd_people_detection/Index_photo.jpg
+               :height: 120px
  ..
   * :ref:`normal_estimation_integral_images`
     Surface normal estimation

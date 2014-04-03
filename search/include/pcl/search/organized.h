@@ -16,7 +16,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,7 +33,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: organized.h 5622 2012-04-25 14:17:31Z nerei $
+ * $Id$
  *
  */
 
@@ -48,6 +48,7 @@
 #include <algorithm>
 #include <queue>
 #include <vector>
+#include <pcl/common/projection_matrix.h>
 
 namespace pcl
 {
@@ -111,7 +112,7 @@ namespace pcl
           // 2 * tan (85 degree) ~ 22.86
           float min_f = 0.043744332f * static_cast<float>(input_->width);
           //std::cout << "isValid: " << determinant3x3Matrix<Eigen::Matrix3f> (KR_ / sqrt (KR_KRT_.coeff (8))) << " >= " << (min_f * min_f) << std::endl;
-          return (determinant3x3Matrix<Eigen::Matrix3f> (KR_ / sqrt (KR_KRT_.coeff (8))) >= (min_f * min_f));
+          return (determinant3x3Matrix<Eigen::Matrix3f> (KR_ / sqrtf (KR_KRT_.coeff (8))) >= (min_f * min_f));
         }
         
         /** \brief Compute the camera matrix
@@ -217,7 +218,11 @@ namespace pcl
           const PointT& point = input_->points [index];
           if (mask_ [index] && pcl_isfinite (point.x))
           {
-            float squared_distance = (point.getVector3fMap () - query.getVector3fMap ()).squaredNorm ();
+            //float squared_distance = (point.getVector3fMap () - query.getVector3fMap ()).squaredNorm ();
+            float dist_x = point.x - query.x;
+            float dist_y = point.y - query.y;
+            float dist_z = point.z - query.z;
+            float squared_distance = dist_x * dist_x + dist_y * dist_y + dist_z * dist_z;
             if (queue.size () < k)
               queue.push (Entry (index, squared_distance));
             else if (queue.top ().distance > squared_distance)
@@ -250,10 +255,6 @@ namespace pcl
                                      unsigned& maxX, unsigned& maxY) const;
 
 
-        /** \brief copys upper or lower triangular part of the matrix to the other one */
-        template <typename MatrixType> void
-        makeSymmetric (MatrixType& matrix, bool use_upper_triangular = true) const;
-
         /** \brief the projection matrix. Either set by user or calculated by the first / each input cloud */
         Eigen::Matrix<float, 3, 4, Eigen::RowMajor> projection_matrix_;
 
@@ -276,6 +277,10 @@ namespace pcl
     };
   }
 }
+
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/search/impl/organized.hpp>
+#endif
 
 #endif
 

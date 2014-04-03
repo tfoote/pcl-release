@@ -33,7 +33,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: example_sift_z_keypoint_estimation.cpp 6062 2012-06-29 08:53:59Z svn $
+ * $Id$
  *
  *
  */

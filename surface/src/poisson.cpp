@@ -31,7 +31,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: poisson.cpp 5907 2012-06-13 04:55:20Z nburrus $
+ * $Id$
  *
  */
 

@@ -16,7 +16,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -51,6 +51,7 @@ namespace pcl
   using boost::uint32_t;
   using boost::int64_t;
   using boost::uint64_t;
+  using boost::int_fast16_t;
 }
 
 #if defined __INTEL_COMPILER
@@ -58,7 +59,11 @@ namespace pcl
 #endif
 
 #if defined _MSC_VER
-  #pragma warning (disable: 4521 4251)
+  // 4244 : conversion from 'type1' to 'type2', possible loss of data
+  // 4661 : no suitable definition provided for explicit template instantiation reques
+  // 4503 : decorated name length exceeded, name was truncated
+  // 4146 : unary minus operator applied to unsigned type, result still unsigned
+  #pragma warning (disable: 4018 4244 4267 4521 4251 4661 4305 4503 4146)
 #endif
 
 #include <iostream>
@@ -136,6 +141,10 @@ pcl_isnan (T &val)
 #define RAD2DEG(x) ((x)*57.29578)
 #endif
 
+/** \brief Macro that maps version information given by major.minor.patch to a linear integer value to enable easy comparison
+ */
+#define PCL_LINEAR_VERSION(major,minor,patch) ((major)<<16|(minor)<<8|(patch))
+
 /** Win32 doesn't seem to have rounding functions.
   * Therefore implement our own versions of these functions here.
   */
@@ -151,8 +160,14 @@ pcl_round (float number)
   return (number < 0.0f ? ceilf (number - 0.5f) : floorf (number + 0.5f));
 }
 
+#ifdef __GNUC__
+#define pcl_lrint(x) (lrint(static_cast<double> (x)))
+#define pcl_lrintf(x) (lrintf(static_cast<float> (x)))
+#else
 #define pcl_lrint(x) (static_cast<long int>(pcl_round(x)))
 #define pcl_lrintf(x) (static_cast<long int>(pcl_round(x)))
+#endif
+
 
 #ifdef _WIN32
 __inline float
@@ -280,23 +295,29 @@ log2f (float x)
 // use me instead
 // void NewFunc(int a, double b);
 
-// gcc supports this starting from 4.5 : http://gcc.gnu.org/bugzilla/show_bug.cgi?id=43666
-#ifdef __GNUC__
-#define GCC_VERSION (__GNUC__ * 10000 \
-    + __GNUC_MINOR__ * 100 \
-    + __GNUC_PATCHLEVEL__)
-#if GCC_VERSION < 40500
+//for clang cf. http://clang.llvm.org/docs/LanguageExtensions.html
+#ifndef __has_extension
+  #define __has_extension(x) 0 // Compatibility with pre-3.0 compilers.
+#endif
+
+#if (defined(__GNUC__) && PCL_LINEAR_VERSION(__GNUC__,__GNUC_MINOR__,__GNUC_PATCHLEVEL__) < PCL_LINEAR_VERSION(4,5,0) && ! defined(__clang__)) || defined(__INTEL_COMPILER)
 #define PCL_DEPRECATED(func, message) func __attribute__ ((deprecated))
-#else
+#endif
+
+// gcc supports this starting from 4.5 : http://gcc.gnu.org/bugzilla/show_bug.cgi?id=43666
+#if (defined(__GNUC__) && PCL_LINEAR_VERSION(__GNUC__,__GNUC_MINOR__,__GNUC_PATCHLEVEL__) >= PCL_LINEAR_VERSION(4,5,0)) || (defined(__clang__) && __has_extension(attribute_deprecated_with_message))
 #define PCL_DEPRECATED(func, message) func __attribute__ ((deprecated(message)))
 #endif
 
-#elif defined(_MSC_VER)
+#ifdef _MSC_VER
 #define PCL_DEPRECATED(func, message) __declspec(deprecated(message)) func
-#else
+#endif
+
+#ifndef PCL_DEPRECATED
 #pragma message("WARNING: You need to implement PCL_DEPRECATED for this compiler")
 #define PCL_DEPRECATED(func) func
 #endif
+
 
 // Macro to deprecate old classes/structs
 //
@@ -314,21 +335,21 @@ log2f (float x)
 //     NewClass() {}
 // };
 
-// gcc supports this starting from 4.5 : http://gcc.gnu.org/bugzilla/show_bug.cgi?id=43666
-#ifdef __GNUC__
-#define GCC_VERSION (__GNUC__ * 10000 \
-    + __GNUC_MINOR__ * 100 \
-    + __GNUC_PATCHLEVEL__)
-#if GCC_VERSION < 40500
+#if (defined(__GNUC__) && PCL_LINEAR_VERSION(__GNUC__,__GNUC_MINOR__,__GNUC_PATCHLEVEL__) < PCL_LINEAR_VERSION(4,5,0) && ! defined(__clang__)) || defined(__INTEL_COMPILER)
 #define PCL_DEPRECATED_CLASS(func, message) __attribute__ ((deprecated)) func
-#else
+#endif
+
+// gcc supports this starting from 4.5 : http://gcc.gnu.org/bugzilla/show_bug.cgi?id=43666
+#if (defined(__GNUC__) && PCL_LINEAR_VERSION(__GNUC__,__GNUC_MINOR__,__GNUC_PATCHLEVEL__) >= PCL_LINEAR_VERSION(4,5,0)) || (defined(__clang__) && __has_extension(attribute_deprecated_with_message))
 #define PCL_DEPRECATED_CLASS(func, message) __attribute__ ((deprecated(message))) func
 #endif
 
-#elif defined(_MSC_VER)
+#ifdef _MSC_VER
 #define PCL_DEPRECATED_CLASS(func, message) __declspec(deprecated(message)) func
-#else
-#pragma message("WARNING: You need to implement PCL_DEPRECATED for this compiler")
+#endif
+
+#ifndef PCL_DEPRECATED_CLASS
+#pragma message("WARNING: You need to implement PCL_DEPRECATED_CLASS for this compiler")
 #define PCL_DEPRECATED_CLASS(func) func
 #endif
 
@@ -340,8 +361,7 @@ log2f (float x)
   #error Alignment not supported on your platform
 #endif
 
-#if defined(__GLIBC__) && ((__GLIBC__>=2 && __GLIBC_MINOR__ >= 8) || __GLIBC__>2) \
- && defined(__LP64__)
+#if defined(__GLIBC__) && PCL_LINEAR_VERSION(__GLIBC__,__GLIBC_MINOR__,0)>PCL_LINEAR_VERSION(2,8,0)
   #define GLIBC_MALLOC_ALIGNED 1
 #else
   #define GLIBC_MALLOC_ALIGNED 0

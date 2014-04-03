@@ -33,7 +33,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: obj_io.cpp 6122 2012-07-03 18:59:43Z aichim $
+ * $Id$
  *
  */
 #include <pcl/io/obj_io.h>
@@ -96,7 +96,7 @@ pcl::io::saveOBJFile (const std::string &file_name,
         count = 1;          // we simply cannot tolerate 0 counts (coming from older converter code)
       int c = 0;
       // adding vertex
-      if ((tex_mesh.cloud.fields[d].datatype == sensor_msgs::PointField::FLOAT32) && (
+      if ((tex_mesh.cloud.fields[d].datatype == pcl::PCLPointField::FLOAT32) && (
           tex_mesh.cloud.fields[d].name == "x" ||
           tex_mesh.cloud.fields[d].name == "y" ||
           tex_mesh.cloud.fields[d].name == "z"))
@@ -137,7 +137,7 @@ pcl::io::saveOBJFile (const std::string &file_name,
         count = 1;          // we simply cannot tolerate 0 counts (coming from older converter code)
       int c = 0;
       // adding vertex
-      if ((tex_mesh.cloud.fields[d].datatype == sensor_msgs::PointField::FLOAT32) && (
+      if ((tex_mesh.cloud.fields[d].datatype == pcl::PCLPointField::FLOAT32) && (
           tex_mesh.cloud.fields[d].name == "normal_x" ||
           tex_mesh.cloud.fields[d].name == "normal_y" ||
           tex_mesh.cloud.fields[d].name == "normal_z"))
@@ -260,7 +260,7 @@ pcl::io::saveOBJFile (const std::string &file_name,
   // number of faces for header
   unsigned nr_faces = static_cast<unsigned> (mesh.polygons.size ());
   // Do we have vertices normals?
-  int normal_index = getFieldIndex (mesh.cloud, "normal");
+  int normal_index = getFieldIndex (mesh.cloud, "normal_x");
 
   // Write the header information
   fs << "####" << std::endl;
@@ -280,7 +280,7 @@ pcl::io::saveOBJFile (const std::string &file_name,
     {
       int c = 0;
       // adding vertex
-      if ((mesh.cloud.fields[d].datatype == sensor_msgs::PointField::FLOAT32) && (
+      if ((mesh.cloud.fields[d].datatype == pcl::PCLPointField::FLOAT32) && (
           mesh.cloud.fields[d].name == "x" ||
           mesh.cloud.fields[d].name == "y" ||
           mesh.cloud.fields[d].name == "z"))
@@ -318,7 +318,7 @@ pcl::io::saveOBJFile (const std::string &file_name,
       {
         int c = 0;
         // adding vertex
-        if ((mesh.cloud.fields[d].datatype == sensor_msgs::PointField::FLOAT32) && (
+        if ((mesh.cloud.fields[d].datatype == pcl::PCLPointField::FLOAT32) && (
               mesh.cloud.fields[d].name == "normal_x" ||
               mesh.cloud.fields[d].name == "normal_y" ||
               mesh.cloud.fields[d].name == "normal_z"))

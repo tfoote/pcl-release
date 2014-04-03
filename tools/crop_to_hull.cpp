@@ -16,7 +16,7 @@
   *     copyright notice, this list of conditions and the following
   *     disclaimer in the documentation and/or other materials provided
   *     with the distribution.
-  *   * Neither the name of Willow Garage, Inc. nor the names of its
+  *   * Neither the name of the copyright holder(s) nor the names of its
   *     contributors may be used to endorse or promote products derived
   *     from this software without specific prior written permission.
   *
@@ -33,6 +33,8 @@
   *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
   *  POSSIBILITY OF SUCH DAMAGE.
   *
+  * $Id$
+  *
   */
   
 #include <pcl/filters/crop_hull.h>
@@ -42,7 +44,6 @@
 #include <pcl/console/time.h>
 #include <pcl/surface/concave_hull.h>
 
-//#include <pcl/visualization/pcl_visualizer.h>
 
 using namespace pcl;
 using namespace pcl::io;
@@ -135,7 +136,7 @@ calculateHull (std::vector<pcl::Vertices>& polygons, int& dim, CloudT::Ptr cloud
   hull_calculator.setAlpha (alpha);
   hull_calculator.reconstruct (*hull, polygons);
   
-  dim = hull_calculator.getDim();
+  dim = hull_calculator.getDimension ();
   return hull;
 }
 
@@ -181,28 +182,13 @@ main (int argc, char** argv)
 
   cropToHull (output_cloud, input_cloud, hull_points, hull_polygons, dim);
   
-  /*
-  boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("Crop Viewer"));
-  viewer->setBackgroundColor (0, 0, 0);
-  viewer->addPointCloud (output_cloud, "cropped");
-  viewer->addPointCloud (hull_cloud, "hull cloud");
-  viewer->addPolygonMesh<PointT> (hull_points, hull_polygons, "hull surface");
-  viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_OPACITY, 0.2, "cropped");
-  viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_OPACITY, 0.6, "hull cloud");
-  viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_OPACITY, 0.4, "hull surface");
-  viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_COLOR, 1.0,0.1,0.2, "cropped");
-  viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_COLOR, 0.1,1.0,0.3, "hull cloud");
-  //viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_COLOR, 0.5,0.8,0.4, "hull surface");
-  viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 8, "cropped");
-  
-  while(!viewer->wasStopped())
-    viewer->spinOnce (100);
-  */
 
   if (output_cloud->size ())
     saveCloud (argv[p_file_indices[2]], *output_cloud);
   else
     print_error ("No points passed crop.\n");
+
+  return (0);
 }
 
 

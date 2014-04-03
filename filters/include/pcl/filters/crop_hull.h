@@ -16,7 +16,7 @@
   *     copyright notice, this list of conditions and the following
   *     disclaimer in the documentation and/or other materials provided
   *     with the distribution.
-  *   * Neither the name of Willow Garage, Inc. nor the names of its
+  *   * Neither the name of the copyright holder(s) nor the names of its
   *     contributors may be used to endorse or promote products derived
   *     from this software without specific prior written permission.
   *
@@ -61,6 +61,10 @@ namespace pcl
     typedef typename PointCloud::ConstPtr PointCloudConstPtr;
 
     public:
+
+      typedef boost::shared_ptr< CropHull<PointT> > Ptr;
+      typedef boost::shared_ptr< const CropHull<PointT> > ConstPtr;
+
       /** \brief Empty Constructor. */
       CropHull () :
         hull_polygons_(),
@@ -232,4 +236,8 @@ namespace pcl
 
 } // namespace pcl
 
-#endif // ndef PCL_FILTERS_CROP_HULL_H_
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/filters/impl/crop_hull.hpp>
+#endif
+
+#endif // ifndef PCL_FILTERS_CROP_HULL_H_

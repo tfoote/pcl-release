@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -31,7 +31,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: gaussian.cpp 4874 2012-03-01 07:22:00Z rusu $
+ * $Id$
  *
  */
 
@@ -53,7 +53,7 @@ pcl::GaussianKernel::compute (float sigma,
     kernel[k] = kernel[j] = expf (-static_cast<float>(i) * static_cast<float>(i) * sigma_sqr);
   kernel[hw] = 1;
   unsigned g_width = kernel_width;
-  for (unsigned i = 0; fabs (kernel[i]/max_gauss) < factor; i++, g_width-= 2);
+  for (unsigned i = 0; fabs (kernel[i]/max_gauss) < factor; i++, g_width-= 2) ;
   if (g_width == kernel_width)
   { 
     PCL_THROW_EXCEPTION (pcl::KernelWidthTooSmallException,
@@ -98,8 +98,8 @@ pcl::GaussianKernel::compute (float sigma,
   // Compute kernel and derivative true width
   unsigned g_width = kernel_width;
   unsigned d_width = kernel_width;
-  for (unsigned i = 0; fabs (derivative[i]/max_deriv) < factor; i++, d_width-= 2);
-  for (unsigned i = 0; fabs (kernel[i]/max_gauss) < factor; i++, g_width-= 2);
+  for (unsigned i = 0; fabs (derivative[i]/max_deriv) < factor; i++, d_width-= 2) ;
+  for (unsigned i = 0; fabs (kernel[i]/max_gauss) < factor; i++, g_width-= 2) ;
   if (g_width == kernel_width || d_width == kernel_width)
   { 
     PCL_THROW_EXCEPTION (KernelWidthTooSmallException,

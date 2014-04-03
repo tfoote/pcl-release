@@ -3,6 +3,7 @@
  *
  *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010-2011, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
  *
  *  All rights reserved.
  *
@@ -16,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,21 +34,21 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: feature.h 6453 2012-07-17 23:09:54Z svn $
+ * $Id$
  *
  */
 
 #ifndef PCL_FEATURE_H_
 #define PCL_FEATURE_H_
 
+#if defined __GNUC__
+#  pragma GCC system_header 
+#endif
+
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
-#include <boost/mpl/size.hpp>
-
 // PCL includes
 #include <pcl/pcl_base.h>
-#include <pcl/common/eigen.h>
-#include <pcl/common/centroid.h>
 #include <pcl/search/search.h>
 
 namespace pcl
@@ -132,6 +133,9 @@ namespace pcl
         search_parameter_(0), search_radius_(0), k_(0),
         fake_surface_(false)
       {}
+            
+      /** \brief Empty destructor */
+      virtual ~Feature () {}
 
       /** \brief Provide a pointer to a dataset to add additional information
         * to estimate the features for every point in the input dataset.  This
@@ -212,14 +216,6 @@ namespace pcl
         */
       void
       compute (PointCloudOut &output);
-
-      /** \brief Base method for feature estimation for all points given in
-        * <setInputCloud (), setIndices ()> using the surface in setSearchSurface ()
-        * and the spatial locator in setSearchMethod ()
-        * \param[out] output the resultant point cloud model dataset containing the estimated features
-        */
-      void
-      computeEigen (pcl::PointCloud<Eigen::MatrixXf> &output);
 
     protected:
       /** \brief The feature name. */
@@ -302,12 +298,6 @@ namespace pcl
       virtual void
       computeFeature (PointCloudOut &output) = 0;
 
-      /** \brief Abstract feature estimation method.
-        * \param[out] output the resultant features
-        */
-      virtual void
-      computeFeatureEigen (pcl::PointCloud<Eigen::MatrixXf> &output) = 0;
-
     public:
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   };
@@ -339,6 +329,9 @@ namespace pcl
 
       /** \brief Empty constructor. */
       FeatureFromNormals () : normals_ () {}
+      
+      /** \brief Empty destructor */
+      virtual ~FeatureFromNormals () {}
 
       /** \brief Provide a pointer to the input dataset that contains the point normals of
         * the XYZ dataset.
@@ -399,6 +392,9 @@ namespace pcl
       {
         k_ = 1; // Search tree is not always used here.
       }
+      
+      /** \brief Empty destructor */
+      virtual ~FeatureFromLabels () {}
 
       /** \brief Provide a pointer to the input dataset that contains the point labels of
         * the XYZ dataset.

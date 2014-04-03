@@ -16,7 +16,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,7 +33,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: flann_search.h 5170 2012-03-18 04:21:56Z rusu $
+ * $Id$
  */
 
 #ifndef PCL_SEARCH_FLANN_SEARCH_H_
@@ -46,8 +46,8 @@
 namespace flann
 {
   template<typename T> class NNIndex;
-  template<typename T> class L2;
-  template<typename T> class L2_Simple;
+  template<typename T> struct L2;
+  template<typename T> struct L2_Simple;
   template<typename T> class Matrix;
 }
 
@@ -85,8 +85,8 @@ namespace pcl
       using Search<PointT>::sorted_results_;
 
       public:
-        typedef boost::shared_ptr<FlannSearch<PointT> > Ptr;
-        typedef boost::shared_ptr<const FlannSearch<PointT> > ConstPtr;
+        typedef boost::shared_ptr<FlannSearch<PointT, FlannDistance> > Ptr;
+        typedef boost::shared_ptr<const FlannSearch<PointT, FlannDistance> > ConstPtr;
 
         /** \brief Helper class that creates a FLANN index from a given FLANN matrix. To
           * use a FLANN index type with FlannSearch, implement this interface and
@@ -101,7 +101,12 @@ namespace pcl
             * \return The FLANN index.
             */
             virtual IndexPtr createIndex (MatrixConstPtr data)=0;
+
+          /** \brief destructor 
+            */
+            virtual ~FlannIndexCreator () {}
         };
+        typedef boost::shared_ptr<FlannIndexCreator> FlannIndexCreatorPtr;
 
         /** \brief Creates a FLANN KdTreeSingleIndex from the given input data.
           */
@@ -113,6 +118,10 @@ namespace pcl
             * cheaper, but search more costly (and the other way around).
             */
             KdTreeIndexCreator (unsigned int max_leaf_size=15) : max_leaf_size_ (max_leaf_size){}
+      
+            /** \brief Empty destructor */
+            virtual ~KdTreeIndexCreator () {}
+
           /** \brief Create a FLANN Index from the input data.
             * \param[in] data The FLANN matrix containing the input.
             * \return The FLANN index.
@@ -122,7 +131,29 @@ namespace pcl
             unsigned int max_leaf_size_;
         };
 
-        FlannSearch (bool sorted = true, FlannIndexCreator* creator = new KdTreeIndexCreator());
+        /** \brief Creates a FLANN KdTreeSingleIndex from the given input data.
+          */
+        class KMeansIndexCreator: public FlannIndexCreator
+        {
+          public:
+          /** \param[in] max_leaf_size All FLANN kd trees created by this class will have
+            * a maximum of max_leaf_size points per leaf node. Higher values make index creation
+            * cheaper, but search more costly (and the other way around).
+            */
+            KMeansIndexCreator (){}
+            
+            /** \brief Empty destructor */
+            virtual ~KMeansIndexCreator () {}
+
+          /** \brief Create a FLANN Index from the input data.
+            * \param[in] data The FLANN matrix containing the input.
+            * \return The FLANN index.
+            */
+            virtual IndexPtr createIndex (MatrixConstPtr data);
+          private:
+        };
+
+        FlannSearch (bool sorted = true, FlannIndexCreatorPtr creator = FlannIndexCreatorPtr (new KdTreeIndexCreator ()));
 
         /** \brief Destructor for FlannSearch. */
         virtual
@@ -152,7 +183,7 @@ namespace pcl
           * \param[in] cloud the const boost shared pointer to a PointCloud message
           * \param[in] indices the point indices subset that is to be used from \a cloud
           */
-        inline virtual void
+        virtual void
         setInputCloud (const PointCloudConstPtr& cloud, const IndicesConstPtr& indices = IndicesConstPtr ());
 
         /** \brief Search for the k-nearest neighbors for the given query point.
@@ -212,7 +243,9 @@ namespace pcl
         setPointRepresentation (const PointRepresentationConstPtr &point_representation)
         {
           point_representation_ = point_representation;
-          setInputCloud (input_, indices_);  // re-create the tree, since point_represenation might change things such as the scaling of the point clouds.
+          dim_ = point_representation->getNumberOfDimensions ();
+          if (input_) // re-create the tree, since point_represenation might change things such as the scaling of the point clouds.
+            setInputCloud (input_, indices_);
         }
 
         /** \brief Get a pointer to the point representation used when converting points into k-D vectors. */
@@ -234,7 +267,7 @@ namespace pcl
 
         /** The index creator, used to (re-) create the index when the search data is passed.
           */
-        FlannIndexCreator *creator_;
+        FlannIndexCreatorPtr creator_;
 
         /** Input data in FLANN format.
           */

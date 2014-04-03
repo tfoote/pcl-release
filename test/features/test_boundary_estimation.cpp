@@ -16,7 +16,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -129,85 +129,6 @@ TEST (PCL, BoundaryEstimation)
   pt = bps->points[indices.size () - 1].boundary_point;
   EXPECT_EQ (pt, true);
 }
-
-#ifndef PCL_ONLY_CORE_POINT_TYPES
-  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  TEST (PCL, BoundaryEstimationEigen)
-  {
-    Eigen::Vector4f u = Eigen::Vector4f::Zero ();
-    Eigen::Vector4f v = Eigen::Vector4f::Zero ();
-
-    // Estimate normals first
-    NormalEstimation<PointXYZ, Normal> n;
-    PointCloud<Normal>::Ptr normals (new PointCloud<Normal>);
-    // set parameters
-    n.setInputCloud (cloud.makeShared ());
-    boost::shared_ptr<vector<int> > indicesptr (new vector<int> (indices));
-    n.setIndices (indicesptr);
-    n.setSearchMethod (tree);
-    n.setKSearch (static_cast<int> (indices.size ()));
-    // estimate
-    n.compute (*normals);
-
-    BoundaryEstimation<PointXYZ, Normal, Eigen::MatrixXf> b;
-    b.setInputNormals (normals);
-    EXPECT_EQ (b.getInputNormals (), normals);
-
-    // getCoordinateSystemOnPlane
-    for (size_t i = 0; i < normals->points.size (); ++i)
-    {
-      b.getCoordinateSystemOnPlane (normals->points[i], u, v);
-      Vector4fMap n4uv = normals->points[i].getNormalVector4fMap ();
-      EXPECT_NEAR (n4uv.dot(u), 0, 1e-4);
-      EXPECT_NEAR (n4uv.dot(v), 0, 1e-4);
-      EXPECT_NEAR (u.dot(v), 0, 1e-4);
-    }
-
-    // isBoundaryPoint (indices)
-    bool pt = false;
-    pt = b.isBoundaryPoint (cloud, 0, indices, u, v, float (M_PI) / 2.0);
-    EXPECT_EQ (pt, false);
-    pt = b.isBoundaryPoint (cloud, static_cast<int> (indices.size () / 3), indices, u, v, float (M_PI) / 2.0);
-    EXPECT_EQ (pt, false);
-    pt = b.isBoundaryPoint (cloud, static_cast<int> (indices.size () / 2), indices, u, v, float (M_PI) / 2.0);
-    EXPECT_EQ (pt, false);
-    pt = b.isBoundaryPoint (cloud, static_cast<int> (indices.size () - 1), indices, u, v, float (M_PI) / 2.0);
-    EXPECT_EQ (pt, true);
-
-    // isBoundaryPoint (points)
-    pt = false;
-    pt = b.isBoundaryPoint (cloud, cloud.points[0], indices, u, v, float (M_PI) / 2.0);
-    EXPECT_EQ (pt, false);
-    pt = b.isBoundaryPoint (cloud, cloud.points[indices.size () / 3], indices, u, v, float (M_PI) / 2.0);
-    EXPECT_EQ (pt, false);
-    pt = b.isBoundaryPoint (cloud, cloud.points[indices.size () / 2], indices, u, v, float (M_PI) / 2.0);
-    EXPECT_EQ (pt, false);
-    pt = b.isBoundaryPoint (cloud, cloud.points[indices.size () - 1], indices, u, v, float (M_PI) / 2.0);
-    EXPECT_EQ (pt, true);
-
-    // Object
-    PointCloud<Eigen::MatrixXf>::Ptr bps (new PointCloud<Eigen::MatrixXf> ());
-
-    // set parameters
-    b.setInputCloud (cloud.makeShared ());
-    b.setIndices (indicesptr);
-    b.setSearchMethod (tree);
-    b.setKSearch (static_cast<int> (indices.size ()));
-
-    // estimate
-    b.computeEigen (*bps);
-    EXPECT_EQ (bps->points.rows (), indices.size ());
-
-    pt = bps->points (0, 0);
-    EXPECT_EQ (pt, false);
-    pt = bps->points (indices.size () / 3, 0);
-    EXPECT_EQ (pt, false);
-    pt = bps->points (indices.size () / 2, 0);
-    EXPECT_EQ (pt, false);
-    pt = bps->points (indices.size () - 1, 0);
-    EXPECT_EQ (pt, true);
-  }
-#endif
 
 /* ---[ */
 int

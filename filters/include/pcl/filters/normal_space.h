@@ -2,7 +2,7 @@
  * Software License Agreement (BSD License)
  * 
  * Point Cloud Library (PCL) - www.pointclouds.org
- * Copyright (c) 2009-2011, Willow Garage, Inc.
+ * Copyright (c) 2012-, Open Perception, Inc.
  * 
  * All rights reserved.
  * 
@@ -16,7 +16,7 @@
  *    copyright notice, this list of conditions and the following
  *    disclaimer in the documentation and/or other materials provided
  *    with the distribution.
- *  * Neither the name of Willow Garage, Inc. nor the names of its
+ *  * Neither the name of the copyright holder(s) nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  * 
@@ -38,11 +38,10 @@
 #ifndef PCL_FILTERS_NORMAL_SUBSAMPLE_H_
 #define PCL_FILTERS_NORMAL_SUBSAMPLE_H_
 
+#include <pcl/filters/boost.h>
 #include <pcl/filters/filter_indices.h>
 #include <time.h>
 #include <limits.h>
-
-#include <boost/dynamic_bitset.hpp>
 
 namespace pcl
 {
@@ -56,18 +55,39 @@ namespace pcl
     using FilterIndices<PointT>::getClassName;
     using FilterIndices<PointT>::indices_;
     using FilterIndices<PointT>::input_;
+    using FilterIndices<PointT>::keep_organized_;
+    using FilterIndices<PointT>::extract_removed_indices_;
+    using FilterIndices<PointT>::removed_indices_;
+    using FilterIndices<PointT>::user_filter_value_;
 
     typedef typename FilterIndices<PointT>::PointCloud PointCloud;
     typedef typename PointCloud::Ptr PointCloudPtr;
     typedef typename PointCloud::ConstPtr PointCloudConstPtr;
-    typedef typename pcl::PointCloud<NormalT>::Ptr NormalsPtr;
+    typedef typename pcl::PointCloud<NormalT>::ConstPtr NormalsConstPtr;
 
     public:
+      
+      typedef boost::shared_ptr<NormalSpaceSampling<PointT, NormalT> > Ptr;
+      typedef boost::shared_ptr<const NormalSpaceSampling<PointT, NormalT> > ConstPtr;
+
       /** \brief Empty constructor. */
-      NormalSpaceSampling () : 
-        sample_ (UINT_MAX), seed_ (static_cast<unsigned int> (time (NULL))), binsx_ (), binsy_ (), binsz_ (), input_normals_ ()
+      NormalSpaceSampling ()
+        : sample_ (std::numeric_limits<unsigned int>::max ())
+        , seed_ (static_cast<unsigned int> (time (NULL)))
+        , binsx_ ()
+        , binsy_ ()
+        , binsz_ ()
+        , input_normals_ ()
+        , rng_uniform_distribution_ (NULL)
       {
         filter_name_ = "NormalSpaceSampling";
+      }
+
+      /** \brief Destructor. */
+      ~NormalSpaceSampling ()
+      {
+        if (rng_uniform_distribution_ != NULL)
+          delete rng_uniform_distribution_;
       }
 
       /** \brief Set number of indices to be sampled.
@@ -75,32 +95,24 @@ namespace pcl
         */
       inline void
       setSample (unsigned int sample)
-      {
-        sample_ = sample;
-      }
+      { sample_ = sample; }
 
       /** \brief Get the value of the internal \a sample parameter. */
       inline unsigned int
       getSample () const
-      {
-        return (sample_);
-      }
+      { return (sample_); }
 
       /** \brief Set seed of random function.
         * \param[in] seed the input seed
         */
       inline void
       setSeed (unsigned int seed)
-      {
-        seed_ = seed;
-      }
+      { seed_ = seed; }
 
       /** \brief Get the value of the internal \a seed parameter. */
       inline unsigned int
       getSeed () const
-      {
-        return (seed_);
-      }
+      { return (seed_); }
 
       /** \brief Set the number of bins in x, y and z direction
         * \param[in] binsx number of bins in x direction
@@ -132,10 +144,10 @@ namespace pcl
         * \param[in] normals the normals computed for the input cloud
         */
       inline void 
-      setNormals (const NormalsPtr &normals) { input_normals_ = normals; }
+      setNormals (const NormalsConstPtr &normals) { input_normals_ = normals; }
 
       /** \brief Get the normals computed on the input point cloud */
-      inline NormalsPtr
+      inline NormalsConstPtr
       getNormals () const { return (input_normals_); }
 
     protected:
@@ -152,7 +164,7 @@ namespace pcl
       unsigned int binsz_;
      
       /** \brief The normals computed at each point in the input cloud */
-      NormalsPtr input_normals_; 
+      NormalsConstPtr input_normals_;
 
       /** \brief Sample of point indices into a separate PointCloud
         * \param[out] output the resultant point cloud
@@ -166,13 +178,16 @@ namespace pcl
       void
       applyFilter (std::vector<int> &indices);
 
+      bool
+      initCompute ();
+
     private:
       /** \brief Finds the bin number of the input normal, returns the bin number
         * \param[in] normal the input normal 
         * \param[in] nbins total number of bins
         */
       unsigned int 
-      findBin (float *normal, unsigned int nbins);
+      findBin (const float *normal, unsigned int nbins);
 
       /** \brief Checks of the entire bin is sampled, returns true or false
         * \param[out] array flag which says whether a point is sampled or not
@@ -182,6 +197,13 @@ namespace pcl
       bool
       isEntireBinSampled (boost::dynamic_bitset<> &array, unsigned int start_index, unsigned int length);
 
+      /** \brief Uniform random distribution. */
+      boost::variate_generator<boost::mt19937, boost::uniform_int<uint32_t> > *rng_uniform_distribution_;
   };
 }
+
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/filters/impl/normal_space.hpp>
+#endif
+
 #endif  //#ifndef PCL_FILTERS_NORMAL_SPACE_SUBSAMPLE_H_

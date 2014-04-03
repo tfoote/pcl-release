@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -35,10 +35,8 @@
  *  \author Raphael Favier
  * */
 
-#include <boost/thread/thread.hpp>
-
 #include <pcl/io/pcd_io.h>
-
+#include <pcl/common/time.h>
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/visualization/point_cloud_handlers.h>
 #include <pcl/visualization/common/common.h>
@@ -47,9 +45,11 @@
 #include <pcl/octree/octree_impl.h>
 
 #include <pcl/filters/filter.h>
+#include "boost.h"
 
-#include <omp.h>
-
+#include <vtkRenderer.h>
+#include <vtkRenderWindow.h>
+#include <vtkCubeSource.h>
 //=============================
 // Displaying cubes is very long!
 // so we limit their numbers.
@@ -323,16 +323,15 @@ private:
   {
     displayCloud->points.clear();
 
-    pcl::octree::OctreePointCloudVoxelCentroid<pcl::PointXYZ>::Iterator tree_it(octree);
+    pcl::octree::OctreePointCloudVoxelCentroid<pcl::PointXYZ>::Iterator tree_it;
+    pcl::octree::OctreePointCloudVoxelCentroid<pcl::PointXYZ>::Iterator tree_it_end = octree.end();
 
     pcl::PointXYZ pt;
     std::cout << "===== Extracting data at depth " << depth << "... " << std::flush;
-    double start = omp_get_wtime();
-    while (*tree_it++)
-    {
-      if (static_cast<int> (tree_it.getCurrentOctreeDepth ()) != depth)
-        continue;
+    double start = pcl::getTime ();
 
+    for (tree_it = octree.begin(depth); tree_it!=tree_it_end; ++tree_it)
+    {
       Eigen::Vector3f voxel_min, voxel_max;
       octree.getVoxelBounds(tree_it, voxel_min, voxel_max);
 
@@ -340,12 +339,9 @@ private:
       pt.y = (voxel_min.y() + voxel_max.y()) / 2.0f;
       pt.z = (voxel_min.z() + voxel_max.z()) / 2.0f;
       displayCloud->points.push_back(pt);
-
-      //we are already the desired depth, there is no reason to go deeper.
-      tree_it.skipChildVoxels();
     }
 
-    double end = omp_get_wtime();
+    double end = pcl::getTime ();
     printf("%zu pts, %.4gs. %.4gs./pt. =====\n", displayCloud->points.size (), end - start,
            (end - start) / static_cast<double> (displayCloud->points.size ()));
 

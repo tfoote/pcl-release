@@ -32,7 +32,8 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: pyramid_feature_matching.cpp 4098 2012-01-31 05:01:31Z rusu $
+ * $Id$
+ *
  */
 
 #include <pcl/point_types.h>

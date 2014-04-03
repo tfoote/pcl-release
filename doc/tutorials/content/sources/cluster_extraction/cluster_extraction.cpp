@@ -58,14 +58,14 @@ main (int argc, char** argv)
     extract.setIndices (inliers);
     extract.setNegative (false);
 
-    // Write the planar inliers to disk
+    // Get the points associated with the planar surface
     extract.filter (*cloud_plane);
     std::cout << "PointCloud representing the planar component: " << cloud_plane->points.size () << " data points." << std::endl;
 
     // Remove the planar inliers, extract the rest
     extract.setNegative (true);
     extract.filter (*cloud_f);
-    cloud_filtered = cloud_f;
+    *cloud_filtered = *cloud_f;
   }
 
   // Creating the KdTree object for the search method of the extraction

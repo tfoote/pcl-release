@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -31,11 +31,11 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: marching_cubes_reconstruction.cpp 5895 2012-06-12 12:59:02Z aichim $
+ * $Id$
  *
  */
 
-#include <sensor_msgs/PointCloud2.h>
+#include <pcl/PCLPointCloud2.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/io/vtk_io.h>
 #include <pcl/surface/marching_cubes_hoppe.h>
@@ -72,7 +72,7 @@ printHelp (int, char **argv)
 }
 
 bool
-loadCloud (const std::string &filename, sensor_msgs::PointCloud2 &cloud)
+loadCloud (const std::string &filename, pcl::PCLPointCloud2 &cloud)
 {
   TicToc tt;
   print_highlight ("Loading "); print_value ("%s ", filename.c_str ());
@@ -87,11 +87,11 @@ loadCloud (const std::string &filename, sensor_msgs::PointCloud2 &cloud)
 }
 
 void
-compute (const sensor_msgs::PointCloud2::ConstPtr &input, PolygonMesh &output,
+compute (const pcl::PCLPointCloud2::ConstPtr &input, PolygonMesh &output,
          int hoppe_or_rbf, float iso_level, int grid_res, float extend_percentage, float off_surface_displacement)
 {
   PointCloud<PointNormal>::Ptr xyz_cloud (new pcl::PointCloud<PointNormal> ());
-  fromROSMsg (*input, *xyz_cloud);
+  fromPCLPointCloud2 (*input, *xyz_cloud);
 
   MarchingCubes<PointNormal> *mc;
   if (hoppe_or_rbf == 0)
@@ -99,7 +99,7 @@ compute (const sensor_msgs::PointCloud2::ConstPtr &input, PolygonMesh &output,
   else
   {
     mc = new MarchingCubesRBF<PointNormal> ();
-    ((MarchingCubesRBF<PointNormal>*) mc)->setOffSurfaceDisplacement (off_surface_displacement);
+    (reinterpret_cast<MarchingCubesRBF<PointNormal>*> (mc))->setOffSurfaceDisplacement (off_surface_displacement);
   }
 
   mc->setIsoLevel (iso_level);
@@ -192,7 +192,7 @@ main (int argc, char** argv)
   print_info ("Setting an off-surface displacement of: "); print_value ("%f\n", off_surface_displacement);
 
   // Load the first file
-  sensor_msgs::PointCloud2::Ptr cloud (new sensor_msgs::PointCloud2);
+  pcl::PCLPointCloud2::Ptr cloud (new pcl::PCLPointCloud2);
   if (!loadCloud (argv[pcd_file_indices[0]], *cloud))
     return (-1);
 

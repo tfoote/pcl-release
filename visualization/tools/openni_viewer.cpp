@@ -31,16 +31,15 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: openni_viewer.cpp 4360 2012-02-10 01:01:11Z rusu $
+ * $Id$
  *
  */
 
-#include <boost/thread/thread.hpp>
 #define MEASURE_FUNCTION_TIME
 #include <pcl/common/time.h> //fps calculations
 #include <pcl/io/openni_grabber.h>
-#include <pcl/visualization/point_cloud_handlers.h>
 #include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/visualization/boost.h>
 #include <pcl/visualization/image_viewer.h>
 #include <pcl/console/print.h>
 #include <pcl/console/parse.h>
@@ -69,176 +68,302 @@ do \
 }while(false)
 #endif
 
-boost::mutex cld_mutex, img_mutex;
-pcl::PointCloud<pcl::PointXYZRGBA>::ConstPtr g_cloud;
-boost::shared_ptr<openni_wrapper::Image> g_image;
-
 void
-printHelp (int argc, char **argv)
+printHelp (int, char **argv)
 {
   using pcl::console::print_error;
   using pcl::console::print_info;
-  print_error ("Syntax is: %s <options>\n", argv[0]);
-  print_info ("  where options are:\n");
-  print_info ("                     -dev device_id           = device to be used\n");
-  print_info ("                                                maybe \"#n\", with n being the number of the device in device list.\n");
-  print_info ("                                                maybe \"bus@addr\", with bus and addr being the usb bus and address where device is connected.\n");
-  print_info ("                                                maybe \"serial\", with serial being the serial number of the device.\n");
-  print_info ("\n");
+
+  print_error ("Syntax is: %s [((<device_id> | <path-to-oni-file>) [-depthmode <mode>] [-imagemode <mode>] [-xyz] | -l [<device_id>]| -h | --help)]\n", argv [0]);
+  print_info ("%s -h | --help : shows this help\n", argv [0]);
+  print_info ("%s -xyz : use only XYZ values and ignore RGB components (this flag is required for use with ASUS Xtion Pro) \n", argv [0]);
+  print_info ("%s -l : list all available devices\n", argv [0]);
+  print_info ("%s -l <device-id> :list all available modes for specified device\n", argv [0]);
+  print_info ("\t\t<device_id> may be \"#1\", \"#2\", ... for the first, second etc device in the list\n");
+#ifndef _WIN32
+  print_info ("\t\t                   bus@address for the device connected to a specific usb-bus / address combination\n");
+  print_info ("\t\t                   <serial-number>\n");
+#endif
+  print_info ("\n\nexamples:\n");
+  print_info ("%s \"#1\"\n", argv [0]);
+  print_info ("\t\t uses the first device.\n");
+  print_info ("%s  \"./temp/test.oni\"\n", argv [0]);
+  print_info ("\t\t uses the oni-player device to play back oni file given by path.\n");
+  print_info ("%s -l\n", argv [0]);
+  print_info ("\t\t list all available devices.\n");
+  print_info ("%s -l \"#2\"\n", argv [0]);
+  print_info ("\t\t list all available modes for the second device.\n");
+  #ifndef _WIN32
+  print_info ("%s A00361800903049A\n", argv [0]);
+  print_info ("\t\t uses the device with the serial number \'A00361800903049A\'.\n");
+  print_info ("%s 1@16\n", argv [0]);
+  print_info ("\t\t uses the device on address 16 at USB bus 1.\n");
+  #endif
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+template <typename PointType>
+class OpenNIViewer
+{
+  public:
+    typedef pcl::PointCloud<PointType> Cloud;
+    typedef typename Cloud::ConstPtr CloudConstPtr;
+
+    OpenNIViewer (pcl::Grabber& grabber)
+      : cloud_viewer_ (new pcl::visualization::PCLVisualizer ("PCL OpenNI cloud"))
+      , image_viewer_ ()
+      , grabber_ (grabber)
+      , rgb_data_ (0), rgb_data_size_ (0)
+    {
+    }
+
+    void
+    cloud_callback (const CloudConstPtr& cloud)
+    {
+      FPS_CALC ("cloud callback");
+      boost::mutex::scoped_lock lock (cloud_mutex_);
+      cloud_ = cloud;
+    }
+
+    void
+    image_callback (const boost::shared_ptr<openni_wrapper::Image>& image)
+    {
+      FPS_CALC ("image callback");
+      boost::mutex::scoped_lock lock (image_mutex_);
+      image_ = image;
+      
+      if (image->getEncoding () != openni_wrapper::Image::RGB)
+      {
+        if (rgb_data_size_ < image->getWidth () * image->getHeight ())
+        {
+          if (rgb_data_)
+            delete [] rgb_data_;
+          rgb_data_size_ = image->getWidth () * image->getHeight ();
+          rgb_data_ = new unsigned char [rgb_data_size_ * 3];
+        }
+        image_->fillRGB (image_->getWidth (), image_->getHeight (), rgb_data_);
+      }
+    }
+    
+    void 
+    keyboard_callback (const pcl::visualization::KeyboardEvent& event, void*)
+    {
+      if (event.getKeyCode ())
+        cout << "the key \'" << event.getKeyCode() << "\' (" << event.getKeyCode() << ") was";
+      else
+        cout << "the special key \'" << event.getKeySym() << "\' was";
+      if (event.keyDown())
+        cout << " pressed" << endl;
+      else
+        cout << " released" << endl;
+    }
+    
+    void 
+    mouse_callback (const pcl::visualization::MouseEvent& mouse_event, void*)
+    {
+      if (mouse_event.getType() == pcl::visualization::MouseEvent::MouseButtonPress && mouse_event.getButton() == pcl::visualization::MouseEvent::LeftButton)
+      {
+        cout << "left button pressed @ " << mouse_event.getX () << " , " << mouse_event.getY () << endl;
+      }
+    }
+
+    /**
+     * @brief starts the main loop
+     */
+    void
+    run ()
+    {
+      cloud_viewer_->registerMouseCallback (&OpenNIViewer::mouse_callback, *this);
+      cloud_viewer_->registerKeyboardCallback(&OpenNIViewer::keyboard_callback, *this);
+      boost::function<void (const CloudConstPtr&) > cloud_cb = boost::bind (&OpenNIViewer::cloud_callback, this, _1);
+      boost::signals2::connection cloud_connection = grabber_.registerCallback (cloud_cb);
+      
+      boost::signals2::connection image_connection;
+      if (grabber_.providesCallback<void (const boost::shared_ptr<openni_wrapper::Image>&)>())
+      {
+        image_viewer_.reset (new pcl::visualization::ImageViewer ("PCL OpenNI image"));
+        image_viewer_->registerMouseCallback (&OpenNIViewer::mouse_callback, *this);
+        image_viewer_->registerKeyboardCallback(&OpenNIViewer::keyboard_callback, *this);
+        boost::function<void (const boost::shared_ptr<openni_wrapper::Image>&) > image_cb = boost::bind (&OpenNIViewer::image_callback, this, _1);
+        image_connection = grabber_.registerCallback (image_cb);
+      }
+      
+      bool image_init = false, cloud_init = false;
+      
+      grabber_.start ();
+
+      while (!cloud_viewer_->wasStopped () && (image_viewer_ && !image_viewer_->wasStopped ()))
+      {
+        boost::shared_ptr<openni_wrapper::Image> image;
+        CloudConstPtr cloud;
+
+        cloud_viewer_->spinOnce ();
+
+        // See if we can get a cloud
+        if (cloud_mutex_.try_lock ())
+        {
+          cloud_.swap (cloud);
+          cloud_mutex_.unlock ();
+        }
+
+        if (cloud)
+        {
+          FPS_CALC ("drawing cloud");
+          
+          if (!cloud_init)
+          {
+            cloud_viewer_->setPosition (0, 0);
+            cloud_viewer_->setSize (cloud->width, cloud->height);
+            cloud_init = !cloud_init;
+          }
+
+          if (!cloud_viewer_->updatePointCloud (cloud, "OpenNICloud"))
+          {
+            cloud_viewer_->addPointCloud (cloud, "OpenNICloud");
+            cloud_viewer_->resetCameraViewpoint ("OpenNICloud");
+          }          
+        }
+
+        // See if we can get an image
+        if (image_mutex_.try_lock ())
+        {
+          image_.swap (image);
+          image_mutex_.unlock ();
+        }
+
+        if (image)
+        {
+          if (!image_init && cloud && cloud->width != 0)
+          {
+            image_viewer_->setPosition (cloud->width, 0);
+            image_viewer_->setSize (cloud->width, cloud->height);
+            image_init = !image_init;
+          }
+
+          if (image->getEncoding() == openni_wrapper::Image::RGB)
+            image_viewer_->addRGBImage (image->getMetaData ().Data (), image->getWidth (), image->getHeight ());
+          else
+            image_viewer_->addRGBImage (rgb_data_, image->getWidth (), image->getHeight ());
+          image_viewer_->spinOnce ();
+        }
+        
+      }
+
+      grabber_.stop ();
+      
+      cloud_connection.disconnect ();
+      image_connection.disconnect ();
+      if (rgb_data_)
+        delete[] rgb_data_;
+    }
+    
+    boost::shared_ptr<pcl::visualization::PCLVisualizer> cloud_viewer_;
+    boost::shared_ptr<pcl::visualization::ImageViewer> image_viewer_;
+    
+    pcl::Grabber& grabber_;
+    boost::mutex cloud_mutex_;
+    boost::mutex image_mutex_;
+    
+    CloudConstPtr cloud_;
+    boost::shared_ptr<openni_wrapper::Image> image_;
+    unsigned char* rgb_data_;
+    unsigned rgb_data_size_;
+};
 
 // Create the PCLVisualizer object
 boost::shared_ptr<pcl::visualization::PCLVisualizer> cld;
-#if !((VTK_MAJOR_VERSION == 5)&&(VTK_MINOR_VERSION <= 4))
 boost::shared_ptr<pcl::visualization::ImageViewer> img;
-#endif
-
-struct EventHelper
-{
-  void 
-  cloud_cb (const pcl::PointCloud<pcl::PointXYZRGBA>::ConstPtr & cloud)
-  {
-    FPS_CALC ("callback");
-    cld_mutex.lock ();
-    g_cloud = cloud;
-    cld_mutex.unlock ();
-  }
-
-#if !((VTK_MAJOR_VERSION == 5)&&(VTK_MINOR_VERSION <= 4))
-  void
-  image_callback (const boost::shared_ptr<openni_wrapper::Image>& image)
-  {
-    FPS_CALC ("image callback");
-    img_mutex.lock ();
-    g_image = image;
-    img_mutex.unlock ();
-  }
-#endif  
-};
-// Simple callbacks.
-void 
-keyboard_callback (const pcl::visualization::KeyboardEvent& event, void* cookie)
-{
-  std::string* message = (std::string*)cookie;
-  cout << (*message) << " :: ";
-  if (event.getKeyCode())
-    cout << "the key \'" << event.getKeyCode() << "\' (" << (int)event.getKeyCode() << ") was";
-  else
-    cout << "the special key \'" << event.getKeySym() << "\' was";
-  if (event.keyDown())
-    cout << " pressed" << endl;
-  else
-    cout << " released" << endl;
-}
-
-void 
-mouse_callback (const pcl::visualization::MouseEvent& mouse_event, void* cookie)
-{
-  std::string* message = (std::string*) cookie;
-  if (mouse_event.getType() == pcl::visualization::MouseEvent::MouseButtonPress && mouse_event.getButton() == pcl::visualization::MouseEvent::LeftButton)
-  {
-    cout << (*message) << " :: " << mouse_event.getX () << " , " << mouse_event.getY () << endl;
-  }
-}
 
 /* ---[ */
 int
 main (int argc, char** argv)
 {
-  if (argc > 1)
-  {
-    for (int i = 1; i < argc; i++)
-    {
-      if (std::string (argv[i]) == "-h")
-      {
-        printHelp (argc, argv);
-        return (-1);
-      }
-    }
-  }
-
-  EventHelper event_helper;
-  std::string device_id = "";
-  pcl::console::parse_argument (argc, argv, "-dev", device_id);
-
-  pcl::Grabber* interface = new pcl::OpenNIGrabber (device_id);
-
-  cld.reset (new pcl::visualization::PCLVisualizer (argc, argv, "OpenNI Viewer"));
-
-  std::string mouseMsg3D ("Mouse coordinates in PCL Visualizer");
-  std::string keyMsg3D ("Key event for PCL Visualizer");
-  cld->registerMouseCallback (&mouse_callback, (void*)(&mouseMsg3D));    
-  cld->registerKeyboardCallback(&keyboard_callback, (void*)(&keyMsg3D));
-  boost::function<void(const pcl::PointCloud<pcl::PointXYZRGBA>::ConstPtr&) > f = boost::bind (&EventHelper::cloud_cb, &event_helper, _1);
-  boost::signals2::connection c1 = interface->registerCallback (f);
-
-#if !((VTK_MAJOR_VERSION == 5)&&(VTK_MINOR_VERSION <= 4))
-  img.reset (new pcl::visualization::ImageViewer ("OpenNI Viewer"));
-  // Register callbacks
-  std::string keyMsg2D ("Key event for image viewer");
-  std::string mouseMsg2D ("Mouse coordinates in image viewer");
-  img->registerMouseCallback (&mouse_callback, (void*)(&mouseMsg2D));
-  img->registerKeyboardCallback(&keyboard_callback, (void*)(&keyMsg2D));
-  boost::function<void (const boost::shared_ptr<openni_wrapper::Image>&) > image_cb = boost::bind (&EventHelper::image_callback, &event_helper, _1);
-  boost::signals2::connection image_connection = interface->registerCallback (image_cb);
-  unsigned char* rgb_data = 0;
-  unsigned rgb_data_size = 0;
-#endif 
+  std::string device_id("");
+  pcl::OpenNIGrabber::Mode depth_mode = pcl::OpenNIGrabber::OpenNI_Default_Mode;
+  pcl::OpenNIGrabber::Mode image_mode = pcl::OpenNIGrabber::OpenNI_Default_Mode;
+  bool xyz = false;
   
-  interface->start ();
-  bool cld_init = false;
-  // Loop
-  while (!cld->wasStopped ())
+  if (argc >= 2)
   {
-    // Render and process events in the two interactors
-    cld->spinOnce ();
-#if !((VTK_MAJOR_VERSION == 5)&&(VTK_MINOR_VERSION <= 4))
-    img->spinOnce ();
-#endif
-    FPS_CALC ("drawing");
-
-    // Add the cloud
-    if (g_cloud && cld_mutex.try_lock ())
+    device_id = argv[1];
+    if (device_id == "--help" || device_id == "-h")
     {
-      if (!cld_init)
-      {
-        cld->getRenderWindow ()->SetSize (g_cloud->width, g_cloud->height);
-        cld->getRenderWindow ()->SetPosition (g_cloud->width, 0);
-        cld_init = !cld_init;
-      }
-
-      pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGBA> handler (g_cloud);
-      if (!cld->updatePointCloud (g_cloud, handler, "OpenNICloud"))
-      {
-        cld->addPointCloud (g_cloud, handler, "OpenNICloud");
-        cld->resetCameraViewpoint ("OpenNICloud");
-      }
-      cld_mutex.unlock ();
+      printHelp(argc, argv);
+      return 0;
     }
-    
-#if !((VTK_MAJOR_VERSION == 5)&&(VTK_MINOR_VERSION <= 4))
-    // Add the image
-    if (g_image && img_mutex.try_lock ())
+    else if (device_id == "-l")
     {
-      if (g_image->getEncoding() == openni_wrapper::Image::RGB)
-        img->showRGBImage (g_image->getMetaData ().Data (), 
-                           g_image->getWidth (), g_image->getHeight ());
+      if (argc >= 3)
+      {
+        pcl::OpenNIGrabber grabber(argv[2]);
+        boost::shared_ptr<openni_wrapper::OpenNIDevice> device = grabber.getDevice();
+        cout << "Supported depth modes for device: " << device->getVendorName() << " , " << device->getProductName() << endl;
+        std::vector<std::pair<int, XnMapOutputMode > > modes = grabber.getAvailableDepthModes();
+        for (std::vector<std::pair<int, XnMapOutputMode > >::const_iterator it = modes.begin(); it != modes.end(); ++it)
+        {
+          cout << it->first << " = " << it->second.nXRes << " x " << it->second.nYRes << " @ " << it->second.nFPS << endl;
+        }
+
+        if (device->hasImageStream ())
+        {
+          cout << endl << "Supported image modes for device: " << device->getVendorName() << " , " << device->getProductName() << endl;
+          modes = grabber.getAvailableImageModes();
+          for (std::vector<std::pair<int, XnMapOutputMode > >::const_iterator it = modes.begin(); it != modes.end(); ++it)
+          {
+            cout << it->first << " = " << it->second.nXRes << " x " << it->second.nYRes << " @ " << it->second.nFPS << endl;
+          }
+        }
+      }
       else
       {
-        if (rgb_data_size < g_image->getWidth () * g_image->getHeight ())
+        openni_wrapper::OpenNIDriver& driver = openni_wrapper::OpenNIDriver::getInstance();
+        if (driver.getNumberDevices() > 0)
         {
-          rgb_data_size = g_image->getWidth () * g_image->getHeight ();
-          rgb_data = new unsigned char [rgb_data_size * 3];
-        }
-        g_image->fillRGB (g_image->getWidth (), g_image->getHeight (), rgb_data);
-        img->showRGBImage (rgb_data, g_image->getWidth (), g_image->getHeight ());
-      }
-      img_mutex.unlock ();
-    }
-#endif
-    boost::this_thread::sleep (boost::posix_time::microseconds (100));
-  }
+          for (unsigned deviceIdx = 0; deviceIdx < driver.getNumberDevices(); ++deviceIdx)
+          {
+            cout << "Device: " << deviceIdx + 1 << ", vendor: " << driver.getVendorName(deviceIdx) << ", product: " << driver.getProductName(deviceIdx)
+              << ", connected: " << driver.getBus(deviceIdx) << " @ " << driver.getAddress(deviceIdx) << ", serial number: \'" << driver.getSerialNumber(deviceIdx) << "\'" << endl;
+          }
 
-  interface->stop ();
+        }
+        else
+          cout << "No devices connected." << endl;
+        
+        cout <<"Virtual Devices available: ONI player" << endl;
+      }
+      return 0;
+    }
+  }
+  else
+  {
+    openni_wrapper::OpenNIDriver& driver = openni_wrapper::OpenNIDriver::getInstance();
+    if (driver.getNumberDevices() > 0)
+      cout << "Device Id not set, using first device." << endl;
+  }
+  
+  unsigned mode;
+  if (pcl::console::parse(argc, argv, "-depthmode", mode) != -1)
+    depth_mode = pcl::OpenNIGrabber::Mode (mode);
+
+  if (pcl::console::parse(argc, argv, "-imagemode", mode) != -1)
+    image_mode = pcl::OpenNIGrabber::Mode (mode);
+  
+  if (pcl::console::find_argument (argc, argv, "-xyz") != -1)
+    xyz = true;
+  
+  pcl::OpenNIGrabber grabber (device_id, depth_mode, image_mode);
+  
+  if (xyz || !grabber.providesCallback<pcl::OpenNIGrabber::sig_cb_openni_point_cloud_rgb> ())
+  {
+    OpenNIViewer<pcl::PointXYZ> openni_viewer (grabber);
+    openni_viewer.run ();
+  }
+  else
+  {
+    OpenNIViewer<pcl::PointXYZRGBA> openni_viewer (grabber);
+    openni_viewer.run ();
+  }
+  
+  return (0);
 }
 /* ]--- */

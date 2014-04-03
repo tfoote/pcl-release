@@ -32,7 +32,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: surfel_smoothing.h 5060 2012-03-14 02:19:39Z rusu $
+ * $Id$
  */
 
 #ifndef PCL_SURFEL_SMOOTHING_H_
@@ -50,6 +50,9 @@ namespace pcl
     using PCLBase<PointT>::initCompute;
 
     public:
+      typedef boost::shared_ptr<SurfelSmoothing<PointT, PointNT> > Ptr;
+      typedef boost::shared_ptr<const SurfelSmoothing<PointT, PointNT> > ConstPtr;
+
       typedef pcl::PointCloud<PointT> PointCloudIn;
       typedef typename pcl::PointCloud<PointT>::Ptr PointCloudInPtr;
       typedef pcl::PointCloud<PointNT> NormalCloud;
@@ -108,4 +111,8 @@ namespace pcl
   };
 }
 
-#endif /* PCL_SURFEL_SMOOTHING_H_ */
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/surface/impl/surfel_smoothing.hpp>
+#endif
+
+#endif    // PCL_SURFEL_SMOOTHING_H_

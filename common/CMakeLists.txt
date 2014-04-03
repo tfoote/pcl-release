@@ -12,11 +12,13 @@ if(build)
     set(range_image_incs
         include/pcl/range_image/range_image.h
         include/pcl/range_image/range_image_planar.h
+        include/pcl/range_image/range_image_spherical.h
         )
   
     set(range_image_incs_impl
         include/pcl/range_image/impl/range_image.hpp
         include/pcl/range_image/impl/range_image_planar.hpp
+        include/pcl/range_image/impl/range_image_spherical.hpp
         )
 
     set(range_image_srcs
@@ -25,6 +27,7 @@ if(build)
         )
 
     set(srcs 
+        src/point_types.cpp
         src/pcl_base.cpp
         src/io.cpp
         src/common.cpp
@@ -34,6 +37,7 @@ if(build)
         src/parse.cpp
         src/poses_from_matches.cpp
         src/print.cpp
+        src/projection_matrix.cpp
         src/time_trigger.cpp
         src/gaussian.cpp
         ${range_image_srcs}
@@ -51,31 +55,33 @@ if(build)
         include/pcl/point_representation.h
         include/pcl/correspondence.h
         include/pcl/point_types.h
-        include/pcl/cloud_properties.h
-        include/pcl/channel_properties.h
         include/pcl/for_each_type.h
         include/pcl/pcl_tests.h
+        include/pcl/cloud_iterator.h
+        include/pcl/TextureMesh.h
+        include/pcl/PCLPointField.h
+        include/pcl/PCLPointCloud2.h
+        include/pcl/PCLImage.h
+        include/pcl/PCLHeader.h
+        include/pcl/ModelCoefficients.h
+        include/pcl/PolygonMesh.h
+        include/pcl/Vertices.h
+        include/pcl/PointIndices.h
+        include/pcl/sse.h
+        include/pcl/PCLPointField.h
+        include/pcl/PCLPointCloud2.h
+        include/pcl/PCLImage.h
+        include/pcl/PCLHeader.h
+        include/pcl/ModelCoefficients.h
+        include/pcl/PolygonMesh.h
+        include/pcl/Vertices.h
+        include/pcl/PointIndices.h
+        include/pcl/register_point_struct.h
+        include/pcl/conversions.h
         )
-        
-    if(NOT USE_ROS)
-        set(incs ${incs}
-          include/pcl/ModelCoefficients.h
-          include/pcl/PolygonMesh.h
-          include/pcl/Vertices.h
-          include/pcl/PointIndices.h
-          include/pcl/TextureMesh.h
-          )
 
-        set(sensor_msg_incs 
-          include/sensor_msgs/PointField.h
-          include/sensor_msgs/PointCloud2.h
-          include/sensor_msgs/Image.h
-          )
-
-        set(std_msg_incs include/std_msgs/Header.h)
-    endif(NOT USE_ROS)
-    
     set(common_incs 
+        include/pcl/common/boost.h
         include/pcl/common/angles.h
         include/pcl/common/bivariate_polynomial.h
         include/pcl/common/centroid.h
@@ -97,6 +103,7 @@ if(build)
         include/pcl/common/transformation_from_correspondences.h
         include/pcl/common/vector_average.h
         include/pcl/common/pca.h
+        include/pcl/common/point_tests.h
         include/pcl/common/synchronizer.h
         include/pcl/common/utils.h
         include/pcl/common/geometry.h
@@ -104,6 +111,11 @@ if(build)
         include/pcl/common/point_operators.h
         include/pcl/common/spring.h
         include/pcl/common/intensity.h
+        include/pcl/common/random.h
+        include/pcl/common/generate.h
+        include/pcl/common/projection_matrix.h
+        include/pcl/register_point_struct.h
+        include/pcl/conversions.h
         )
 
     set(common_incs_impl
@@ -124,13 +136,20 @@ if(build)
         include/pcl/common/impl/gaussian.hpp
         include/pcl/common/impl/spring.hpp
         include/pcl/common/impl/intensity.hpp
+        include/pcl/common/impl/random.hpp
+        include/pcl/common/impl/generate.hpp
+        include/pcl/common/impl/projection_matrix.hpp
         )
 
-    set(impl_incs include/pcl/impl/instantiate.hpp
+    set(impl_incs 
+        include/pcl/impl/pcl_base.hpp
+        include/pcl/impl/instantiate.hpp
         include/pcl/impl/point_types.hpp
+        include/pcl/impl/cloud_iterator.hpp
         )
 
-    set(ros_incs include/pcl/ros/conversions.h
+    set(ros_incs 
+        include/pcl/ros/conversions.h
         include/pcl/ros/register_point_struct.h
         )
 
@@ -140,31 +159,31 @@ if(build)
         include/pcl/console/time.h
         )
         
+    set(kissfft_incs
+        include/pcl/common/fft/_kiss_fft_guts.h
+        include/pcl/common/fft/kiss_fft.h
+        include/pcl/common/fft/kiss_fftr.h)
+        
+    set(kissfft_srcs
+        src/fft/kiss_fft.c
+        src/fft/kiss_fftr.c)
 
     set(LIB_NAME pcl_${SUBSYS_NAME})
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-    PCL_ADD_LIBRARY(${LIB_NAME} ${SUBSYS_NAME} ${srcs} ${kissfft_srcs} ${incs} ${common_incs} ${impl_incs} ${ros_incs} ${tools_incs} ${kissfft_incs} ${common_incs_impl} ${sensor_msg_incs} ${std_msg_incs} ${range_image_incs} ${range_image_incs_impl})
-    #PCL_ADD_LIBRARY(${LIB_NAME} ${SUBSYS_NAME} ${srcs} ${incs} ${common_incs} ${impl_incs} ${ros_incs} ${tools_incs} ${common_incs_impl} ${sensor_msg_incs} ${std_msg_incs} ${range_image_incs} ${range_image_incs_impl})
-    link_ros_libs (${LIB_NAME})
+    PCL_ADD_LIBRARY(${LIB_NAME} ${SUBSYS_NAME} ${srcs} ${kissfft_srcs} ${incs} ${common_incs} ${impl_incs} ${ros_incs} ${tools_incs} ${kissfft_incs} ${common_incs_impl} ${range_image_incs} ${range_image_incs_impl})
+    #PCL_ADD_LIBRARY(${LIB_NAME} ${SUBSYS_NAME} ${srcs} ${incs} ${common_incs} ${impl_incs} ${ros_incs} ${tools_incs} ${common_incs_impl} ${range_image_incs} ${range_image_incs_impl})
     PCL_MAKE_PKGCONFIG(${LIB_NAME} ${SUBSYS_NAME} "${SUBSYS_DESC}" "" ""
         "" "" "")
 
     # Install include files
     PCL_ADD_INCLUDES(${SUBSYS_NAME} "" ${incs})
-    if(NOT USE_ROS)
-        PCL_ADD_INCLUDES(${SUBSYS_NAME} "../sensor_msgs" ${sensor_msg_incs})
-        PCL_ADD_INCLUDES(${SUBSYS_NAME} "../std_msgs" ${std_msg_incs})
-    endif(NOT USE_ROS)
     PCL_ADD_INCLUDES(${SUBSYS_NAME} common ${common_incs})
+    PCL_ADD_INCLUDES(${SUBSYS_NAME} common/fft ${kissfft_incs})
     PCL_ADD_INCLUDES(${SUBSYS_NAME} common/impl ${common_incs_impl})
     PCL_ADD_INCLUDES(${SUBSYS_NAME} impl ${impl_incs})
     PCL_ADD_INCLUDES(${SUBSYS_NAME} ros ${ros_incs})
     PCL_ADD_INCLUDES(${SUBSYS_NAME} console ${tools_incs})
     PCL_ADD_INCLUDES(${SUBSYS_NAME} range_image ${range_image_incs})
     PCL_ADD_INCLUDES(${SUBSYS_NAME} range_image/impl ${range_image_incs_impl})
-
-    if(BUILD_TESTS)
-       add_subdirectory(test)
-    endif(BUILD_TESTS)
 
 endif(build)

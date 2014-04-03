@@ -33,7 +33,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: reconstruction.h 6112 2012-07-03 17:57:04Z aichim $
+ * $Id$
  *
  */
 
@@ -43,9 +43,8 @@
 #include <pcl/pcl_base.h>
 #include <pcl/PolygonMesh.h>
 #include <pcl/search/pcl_search.h>
-#include <pcl/ros/conversions.h>
-#include <boost/bind.hpp>
-#include <boost/function.hpp>
+#include <pcl/conversions.h>
+#include <pcl/surface/boost.h>
 
 namespace pcl
 {
@@ -62,11 +61,17 @@ namespace pcl
   class PCLSurfaceBase: public PCLBase<PointInT>
   {
     public:
+      typedef boost::shared_ptr<PCLSurfaceBase<PointInT> > Ptr;
+      typedef boost::shared_ptr<const PCLSurfaceBase<PointInT> > ConstPtr;
+
       typedef typename pcl::search::Search<PointInT> KdTree;
       typedef typename pcl::search::Search<PointInT>::Ptr KdTreePtr;
 
       /** \brief Empty constructor. */
       PCLSurfaceBase () : tree_ () {}
+      
+      /** \brief Empty destructor */
+      virtual ~PCLSurfaceBase () {}
 
       /** \brief Provide an optional pointer to a search object.
         * \param[in] tree a pointer to the spatial search object.
@@ -114,6 +119,9 @@ namespace pcl
   class SurfaceReconstruction: public PCLSurfaceBase<PointInT>
   {
     public:
+      typedef boost::shared_ptr<SurfaceReconstruction<PointInT> > Ptr;
+      typedef boost::shared_ptr<const SurfaceReconstruction<PointInT> > ConstPtr;
+
       using PCLSurfaceBase<PointInT>::input_;
       using PCLSurfaceBase<PointInT>::indices_;
       using PCLSurfaceBase<PointInT>::initCompute;
@@ -180,6 +188,9 @@ namespace pcl
   class MeshConstruction: public PCLSurfaceBase<PointInT>
   {
     public:
+      typedef boost::shared_ptr<MeshConstruction<PointInT> > Ptr;
+      typedef boost::shared_ptr<const MeshConstruction<PointInT> > ConstPtr;
+
       using PCLSurfaceBase<PointInT>::input_;
       using PCLSurfaceBase<PointInT>::indices_;
       using PCLSurfaceBase<PointInT>::initCompute;
@@ -198,7 +209,7 @@ namespace pcl
         * \param[out] output the resultant reconstructed surface model
         *
         * \note This method copies the input point cloud data from
-        * PointCloud<T> to PointCloud2, and is implemented here for backwards
+        * PointCloud<T> to PCLPointCloud2, and is implemented here for backwards
         * compatibility only!
         *
         */

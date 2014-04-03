@@ -33,7 +33,7 @@
   *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
   *  POSSIBILITY OF SUCH DAMAGE.
   *
-  * $Id: concave_hull.hpp 6214 2012-07-06 19:31:29Z rusu $
+  * $Id$
   *
   */
 
@@ -54,6 +54,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pcl/surface/qhull.h>
+
+//////////////////////////////////////////////////////////////////////////
+/** \brief Get dimension of concave hull  
+  * \return dimension
+  */                    
+template <typename PointInT> int
+pcl::ConcaveHull<PointInT>::getDim () const
+{
+  return (getDimension ());
+}
 
 //////////////////////////////////////////////////////////////////////////
 template <typename PointInT> void
@@ -119,8 +129,8 @@ pcl::ConcaveHull<PointInT>::reconstruct (PointCloud &output, std::vector<pcl::Ve
 template <typename PointInT> void
 pcl::ConcaveHull<PointInT>::performReconstruction (PointCloud &alpha_shape, std::vector<pcl::Vertices> &polygons)
 {
-  EIGEN_ALIGN16 Eigen::Matrix3f covariance_matrix;
-  Eigen::Vector4f xyz_centroid;
+  EIGEN_ALIGN16 Eigen::Matrix3d covariance_matrix;
+  Eigen::Vector4d xyz_centroid;
   computeMeanAndCovarianceMatrix (*input_, *indices_, covariance_matrix, xyz_centroid);
 
   // Check if the covariance matrix is finite or not.
@@ -129,17 +139,17 @@ pcl::ConcaveHull<PointInT>::performReconstruction (PointCloud &alpha_shape, std:
       if (!pcl_isfinite (covariance_matrix.coeffRef (i, j)))
           return;
 
-  EIGEN_ALIGN16 Eigen::Vector3f eigen_values;
-  EIGEN_ALIGN16 Eigen::Matrix3f eigen_vectors;
+  EIGEN_ALIGN16 Eigen::Vector3d eigen_values;
+  EIGEN_ALIGN16 Eigen::Matrix3d eigen_vectors;
   pcl::eigen33 (covariance_matrix, eigen_vectors, eigen_values);
 
-  Eigen::Affine3f transform1;
+  Eigen::Affine3d transform1;
   transform1.setIdentity ();
 
   // If no input dimension is specified, determine automatically
   if (dim_ == 0)
   {
-    PCL_WARN ("[pcl::%s] WARNING: Input dimension not specified.  Automatically determining input dimension.\n", getClassName ().c_str ());
+    PCL_DEBUG ("[pcl::%s] WARNING: Input dimension not specified.  Automatically determining input dimension.\n", getClassName ().c_str ());
     if (eigen_values[0] / eigen_values[2] < 1.0e-3)
       dim_ = 2;
     else
@@ -518,16 +528,21 @@ pcl::ConcaveHull<PointInT>::performReconstruction (PointCloud &alpha_shape, std:
 
     alpha_shape.points = alpha_shape_sorted.points;
 
-    polygons.resize (pcd_idx_start_polygons.size () - 1);
+    polygons.reserve (pcd_idx_start_polygons.size () - 1);
 
-    for (size_t poly_id = 0; poly_id < polygons.size (); poly_id++)
+    for (size_t poly_id = 0; poly_id < pcd_idx_start_polygons.size () - 1; poly_id++)
     {
-      polygons[poly_id].vertices.resize (pcd_idx_start_polygons[poly_id + 1] - pcd_idx_start_polygons[poly_id] + 1);
-      // populate points in the corresponding polygon
-      for (int j = pcd_idx_start_polygons[poly_id]; j < pcd_idx_start_polygons[poly_id + 1]; ++j)
-        polygons[poly_id].vertices[j - pcd_idx_start_polygons[poly_id]] = static_cast<uint32_t> (j);
+      // Check if we actually have a polygon, and not some degenerated output from QHull
+      if (pcd_idx_start_polygons[poly_id + 1] - pcd_idx_start_polygons[poly_id] >= 3)
+      {
+        pcl::Vertices vertices;
+        vertices.vertices.resize (pcd_idx_start_polygons[poly_id + 1] - pcd_idx_start_polygons[poly_id]);
+        // populate points in the corresponding polygon
+        for (int j = pcd_idx_start_polygons[poly_id]; j < pcd_idx_start_polygons[poly_id + 1]; ++j)
+          vertices.vertices[j - pcd_idx_start_polygons[poly_id]] = static_cast<uint32_t> (j);
 
-      polygons[poly_id].vertices[polygons[poly_id].vertices.size () - 1] = pcd_idx_start_polygons[poly_id];
+        polygons.push_back (vertices);
+      }
     }
 
     if (voronoi_centers_)
@@ -538,7 +553,7 @@ pcl::ConcaveHull<PointInT>::performReconstruction (PointCloud &alpha_shape, std:
   int curlong, totlong;
   qh_memfreeshort (&curlong, &totlong);
 
-  Eigen::Affine3f transInverse = transform1.inverse ();
+  Eigen::Affine3d transInverse = transform1.inverse ();
   pcl::transformPointCloud (alpha_shape, alpha_shape, transInverse);
   xyz_centroid[0] = - xyz_centroid[0];
   xyz_centroid[1] = - xyz_centroid[1];
@@ -590,8 +605,8 @@ pcl::ConcaveHull<PointInT>::performReconstruction (PolygonMesh &output)
   pcl::PointCloud<PointInT> hull_points;
   performReconstruction (hull_points, output.polygons);
 
-  // Convert the PointCloud into a PointCloud2
-  pcl::toROSMsg (hull_points, output.cloud);
+  // Convert the PointCloud into a PCLPointCloud2
+  pcl::toPCLPointCloud2 (hull_points, output.cloud);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////

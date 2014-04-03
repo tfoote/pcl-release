@@ -35,7 +35,6 @@
 #include <pcl/io/io.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/visualization/pcl_visualizer.h>
-#include <boost/make_shared.hpp>
 #include <pcl/common/time.h>
 #include <pcl/features/integral_image_normal.h>
 #include <pcl/features/normal_3d.h>
@@ -85,25 +84,27 @@ class PCDOrganizedMultiPlaneSegmentation
           case 'B':
             if (threshold_ < 0.1f)
               threshold_ += 0.001f;
+            process ();
             break;
           case 'v':
           case 'V':
             if (threshold_ > 0.001f)
               threshold_ -= 0.001f;
+            process ();
             break;
             
           case 'n':
           case 'N':
             depth_dependent_ = !depth_dependent_;
+            process ();
             break;
             
           case 'm':
           case 'M':
             polygon_refinement_ = !polygon_refinement_;
+            process ();
             break;
         }
-        
-        process ();
       }
     }
     
@@ -171,7 +172,7 @@ class PCDOrganizedMultiPlaneSegmentation
                                            centroid[1] + (0.5f * model[1]),
                                            centroid[2] + (0.5f * model[2]));
         sprintf (name, "normal_%d", unsigned (i));
-        viewer.addArrow (pt2, pt1, 1.0, 0, 0, name);
+        viewer.addArrow (pt2, pt1, 1.0, 0, 0, std::string (name));
 
         contour->points = regions[i].getContour ();        
         sprintf (name, "plane_%02d", int (i));

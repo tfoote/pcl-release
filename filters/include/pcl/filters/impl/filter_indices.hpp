@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -31,7 +31,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: filter_indices.hpp 4968 2012-03-08 06:39:52Z rusu $
+ * $Id: filter.hpp 1800 2011-07-15 11:45:31Z marton $
  *
  */
 
@@ -39,7 +39,7 @@
 #define PCL_FILTERS_IMPL_FILTER_INDICES_H_
 
 #include <pcl/pcl_macros.h>
-
+#include <pcl/filters/filter_indices.h>
 
 template <typename PointT> void
 pcl::removeNaNFromPointCloud (const pcl::PointCloud<PointT> &cloud_in,

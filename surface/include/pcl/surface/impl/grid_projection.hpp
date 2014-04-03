@@ -31,7 +31,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: grid_projection.hpp 5982 2012-06-24 23:03:31Z rusu $
+ * $Id$
  *
  */
 
@@ -747,7 +747,7 @@ pcl::GridProjection<PointNT>::performReconstruction (pcl::PolygonMesh &output)
     cloud.points[i].y = surface_[i].y ();
     cloud.points[i].z = surface_[i].z ();
   }
-  pcl::toROSMsg (cloud, output.cloud);
+  pcl::toPCLPointCloud2 (cloud, output.cloud);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////

@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -31,7 +31,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: print.h 6126 2012-07-03 20:19:58Z aichim $
+ * $Id$
  *
  */
 #ifndef TERMINAL_TOOLS_PRINT_H_
@@ -40,7 +40,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#include <pcl/pcl_macros.h>
+#include <pcl/pcl_exports.h>
+#include <pcl/pcl_config.h>
 
 #define PCL_ALWAYS(...)  pcl::console::print (pcl::console::L_ALWAYS, __VA_ARGS__)
 #define PCL_ERROR(...)   pcl::console::print (pcl::console::L_ERROR, __VA_ARGS__)
@@ -48,6 +49,23 @@
 #define PCL_INFO(...)    pcl::console::print (pcl::console::L_INFO, __VA_ARGS__)
 #define PCL_DEBUG(...)   pcl::console::print (pcl::console::L_DEBUG, __VA_ARGS__)
 #define PCL_VERBOSE(...) pcl::console::print (pcl::console::L_VERBOSE, __VA_ARGS__)
+
+#define PCL_ASSERT_ERROR_PRINT_CHECK(pred, msg) \
+    do \
+    { \
+        if (!(pred)) \
+        { \
+            PCL_ERROR(msg); \
+            PCL_ERROR("In File %s, in line %d\n" __FILE__, __LINE__); \
+        } \
+    } while (0)
+
+#define PCL_ASSERT_ERROR_PRINT_RETURN(pred, msg, err) \
+    do \
+    { \
+        PCL_ASSERT_ERROR_PRINT_CHECK(pred, msg); \
+        if (!(pred)) return err; \
+    } while (0)
 
 namespace pcl
 {
@@ -230,4 +248,4 @@ namespace pcl
   }
 } 
 
-#endif
+#endif // TERMINAL_TOOLS_PRINT_H_

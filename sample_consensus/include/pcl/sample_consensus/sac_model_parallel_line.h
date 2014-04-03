@@ -3,6 +3,7 @@
  *
  *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010-2011, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
  *
  *  All rights reserved.
  *
@@ -16,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,7 +34,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: sac_model_parallel_line.h 4710 2012-02-23 17:51:24Z rusu $
+ * $Id$
  *
  */
 
@@ -70,24 +71,32 @@ namespace pcl
 
       /** \brief Constructor for base SampleConsensusModelParallelLine.
         * \param[in] cloud the input point cloud dataset
+        * \param[in] random if true set the random seed to the current time, else set to 12345 (default: false)
         */
-      SampleConsensusModelParallelLine (const PointCloudConstPtr &cloud) : 
-        SampleConsensusModelLine<PointT> (cloud),
-        axis_ (Eigen::Vector3f::Zero ()),
-        eps_angle_ (0.0)
+      SampleConsensusModelParallelLine (const PointCloudConstPtr &cloud, 
+                                        bool random = false) 
+        : SampleConsensusModelLine<PointT> (cloud, random)
+        , axis_ (Eigen::Vector3f::Zero ())
+        , eps_angle_ (0.0)
       {
       }
 
       /** \brief Constructor for base SampleConsensusModelParallelLine.
         * \param[in] cloud the input point cloud dataset
         * \param[in] indices a vector of point indices to be used from \a cloud
+        * \param[in] random if true set the random seed to the current time, else set to 12345 (default: false)
         */
-      SampleConsensusModelParallelLine (const PointCloudConstPtr &cloud, const std::vector<int> &indices) : 
-        SampleConsensusModelLine<PointT> (cloud, indices),
-        axis_ (Eigen::Vector3f::Zero ()),
-        eps_angle_ (0.0)
+      SampleConsensusModelParallelLine (const PointCloudConstPtr &cloud, 
+                                        const std::vector<int> &indices,
+                                        bool random = false) 
+        : SampleConsensusModelLine<PointT> (cloud, indices, random)
+        , axis_ (Eigen::Vector3f::Zero ())
+        , eps_angle_ (0.0)
       {
       }
+      
+      /** \brief Empty destructor */
+      virtual ~SampleConsensusModelParallelLine () {}
 
       /** \brief Set the axis along which we need to search for a plane perpendicular to.
         * \param[in] ax the axis along which we need to search for a plane perpendicular to
@@ -155,5 +164,9 @@ namespace pcl
       double eps_angle_;
   };
 }
+
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/sample_consensus/impl/sac_model_parallel_line.hpp>
+#endif
 
 #endif  //#ifndef PCL_SAMPLE_CONSENSUS_MODEL_PARALLELLINE_H_

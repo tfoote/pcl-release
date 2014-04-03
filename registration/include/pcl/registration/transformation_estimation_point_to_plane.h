@@ -3,6 +3,7 @@
  *
  *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010-2011, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
  *
  *  All rights reserved.
  *
@@ -16,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,7 +34,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: transformation_estimation_point_to_plane.h 3217 2011-11-21 10:42:11Z mdixon $
+ * $Id$
  *
  */
 #ifndef PCL_REGISTRATION_TRANSFORMATION_ESTIMATION_POINT_TO_PLANE_H_
@@ -53,11 +54,13 @@ namespace pcl
       * \author Michael Dixon
       * \ingroup registration
       */
-    template <typename PointSource, typename PointTarget>
-    class TransformationEstimationPointToPlane : public TransformationEstimationLM<PointSource, PointTarget>
+    template <typename PointSource, typename PointTarget, typename Scalar = float>
+    class TransformationEstimationPointToPlane : public TransformationEstimationLM<PointSource, PointTarget, Scalar>
     {
       public:
-        typedef boost::shared_ptr<TransformationEstimationPointToPlane<PointSource, PointTarget> > Ptr;
+        typedef boost::shared_ptr<TransformationEstimationPointToPlane<PointSource, PointTarget, Scalar> > Ptr;
+        typedef boost::shared_ptr<const TransformationEstimationPointToPlane<PointSource, PointTarget, Scalar> > ConstPtr;
+
         typedef pcl::PointCloud<PointSource> PointCloudSource;
         typedef typename PointCloudSource::Ptr PointCloudSourcePtr;
         typedef typename PointCloudSource::ConstPtr PointCloudSourceConstPtr;
@@ -65,19 +68,29 @@ namespace pcl
         typedef PointIndices::Ptr PointIndicesPtr;
         typedef PointIndices::ConstPtr PointIndicesConstPtr;
 
+        typedef Eigen::Matrix<Scalar, 4, 1> Vector4;
 
         TransformationEstimationPointToPlane () {};
         virtual ~TransformationEstimationPointToPlane () {};
 
       protected:
-        virtual double
-        computeDistance (const PointSource &p_src, const PointTarget &p_tgt)
-        { 
+        virtual Scalar
+        computeDistance (const PointSource &p_src, const PointTarget &p_tgt) const
+        {
           // Compute the point-to-plane distance
-          Vector4fMapConst s = p_src.getVector4fMap ();
-          Vector4fMapConst t = p_tgt.getVector4fMap ();
-          Vector4fMapConst n = p_tgt.getNormalVector4fMap ();
+          Vector4 s (p_src.x, p_src.y, p_src.z, 0);
+          Vector4 t (p_tgt.x, p_tgt.y, p_tgt.z, 0);
+          Vector4 n (p_tgt.normal_x, p_tgt.normal_y, p_tgt.normal_z, 0);
           return ((s - t).dot (n));
+        }
+
+        virtual Scalar
+        computeDistance (const Vector4 &p_src, const PointTarget &p_tgt) const
+        {
+          // Compute the point-to-plane distance
+          Vector4 t (p_tgt.x, p_tgt.y, p_tgt.z, 0);
+          Vector4 n (p_tgt.normal_x, p_tgt.normal_y, p_tgt.normal_z, 0);
+          return ((p_src - t).dot (n));
         }
 
     };

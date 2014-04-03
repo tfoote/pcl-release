@@ -5,7 +5,14 @@
 #include <pcl/registration/transforms.h>
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/keypoints/sift_keypoint.h>
-#include <pcl/keypoints/harris_keypoint3D.h>
+
+#include <pcl/pcl_config.h>
+#if PCL_MAJOR_VERSION >= 1 && PCL_MINOR_VERSION >= 7
+#  include <pcl/keypoints/harris_3d.h>
+#else
+#  include <pcl/keypoints/harris_3d.h>
+#endif
+
 #include <pcl/ModelCoefficients.h>
 #include <pcl/sample_consensus/method_types.h>
 #include <pcl/sample_consensus/model_types.h>
@@ -623,10 +630,10 @@ main (int argc, char ** argv)
     
     case 2:
     {
-      pcl::SHOTEstimationOMP<pcl::PointXYZRGB, pcl::Normal, pcl::SHOT>* shot = new pcl::SHOTEstimationOMP<pcl::PointXYZRGB, pcl::Normal, pcl::SHOT>;
+      pcl::SHOTColorEstimationOMP<pcl::PointXYZRGB, pcl::Normal, pcl::SHOT1344>* shot = new pcl::SHOTColorEstimationOMP<pcl::PointXYZRGB, pcl::Normal, pcl::SHOT1344>;
       shot->setRadiusSearch (0.04);
-      pcl::Feature<pcl::PointXYZRGB, pcl::SHOT>::Ptr feature_extractor (shot);
-      ICCVTutorial<pcl::SHOT> tutorial (keypoint_detector, feature_extractor, surface_reconstruction, source, target);
+      pcl::Feature<pcl::PointXYZRGB, pcl::SHOT1344>::Ptr feature_extractor (shot);
+      ICCVTutorial<pcl::SHOT1344> tutorial (keypoint_detector, feature_extractor, surface_reconstruction, source, target);
       tutorial.run ();
     }
     break;

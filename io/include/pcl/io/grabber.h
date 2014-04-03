@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -41,13 +41,12 @@
 #include <map>
 #include <iostream>
 #include <string>
-#include <boost/signals2.hpp>
-#include <boost/signals2/slot.hpp>
 #include <typeinfo>
 #include <vector>
 #include <sstream>
 #include <pcl/pcl_macros.h>
-#include <pcl/io/pcl_io_exception.h>
+#include <pcl/io/boost.h>
+#include <pcl/exceptions.h>
 
 namespace pcl
 {
@@ -249,7 +248,7 @@ namespace pcl
         sstream << cIt->first << std::endl;
       }*/
 
-      THROW_PCL_IO_EXCEPTION ("[%s] %s", getName ().c_str (), sstream.str ().c_str ());
+      PCL_THROW_EXCEPTION (pcl::IOException, "[" << getName () << "] " << sstream.str ());
       //return (boost::signals2::connection ());
     }
     Signal* signal = dynamic_cast<Signal*> (signals_[typeid (T).name ()]);

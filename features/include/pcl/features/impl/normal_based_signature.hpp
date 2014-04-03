@@ -1,8 +1,10 @@
 /*
  * Software License Agreement (BSD License)
  *
+ *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2011, Alexandru-Eugen Ichim
- *                      Willow Garage, Inc
+ *  Copyright (c) 2012-, Open Perception, Inc.
+ *
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -15,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -32,7 +34,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- *  $Id: normal_based_signature.hpp 6144 2012-07-04 22:06:28Z rusu $
+ *  $Id$
  */
 
 #ifndef PCL_FEATURES_IMPL_NORMAL_BASED_SIGNATURE_H_
@@ -46,6 +48,7 @@ pcl::NormalBasedSignatureEstimation<PointT, PointNT, PointFeature>::computeFeatu
   // do a few checks before starting the computations
 
   PointFeature test_feature;
+  (void)test_feature;
   if (N_prime_ * M_prime_ != sizeof (test_feature.values) / sizeof (float))
   {
     PCL_ERROR ("NormalBasedSignatureEstimation: not using the proper signature size: %u vs %u\n", N_prime_ * M_prime_, sizeof (test_feature.values) / sizeof (float));
@@ -148,7 +151,7 @@ pcl::NormalBasedSignatureEstimation<PointT, PointNT, PointFeature>::computeFeatu
         dct_row[m] = Xk;
       }
       s_row = dct_row;
-      s_matrix.row (k) = dct_row;
+      s_matrix.row (k).matrix () = dct_row;
     }
 
     // do DFT on the s_matrix column-wise
@@ -164,9 +167,9 @@ pcl::NormalBasedSignatureEstimation<PointT, PointNT, PointFeature>::computeFeatu
           Xk_real += static_cast<float> (s_matrix (n, column_i) * cos (2.0f * M_PI / static_cast<double> (N_ * k * n)));
           Xk_imag += static_cast<float> (s_matrix (n, column_i) * sin (2.0f * M_PI / static_cast<double> (N_ * k * n)));
         }
-        dft_col[k] = sqrt (Xk_real*Xk_real + Xk_imag*Xk_imag);
+        dft_col[k] = sqrtf (Xk_real*Xk_real + Xk_imag*Xk_imag);
       }
-      dft_matrix.col (column_i) = dft_col;
+      dft_matrix.col (column_i).matrix () = dft_col;
     }
 
     Eigen::MatrixXf final_matrix = dft_matrix.block (0, 0, N_prime_, M_prime_);

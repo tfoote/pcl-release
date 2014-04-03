@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -31,7 +31,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: conditional_removal.hpp 6144 2012-07-04 22:06:28Z rusu $
+ * $Id$
  *
  */
 
@@ -39,23 +39,22 @@
 #define PCL_FILTER_IMPL_FIELD_VAL_CONDITION_H_
 
 #include <pcl/common/io.h>
-#include <boost/shared_ptr.hpp>
-#include <vector>
-#include <Eigen/Geometry>
+#include <pcl/filters/conditional_removal.h>
 
 //////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
 template <typename PointT>
 pcl::FieldComparison<PointT>::FieldComparison (
-    std::string field_name, ComparisonOps::CompareOp op, double compare_val) :
-      compare_val_ (compare_val), point_data_ (NULL)
+    std::string field_name, ComparisonOps::CompareOp op, double compare_val) 
+  : ComparisonBase<PointT> ()
+  , compare_val_ (compare_val), point_data_ (NULL)
 {
   field_name_ = field_name;
   op_ = op;
 
   // Get all fields
-  std::vector<sensor_msgs::PointField> point_fields; 
+  std::vector<pcl::PCLPointField> point_fields;
   // Use a dummy cloud to get the field types in a clever way
   PointCloud<PointT> dummyCloud;
   pcl::getFields (dummyCloud, point_fields);
@@ -142,7 +141,7 @@ pcl::PackedRGBComparison<PointT>::PackedRGBComparison (
   component_name_ (component_name), component_offset_ (), compare_val_ (compare_val)
 {
   // get all the fields
-  std::vector<sensor_msgs::PointField> point_fields;
+  std::vector<pcl::PCLPointField> point_fields;
   // Use a dummy cloud to get the field types in a clever way
   PointCloud<PointT> dummyCloud;
   pcl::getFields (dummyCloud, point_fields);
@@ -163,9 +162,9 @@ pcl::PackedRGBComparison<PointT>::PackedRGBComparison (
 
   // Verify the datatype
   uint8_t datatype = point_fields[d].datatype;
-  if (datatype != sensor_msgs::PointField::FLOAT32 &&
-      datatype != sensor_msgs::PointField::UINT32 &&
-      datatype != sensor_msgs::PointField::INT32)
+  if (datatype != pcl::PCLPointField::FLOAT32 &&
+      datatype != pcl::PCLPointField::UINT32 &&
+      datatype != pcl::PCLPointField::INT32)
   {
     PCL_WARN ("[pcl::PackedRGBComparison::PackedRGBComparison] has unusable type!\n");
     capable_ = false;
@@ -234,7 +233,7 @@ pcl::PackedHSIComparison<PointT>::PackedHSIComparison (
   component_name_ (component_name), component_id_ (), compare_val_ (compare_val), rgb_offset_ ()
 {
   // Get all the fields
-  std::vector<sensor_msgs::PointField> point_fields; 
+  std::vector<pcl::PCLPointField> point_fields;
   // Use a dummy cloud to get the field types in a clever way
   PointCloud<PointT> dummyCloud;
   pcl::getFields (dummyCloud, point_fields);
@@ -253,9 +252,9 @@ pcl::PackedHSIComparison<PointT>::PackedHSIComparison (
 
   // Verify the datatype
   uint8_t datatype = point_fields[d].datatype;
-  if (datatype != sensor_msgs::PointField::FLOAT32 && 
-      datatype != sensor_msgs::PointField::UINT32 && 
-      datatype != sensor_msgs::PointField::INT32) 
+  if (datatype != pcl::PCLPointField::FLOAT32 &&
+      datatype != pcl::PCLPointField::UINT32 &&
+      datatype != pcl::PCLPointField::INT32)
   {
     PCL_WARN ("[pcl::PackedHSIComparison::PackedHSIComparison] has unusable type!\n");
     capable_ = false;
@@ -383,7 +382,7 @@ pcl::TfQuadraticXYZComparison<PointT>::TfQuadraticXYZComparison () :
   comp_matr_ (), comp_vect_ (), comp_scalar_ (0.0)
 {
   // get all the fields
-  std::vector<sensor_msgs::PointField> point_fields;
+  std::vector<pcl::PCLPointField> point_fields;
   // Use a dummy cloud to get the field types in a clever way
   PointCloud<PointT> dummyCloud;
   pcl::getFields (dummyCloud, point_fields);
@@ -448,7 +447,7 @@ pcl::TfQuadraticXYZComparison<PointT>::TfQuadraticXYZComparison (const pcl::Comp
   comp_matr_ (), comp_vect_ (), comp_scalar_ (comparison_scalar)
 {
   // get all the fields
-  std::vector<sensor_msgs::PointField> point_fields;
+  std::vector<pcl::PCLPointField> point_fields;
   // Use a dummy cloud to get the field types in a clever way
   PointCloud<PointT> dummyCloud;
   pcl::getFields (dummyCloud, point_fields);
@@ -546,49 +545,49 @@ pcl::PointDataAtOffset<PointT>::compare (const PointT& p, const double& val)
 
   switch (datatype_) 
   {
-    case sensor_msgs::PointField::INT8 : 
+    case pcl::PCLPointField::INT8 :
     {
       int8_t pt_val;
       memcpy (&pt_val, pt_data + this->offset_, sizeof (int8_t));
       return (pt_val > static_cast<int8_t>(val)) - (pt_val < static_cast<int8_t> (val));
     }
-    case sensor_msgs::PointField::UINT8 : 
+    case pcl::PCLPointField::UINT8 :
     {
       uint8_t pt_val;
       memcpy (&pt_val, pt_data + this->offset_, sizeof (uint8_t));
       return (pt_val > static_cast<uint8_t>(val)) - (pt_val < static_cast<uint8_t> (val));
     }
-    case sensor_msgs::PointField::INT16 :
+    case pcl::PCLPointField::INT16 :
     {
       int16_t pt_val;
       memcpy (&pt_val, pt_data + this->offset_, sizeof (int16_t));
       return (pt_val > static_cast<int16_t>(val)) - (pt_val < static_cast<int16_t> (val));
     }
-    case sensor_msgs::PointField::UINT16 : 
+    case pcl::PCLPointField::UINT16 :
     {
       uint16_t pt_val;
       memcpy (&pt_val, pt_data + this->offset_, sizeof (uint16_t));
       return (pt_val > static_cast<uint16_t> (val)) - (pt_val < static_cast<uint16_t> (val));
     }
-    case sensor_msgs::PointField::INT32 : 
+    case pcl::PCLPointField::INT32 :
     {
       int32_t pt_val;
       memcpy (&pt_val, pt_data + this->offset_, sizeof (int32_t));
       return (pt_val > static_cast<int32_t> (val)) - (pt_val < static_cast<int32_t> (val));
     }
-    case sensor_msgs::PointField::UINT32 : 
+    case pcl::PCLPointField::UINT32 :
     {
       uint32_t pt_val;
       memcpy (&pt_val, pt_data + this->offset_, sizeof (uint32_t));
       return (pt_val > static_cast<uint32_t> (val)) - (pt_val < static_cast<uint32_t> (val));
     }
-    case sensor_msgs::PointField::FLOAT32 : 
+    case pcl::PCLPointField::FLOAT32 :
     {
       float pt_val;
       memcpy (&pt_val, pt_data + this->offset_, sizeof (float));
       return (pt_val > static_cast<float> (val)) - (pt_val < static_cast<float> (val));
     }
-    case sensor_msgs::PointField::FLOAT64 : 
+    case pcl::PCLPointField::FLOAT64 :
     {
       double pt_val;
       memcpy (&pt_val, pt_data + this->offset_, sizeof (double));
@@ -749,12 +748,13 @@ pcl::ConditionalRemoval<PointT>::applyFilter (PointCloud &output)
   {
     std::vector<int> indices = *Filter<PointT>::indices_;
     std::sort (indices.begin (), indices.end ());   //TODO: is this necessary or can we assume the indices to be sorted?
+    bool removed_p = false;
     size_t ci = 0;
     for (size_t cp = 0; cp < input_->points.size (); ++cp)
     {
       if (cp == static_cast<size_t> (indices[ci]))
       {
-        if (ci < indices.size ())
+        if (ci < indices.size () - 1)
         {
           ci++;
           if (cp == static_cast<size_t> (indices[ci]))   //check whether the next index will have the same value. TODO: necessary?
@@ -767,6 +767,7 @@ pcl::ConditionalRemoval<PointT>::applyFilter (PointCloud &output)
         if (!condition_->evaluate (input_->points[cp]))
         {
           output.points[cp].getVector4fMap ().setConstant (user_filter_value_);
+          removed_p = true;
 
           if (extract_removed_indices_)
           {
@@ -778,9 +779,13 @@ pcl::ConditionalRemoval<PointT>::applyFilter (PointCloud &output)
       else
       {
         output.points[cp].getVector4fMap ().setConstant (user_filter_value_);
+        removed_p = true;
         //as for !keep_organized_: removed points due to setIndices are not considered as removed_indices_
       }
     }
+
+    if (removed_p && !pcl_isfinite (user_filter_value_))
+      output.is_dense = false;
   }
   removed_indices_->resize (nr_removed_p);
 }

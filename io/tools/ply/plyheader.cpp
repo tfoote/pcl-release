@@ -33,7 +33,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *	
- * $Id: plyheader.cpp 4024 2012-01-26 12:23:37Z bouffa $
+ * $Id$
  *
  */
 

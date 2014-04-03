@@ -3,6 +3,7 @@
  *
  *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010-2011, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
  *
  *  All rights reserved.
  *
@@ -16,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,48 +34,11 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
+ * $Id$
  *
  */
 #ifndef PCL_REGISTRATION_IMPL_CORRESPONDENCE_REJECTION_MEDIAN_DISTANCE_HPP_
 #define PCL_REGISTRATION_IMPL_CORRESPONDENCE_REJECTION_MEDIAN_DISTANCE_HPP_
 
-#include <vector>
 
-//////////////////////////////////////////////////////////////////////////////////////////////
-void
-pcl::registration::CorrespondenceRejectorMedianDistance::getRemainingCorrespondences (
-    const pcl::Correspondences& original_correspondences, 
-    pcl::Correspondences& remaining_correspondences)
-{
-  std::vector <double> dists;
-  dists.resize (original_correspondences.size ());
-
-  for (size_t i = 0; i < original_correspondences.size (); ++i)
-  {
-    if (data_container_)
-    {
-      dists[i] = data_container_->getCorrespondenceScore (original_correspondences[i]);
-    }
-    else
-    {
-      dists[i] = original_correspondences[i].distance;
-    }
-  }
-  nth_element (dists.begin (), dists.begin () + (dists.size () / 2), dists.end ());
-  median_distance_ = dists [dists.size () / 2];
-
-  unsigned int number_valid_correspondences = 0;
-  remaining_correspondences.resize (original_correspondences.size ());
-
-  for (size_t i = 0; i < original_correspondences.size (); ++i)
-  {
-    if ( dists[i] < median_distance_ * factor_)
-    {
-      remaining_correspondences[number_valid_correspondences] = original_correspondences[i];
-      ++number_valid_correspondences;
-    }
-  }
-  remaining_correspondences.resize (number_valid_correspondences);
-}
-
-#endif /* PCL_REGISTRATION_IMPL_CORRESPONDENCE_REJECTION_MEDIAN_DISTANCE_HPP_ */
+#endif    // PCL_REGISTRATION_IMPL_CORRESPONDENCE_REJECTION_MEDIAN_DISTANCE_HPP_

@@ -16,7 +16,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,16 +33,16 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: ply_io.h 5354 2012-03-27 22:13:21Z nizar $
+ * $Id$
  *
  */
 
 #ifndef PCL_IO_PLY_IO_H_
 #define PCL_IO_PLY_IO_H_
 
+#include <pcl/io/boost.h>
 #include <pcl/io/file_io.h>
 #include <pcl/io/ply/ply_parser.h>
-#include <boost/bind.hpp>
 #include <pcl/PolygonMesh.h>
 #include <sstream>
 
@@ -96,10 +96,12 @@ namespace pcl
         , range_count_ (0)
         , range_grid_vertex_indices_element_index_ (0)
         , rgb_offset_before_ (0)
+        , do_resize_ (false)
       {}
 
       PLYReader (const PLYReader &p)
-        : parser_ ()
+        : FileReader ()
+        , parser_ ()
         , origin_ (Eigen::Vector4f::Zero ())
         , orientation_ (Eigen::Matrix3f::Zero ())
         , cloud_ ()
@@ -110,6 +112,7 @@ namespace pcl
         , range_count_ (0)
         , range_grid_vertex_indices_element_index_ (0)
         , rgb_offset_before_ (0)
+        , do_resize_ (false)
       {
         *this = p;
       }
@@ -147,11 +150,11 @@ namespace pcl
         * to the next byte after the header (e.g., 513).
         */
       int 
-      readHeader (const std::string &file_name, sensor_msgs::PointCloud2 &cloud,
+      readHeader (const std::string &file_name, pcl::PCLPointCloud2 &cloud,
                   Eigen::Vector4f &origin, Eigen::Quaternionf &orientation,
                   int &ply_version, int &data_type, unsigned int &data_idx, const int offset = 0);
 
-      /** \brief Read a point cloud data from a PLY file and store it into a sensor_msgs/PointCloud2.
+      /** \brief Read a point cloud data from a PLY file and store it into a pcl/PCLPointCloud2.
         * \param[in] file_name the name of the file containing the actual PointCloud data
         * \param[out] cloud the resultant PointCloud message read from disk
         * \param[in] origin the sensor data acquisition origin (translation)
@@ -164,13 +167,13 @@ namespace pcl
         * to the next byte after the header (e.g., 513).
         */
       int 
-      read (const std::string &file_name, sensor_msgs::PointCloud2 &cloud,
+      read (const std::string &file_name, pcl::PCLPointCloud2 &cloud,
             Eigen::Vector4f &origin, Eigen::Quaternionf &orientation, int& ply_version, const int offset = 0);
 
-      /** \brief Read a point cloud data from a PLY file (PLY_V6 only!) and store it into a sensor_msgs/PointCloud2.
+      /** \brief Read a point cloud data from a PLY file (PLY_V6 only!) and store it into a pcl/PCLPointCloud2.
         *
         * \note This function is provided for backwards compatibility only and
-        * it can only read PLY_V6 files correctly, as sensor_msgs::PointCloud2
+        * it can only read PLY_V6 files correctly, as pcl::PCLPointCloud2
         * does not contain a sensor origin/orientation. Reading any file
         * > PLY_V6 will generate a warning.
         *
@@ -183,7 +186,7 @@ namespace pcl
         * to the next byte after the header (e.g., 513).
         */
       inline int 
-      read (const std::string &file_name, sensor_msgs::PointCloud2 &cloud, const int offset = 0)
+      read (const std::string &file_name, pcl::PCLPointCloud2 &cloud, const int offset = 0)
       {
         Eigen::Vector4f origin;
         Eigen::Quaternionf orientation;
@@ -203,7 +206,7 @@ namespace pcl
       template<typename PointT> inline int
       read (const std::string &file_name, pcl::PointCloud<PointT> &cloud, const int offset = 0)
       {
-        sensor_msgs::PointCloud2 blob;
+        pcl::PCLPointCloud2 blob;
         int ply_version;
         int res = read (file_name, blob, cloud.sensor_origin_, cloud.sensor_orientation_,
                         ply_version, offset);
@@ -211,7 +214,7 @@ namespace pcl
         // Exit in case of error
         if (res < 0)
           return (res);
-        pcl::fromROSMsg (blob, cloud);
+        pcl::fromPCLPointCloud2 (blob, cloud);
         return (0);
       }
       
@@ -275,23 +278,88 @@ namespace pcl
         * \param[in] element_name element name to which the property belongs
         * \param[in] property_name list property name
         */
-      template <typename SizeType, typename ScalarType> 
-      boost::tuple<boost::function<void (SizeType)>, boost::function<void (ScalarType)>, boost::function<void ()> > 
+      template <typename SizeType, typename ScalarType>
+      boost::tuple<boost::function<void (SizeType)>, boost::function<void (ScalarType)>, boost::function<void ()> >
       listPropertyDefinitionCallback (const std::string& element_name, const std::string& property_name);
       
+      /** \brief function called at the beginning of a list property parsing.
+        * \param[in] size number of elements in the list
+        */
+      template <typename SizeType> void
+      vertexListPropertyBeginCallback (const std::string& property_name, SizeType size);
+
+      /** \brief function called when a list element is parsed.
+        * \param[in] value the list's element value
+        */
+      template <typename ContentType> void
+      vertexListPropertyContentCallback (ContentType value);
+
+      /** \brief function called at the end of a list property parsing */
+      inline void
+      vertexListPropertyEndCallback ();
+
+      /** Callback function for an anonymous vertex double property.
+        * Writes down a double value in cloud data.
+        * param[in] value double value parsed
+        */
+      inline void
+      vertexDoublePropertyCallback (pcl::io::ply::float64 value);
+
       /** Callback function for an anonymous vertex float property.
         * Writes down a float value in cloud data.
         * param[in] value float value parsed
-        */      
+        */
       inline void
       vertexFloatPropertyCallback (pcl::io::ply::float32 value);
+
+      /** Callback function for an anonymous vertex int property.
+        * Writes down a int value in cloud data.
+        * param[in] value int value parsed
+        */
+      inline void
+      vertexIntPropertyCallback (pcl::io::ply::int32 value);
+
+      /** Callback function for an anonymous vertex uint property.
+        * Writes down a uint value in cloud data.
+        * param[in] value uint value parsed
+        */
+      inline void
+      vertexUnsignedIntPropertyCallback (pcl::io::ply::uint32 value);
+
+      /** Callback function for an anonymous vertex short property.
+        * Writes down a short value in cloud data.
+        * param[in] value short value parsed
+        */
+      inline void
+      vertexShortPropertyCallback (pcl::io::ply::int16 value);
+
+      /** Callback function for an anonymous vertex ushort property.
+        * Writes down a ushort value in cloud data.
+        * param[in] value ushort value parsed
+        */
+      inline void
+      vertexUnsignedShortPropertyCallback (pcl::io::ply::uint16 value);
+
+      /** Callback function for an anonymous vertex char property.
+        * Writes down a char value in cloud data.
+        * param[in] value char value parsed
+        */
+      inline void
+      vertexCharPropertyCallback (pcl::io::ply::int8 value);
+
+      /** Callback function for an anonymous vertex uchar property.
+        * Writes down a uchar value in cloud data.
+        * param[in] value uchar value parsed
+        */
+      inline void
+      vertexUnsignedCharPropertyCallback (pcl::io::ply::uint8 value);
 
       /** Callback function for vertex RGB color.
         * This callback is in charge of packing red green and blue in a single int
         * before writing it down in cloud data.
         * param[in] color_name color name in {red, green, blue}
         * param[in] color value of {red, green, blue} property
-        */      
+        */
       inline void
       vertexColorCallback (const std::string& color_name, pcl::io::ply::uint8 color);
 
@@ -301,6 +369,13 @@ namespace pcl
         */
       inline void
       vertexIntensityCallback (pcl::io::ply::uint8 intensity);
+
+      /** Callback function for vertex alpha.
+        * extracts RGB value, append alpha and put it back
+        * param[in] alpha
+        */
+      inline void
+      vertexAlphaCallback (pcl::io::ply::uint8 alpha);
       
       /** Callback function for origin x component.
         * param[in] value origin x value
@@ -386,13 +461,77 @@ namespace pcl
       inline void
       cloudWidthCallback (const int &width) { cloud_->width = width; }
         
+      /** Append a double property to the cloud fields.
+        * param[in] name property name
+        * param[in] count property count: 1 for scalar properties and higher for a
+        * list property.
+        */
+      void
+      appendDoubleProperty (const std::string& name, const size_t& count = 1);
+
       /** Append a float property to the cloud fields.
         * param[in] name property name
-        * param[in] count property count: 1 for scalar properties and higher for a 
+        * param[in] count property count: 1 for scalar properties and higher for a
         * list property.
         */
       void
       appendFloatProperty (const std::string& name, const size_t& count = 1);
+
+      /** Append an unsigned int property to the cloud fields.
+        * param[in] name property name
+        * param[in] count property count: 1 for scalar properties and higher for a
+        * list property.
+        */
+      void
+      appendIntProperty (const std::string& name, const size_t& count = 1);
+
+      /** Append an unsigned int property to the cloud fields.
+        * param[in] name property name
+        * param[in] count property count: 1 for scalar properties and higher for a
+        * list property.
+        */
+      void
+      appendUnsignedIntProperty (const std::string& name, const size_t& count = 1);
+
+      /** Append a short property to the cloud fields.
+        * param[in] name property name
+        * param[in] count property count: 1 for scalar properties and higher for a
+        * list property.
+        */
+      void
+      appendShortProperty (const std::string& name, const size_t& count = 1);
+
+      /** Append a short property to the cloud fields.
+        * param[in] name property name
+        * param[in] count property count: 1 for scalar properties and higher for a
+        * list property.
+        */
+      void
+      appendUnsignedShortProperty (const std::string& name, const size_t& count = 1);
+
+      /** Append a char property to the cloud fields.
+        * param[in] name property name
+        * param[in] count property count: 1 for scalar properties and higher for a
+        * list property.
+        */
+      void
+      appendCharProperty (const std::string& name, const size_t& count = 1);
+
+      /** Append a char property to the cloud fields.
+        * param[in] name property name
+        * param[in] count property count: 1 for scalar properties and higher for a
+        * list property.
+        */
+      void
+      appendUnsignedCharProperty (const std::string& name, const size_t& count = 1);
+
+      /** Amend property from cloud fields identified by \a old_name renaming
+        * it \a new_name.
+        * param[in] old_name property old name
+        * param[in] new_name property new name
+        */
+      void
+      amendProperty (const std::string& old_name, const std::string& new_name, uint8_t datatype = 0);
 
       /** Callback function for the begin of vertex line */
       void
@@ -437,14 +576,14 @@ namespace pcl
       Eigen::Matrix3f orientation_;
 
       //vertex element artifacts
-      sensor_msgs::PointCloud2 *cloud_;
+      pcl::PCLPointCloud2 *cloud_;
       size_t vertex_count_, vertex_properties_counter_;
       int vertex_offset_before_;
       //range element artifacts
       std::vector<std::vector <int> > *range_grid_;
       size_t range_count_, range_grid_vertex_indices_element_index_;
       size_t rgb_offset_before_;
-      
+      bool do_resize_;
     public:
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   };
@@ -472,7 +611,7 @@ namespace pcl
         * element range_grid will be used.
         */
       inline std::string
-      generateHeaderBinary (const sensor_msgs::PointCloud2 &cloud, 
+      generateHeaderBinary (const pcl::PCLPointCloud2 &cloud,
                             const Eigen::Vector4f &origin, 
                             const Eigen::Quaternionf &orientation,
                             int valid_points,
@@ -491,7 +630,7 @@ namespace pcl
         * element range_grid will be used.
         */
       inline std::string
-      generateHeaderASCII (const sensor_msgs::PointCloud2 &cloud, 
+      generateHeaderASCII (const pcl::PCLPointCloud2 &cloud,
                            const Eigen::Vector4f &origin, 
                            const Eigen::Quaternionf &orientation,
                            int valid_points,
@@ -510,7 +649,7 @@ namespace pcl
         * element range_grid will be used.
         */
       int 
-      writeASCII (const std::string &file_name, const sensor_msgs::PointCloud2 &cloud, 
+      writeASCII (const std::string &file_name, const pcl::PCLPointCloud2 &cloud,
                   const Eigen::Vector4f &origin = Eigen::Vector4f::Zero (), 
                   const Eigen::Quaternionf &orientation = Eigen::Quaternionf::Identity (),
                   int precision = 8,
@@ -521,11 +660,14 @@ namespace pcl
         * \param[in] cloud the point cloud data message
         * \param[in] origin the sensor data acquisition origin (translation)
         * \param[in] orientation the sensor data acquisition origin (rotation)
+        * \param[in] use_camera if set to true then PLY file will use element camera else
+        * element range_grid will be used
         */
       int 
-      writeBinary (const std::string &file_name, const sensor_msgs::PointCloud2 &cloud,
+      writeBinary (const std::string &file_name, const pcl::PCLPointCloud2 &cloud,
                    const Eigen::Vector4f &origin = Eigen::Vector4f::Zero (), 
-                   const Eigen::Quaternionf &orientation = Eigen::Quaternionf::Identity ());
+                   const Eigen::Quaternionf &orientation = Eigen::Quaternionf::Identity (),
+                   bool use_camera = true);
 
       /** \brief Save point cloud data to a PLY file containing n-D points
         * \param[in] file_name the output file name
@@ -536,13 +678,13 @@ namespace pcl
         * PLY format, false (default) for ASCII
         */
       inline int
-      write (const std::string &file_name, const sensor_msgs::PointCloud2 &cloud, 
+      write (const std::string &file_name, const pcl::PCLPointCloud2 &cloud,
              const Eigen::Vector4f &origin = Eigen::Vector4f::Zero (), 
              const Eigen::Quaternionf &orientation = Eigen::Quaternionf::Identity (),
              const bool binary = false)
       {
         if (binary)
-          return (this->writeBinary (file_name, cloud, origin, orientation));
+          return (this->writeBinary (file_name, cloud, origin, orientation, true));
         else
           return (this->writeASCII (file_name, cloud, origin, orientation, 8, true));
       }
@@ -554,18 +696,18 @@ namespace pcl
         * \param[in] orientation the sensor acquisition orientation
         * \param[in] binary set to true if the file is to be written in a binary
         * PLY format, false (default) for ASCII
-        * \param[in] use_camera set to true to used camera element and false to
+        * \param[in] use_camera set to true to use camera element and false to
         * use range_grid element
         */
       inline int
-      write (const std::string &file_name, const sensor_msgs::PointCloud2 &cloud, 
+      write (const std::string &file_name, const pcl::PCLPointCloud2 &cloud,
              const Eigen::Vector4f &origin = Eigen::Vector4f::Zero (), 
              const Eigen::Quaternionf &orientation = Eigen::Quaternionf::Identity (),
              bool binary = false,
              bool use_camera = true)
       {
         if (binary)
-          return (this->writeBinary (file_name, cloud, origin, orientation));
+          return (this->writeBinary (file_name, cloud, origin, orientation, use_camera));
         else
           return (this->writeASCII (file_name, cloud, origin, orientation, 8, use_camera));
       }
@@ -577,11 +719,11 @@ namespace pcl
         * \param[in] orientation the sensor acquisition orientation
         * \param[in] binary set to true if the file is to be written in a binary
         * PLY format, false (default) for ASCII
-        * \param[in] use_camera set to true to used camera element and false to
+        * \param[in] use_camera set to true to use camera element and false to
         * use range_grid element
         */
       inline int
-      write (const std::string &file_name, const sensor_msgs::PointCloud2::ConstPtr &cloud, 
+      write (const std::string &file_name, const pcl::PCLPointCloud2::ConstPtr &cloud,
              const Eigen::Vector4f &origin = Eigen::Vector4f::Zero (), 
              const Eigen::Quaternionf &orientation = Eigen::Quaternionf::Identity (),
              bool binary = false,
@@ -595,7 +737,7 @@ namespace pcl
         * \param[in] cloud the pcl::PointCloud data
         * \param[in] binary set to true if the file is to be written in a binary
         * PLY format, false (default) for ASCII
-        * \param[in] use_camera set to true to used camera element and false to
+        * \param[in] use_camera set to true to use camera element and false to
         * use range_grid element
         */
       template<typename PointT> inline int
@@ -607,8 +749,8 @@ namespace pcl
         Eigen::Vector4f origin = cloud.sensor_origin_;
         Eigen::Quaternionf orientation = cloud.sensor_orientation_;
 
-        sensor_msgs::PointCloud2 blob;
-        pcl::toROSMsg (cloud, blob);
+        pcl::PCLPointCloud2 blob;
+        pcl::toPCLPointCloud2 (cloud, blob);
 
         // Save the data
         return (this->write (file_name, blob, origin, orientation, binary, use_camera));
@@ -620,7 +762,7 @@ namespace pcl
         * \param[in] binary whether the PLY file should be saved as binary data (true) or ascii (false)
         */
       std::string
-      generateHeader (const sensor_msgs::PointCloud2 &cloud, 
+      generateHeader (const pcl::PCLPointCloud2 &cloud,
                       const Eigen::Vector4f &origin, 
                       const Eigen::Quaternionf &orientation,
                       bool binary, 
@@ -630,7 +772,7 @@ namespace pcl
       void
       writeContentWithCameraASCII (int nr_points, 
                                    int point_size,
-                                   const sensor_msgs::PointCloud2 &cloud, 
+                                   const pcl::PCLPointCloud2 &cloud,
                                    const Eigen::Vector4f &origin, 
                                    const Eigen::Quaternionf &orientation,
                                    std::ofstream& fs);
@@ -638,7 +780,7 @@ namespace pcl
       void
       writeContentWithRangeGridASCII (int nr_points, 
                                       int point_size,
-                                      const sensor_msgs::PointCloud2 &cloud, 
+                                      const pcl::PCLPointCloud2 &cloud,
                                       std::ostringstream& fs,
                                       int& nb_valid_points);
   };
@@ -648,14 +790,14 @@ namespace pcl
     /** \brief Load a PLY v.6 file into a templated PointCloud type.
       *
       * Any PLY files containg sensor data will generate a warning as a
-      * sensor_msgs/PointCloud2 message cannot hold the sensor origin.
+      * pcl/PCLPointCloud2 message cannot hold the sensor origin.
       *
       * \param[in] file_name the name of the file to load
       * \param[in] cloud the resultant templated point cloud
       * \ingroup io
       */
     inline int
-    loadPLYFile (const std::string &file_name, sensor_msgs::PointCloud2 &cloud)
+    loadPLYFile (const std::string &file_name, pcl::PCLPointCloud2 &cloud)
     {
       pcl::PLYReader p;
       return (p.read (file_name, cloud));
@@ -670,7 +812,7 @@ namespace pcl
       * \ingroup io
       */
     inline int
-    loadPLYFile (const std::string &file_name, sensor_msgs::PointCloud2 &cloud,
+    loadPLYFile (const std::string &file_name, pcl::PCLPointCloud2 &cloud,
                  Eigen::Vector4f &origin, Eigen::Quaternionf &orientation)
     {
       pcl::PLYReader p;
@@ -699,7 +841,7 @@ namespace pcl
       * \ingroup io
       */
     inline int 
-    savePLYFile (const std::string &file_name, const sensor_msgs::PointCloud2 &cloud, 
+    savePLYFile (const std::string &file_name, const pcl::PCLPointCloud2 &cloud,
                  const Eigen::Vector4f &origin = Eigen::Vector4f::Zero (), 
                  const Eigen::Quaternionf &orientation = Eigen::Quaternionf::Identity (),
                  bool binary_mode = false, bool use_camera = true)
@@ -774,6 +916,14 @@ namespace pcl
       */
     PCL_EXPORTS int
     savePLYFile (const std::string &file_name, const pcl::PolygonMesh &mesh, unsigned precision = 5);
+    
+    /** \brief Saves a PolygonMesh in binary PLY format.
+      * \param[in] file_name the name of the file to write to disk
+      * \param[in] mesh the polygonal mesh to save
+      * \ingroup io
+      */
+    PCL_EXPORTS int
+    savePLYFileBinary (const std::string &file_name, const pcl::PolygonMesh &mesh);
   }
 }
 

@@ -3,6 +3,7 @@
  *
  *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010-2011, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
  *
  *  All rights reserved.
  *
@@ -16,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,7 +34,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- *  $Id: usc.hpp 6144 2012-07-04 22:06:28Z rusu $
+ *  $Id$
  *
  */
 
@@ -144,9 +145,13 @@ pcl::UniqueShapeContext<PointInT, PointOutT, PointRFT>::computePointDescriptor (
 {
   pcl::Vector3fMapConst origin = input_->points[(*indices_)[index]].getVector3fMap ();
 
-  const Eigen::Vector3f& x_axis = frames_->points[index].x_axis.getNormalVector3fMap ();
+  const Eigen::Vector3f x_axis (frames_->points[index].x_axis[0],
+                                frames_->points[index].x_axis[1],
+                                frames_->points[index].x_axis[2]);
   //const Eigen::Vector3f& y_axis = frames_->points[index].y_axis.getNormalVector3fMap ();
-  const Eigen::Vector3f& normal = frames_->points[index].z_axis.getNormalVector3fMap ();
+  const Eigen::Vector3f normal (frames_->points[index].z_axis[0],
+                                frames_->points[index].z_axis[1],
+                                frames_->points[index].z_axis[2]);
 
   // Find every point within specified search_radius_
   std::vector<int> nn_indices;
@@ -163,7 +168,7 @@ pcl::UniqueShapeContext<PointInT, PointOutT, PointRFT>::computePointDescriptor (
     // ----- Compute current neighbour polar coordinates -----
 
     // Get distance between the neighbour and the origin
-    float r = sqrt (nn_dists[ne]);
+    float r = sqrtf (nn_dists[ne]);
 
     // Project point into the tangent plane
     Eigen::Vector3f proj;
@@ -241,31 +246,40 @@ pcl::UniqueShapeContext<PointInT, PointOutT, PointRFT>::computePointDescriptor (
 template <typename PointInT, typename PointOutT, typename PointRFT> void
 pcl::UniqueShapeContext<PointInT, PointOutT, PointRFT>::computeFeature (PointCloudOut &output)
 {
-  for (size_t point_index = 0; point_index < indices_->size (); point_index++)
+  assert (descriptor_length_ == 1980);
+
+  output.is_dense = true;
+
+  for (size_t point_index = 0; point_index < indices_->size (); ++point_index)
   {
-    output[point_index].descriptor.resize (descriptor_length_);
-    for (int d = 0; d < 9; ++d)
-      output.points[point_index].rf[d] = frames_->points[point_index].rf[ (4*(d/3) + (d%3)) ];
+    //output[point_index].descriptor.resize (descriptor_length_);
 
-    computePointDescriptor (point_index, output[point_index].descriptor);
-  }
-}
+    // If the point is not finite, set the descriptor to NaN and continue
+    const PointRFT& current_frame = (*frames_)[point_index];
+    if (!isFinite ((*input_)[(*indices_)[point_index]]) ||
+        !pcl_isfinite (current_frame.x_axis[0]) ||
+        !pcl_isfinite (current_frame.y_axis[0]) ||
+        !pcl_isfinite (current_frame.z_axis[0])  )
+    {
+      for (size_t i = 0; i < descriptor_length_; ++i)
+        output[point_index].descriptor[i] = std::numeric_limits<float>::quiet_NaN ();
 
-//////////////////////////////////////////////////////////////////////////////////////////////
-template <typename PointInT, typename PointRFT> void
-pcl::UniqueShapeContext<PointInT, Eigen::MatrixXf, PointRFT>::computeFeatureEigen (pcl::PointCloud<Eigen::MatrixXf> &output)
-{
-  output.points.resize (indices_->size (), descriptor_length_ + 9);
+      memset (output[point_index].rf, 0, sizeof (output[point_index].rf[0]) * 9);
+      output.is_dense = false;
+      continue;
+    }
 
-  for (size_t point_index = 0; point_index < indices_->size (); point_index++)
-  {
-    for (int d = 0; d < 9; ++d)
-      output.points (point_index, d) = frames_->points[point_index].rf[ (4*(d/3) + (d%3)) ];
+    for (int d = 0; d < 3; ++d)
+    {
+      output.points[point_index].rf[0 + d] = current_frame.x_axis[d];
+      output.points[point_index].rf[3 + d] = current_frame.y_axis[d];
+      output.points[point_index].rf[6 + d] = current_frame.z_axis[d];
+    }
 
     std::vector<float> descriptor (descriptor_length_);
     computePointDescriptor (point_index, descriptor);
     for (size_t j = 0; j < descriptor_length_; ++j)
-      output.points (point_index, 9 + j) = descriptor[j];
+      output [point_index].descriptor[j] = descriptor[j];
   }
 }
 

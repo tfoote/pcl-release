@@ -33,11 +33,11 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: octree.h 6119 2012-07-03 18:50:04Z aichim $
+ * $Id$
  */
 
-#ifndef OCTREE_H
-#define OCTREE_H
+#ifndef PCL_OCTREE_H
+#define PCL_OCTREE_H
 
 
 #include <pcl/octree/octree_base.h>

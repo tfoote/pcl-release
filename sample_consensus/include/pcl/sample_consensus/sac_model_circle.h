@@ -3,6 +3,7 @@
  *
  *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010-2011, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
  *
  *  All rights reserved.
  *
@@ -16,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,7 +34,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: sac_model_circle.h 6144 2012-07-04 22:06:28Z rusu $
+ * $Id$
  *
  */
 
@@ -58,12 +59,13 @@ namespace pcl
   template <typename PointT>
   class SampleConsensusModelCircle2D : public SampleConsensusModel<PointT>
   {
-    using SampleConsensusModel<PointT>::input_;
-    using SampleConsensusModel<PointT>::indices_;
-    using SampleConsensusModel<PointT>::radius_min_;
-    using SampleConsensusModel<PointT>::radius_max_;
-
     public:
+      using SampleConsensusModel<PointT>::input_;
+      using SampleConsensusModel<PointT>::indices_;
+      using SampleConsensusModel<PointT>::radius_min_;
+      using SampleConsensusModel<PointT>::radius_max_;
+      using SampleConsensusModel<PointT>::error_sqr_dists_;
+
       typedef typename SampleConsensusModel<PointT>::PointCloud PointCloud;
       typedef typename SampleConsensusModel<PointT>::PointCloudPtr PointCloudPtr;
       typedef typename SampleConsensusModel<PointT>::PointCloudConstPtr PointCloudConstPtr;
@@ -72,17 +74,21 @@ namespace pcl
 
       /** \brief Constructor for base SampleConsensusModelCircle2D.
         * \param[in] cloud the input point cloud dataset
+        * \param[in] random if true set the random seed to the current time, else set to 12345 (default: false)
         */
-      SampleConsensusModelCircle2D (const PointCloudConstPtr &cloud) : 
-        SampleConsensusModel<PointT> (cloud), tmp_inliers_ () 
+      SampleConsensusModelCircle2D (const PointCloudConstPtr &cloud, bool random = false) 
+        : SampleConsensusModel<PointT> (cloud, random), tmp_inliers_ () 
       {};
 
       /** \brief Constructor for base SampleConsensusModelCircle2D.
         * \param[in] cloud the input point cloud dataset
         * \param[in] indices a vector of point indices to be used from \a cloud
+        * \param[in] random if true set the random seed to the current time, else set to 12345 (default: false)
         */
-      SampleConsensusModelCircle2D (const PointCloudConstPtr &cloud, const std::vector<int> &indices) : 
-        SampleConsensusModel<PointT> (cloud, indices), tmp_inliers_ ()
+      SampleConsensusModelCircle2D (const PointCloudConstPtr &cloud, 
+                                    const std::vector<int> &indices,
+                                    bool random = false)
+        : SampleConsensusModel<PointT> (cloud, indices, random), tmp_inliers_ ()
       {};
 
       /** \brief Copy constructor.
@@ -93,6 +99,9 @@ namespace pcl
       {
         *this = source;
       }
+      
+      /** \brief Empty destructor */
+      virtual ~SampleConsensusModelCircle2D () {}
 
       /** \brief Copy constructor.
         * \param[in] source the model to copy into this
@@ -237,5 +246,9 @@ namespace pcl
 #endif
   };
 }
+
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/sample_consensus/impl/sac_model_circle.hpp>
+#endif
 
 #endif  //#ifndef PCL_SAMPLE_CONSENSUS_MODEL_CIRCLE2D_H_

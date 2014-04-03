@@ -9,15 +9,15 @@ PCL_SUBSYS_DEPEND(build ${SUBSYS_NAME} DEPS ${SUBSYS_DEPS})
 PCL_ADD_DOC(${SUBSYS_NAME})
 
 if(build)
-    set(srcs src/octree_impl.cpp
+    set(srcs src/octree_inst.cpp
     )
 
     set(incs 
+        include/pcl/${SUBSYS_NAME}/boost.h
         include/pcl/${SUBSYS_NAME}/octree_base.h 
         include/pcl/${SUBSYS_NAME}/octree_container.h
         include/pcl/${SUBSYS_NAME}/octree_impl.h 
-        include/pcl/${SUBSYS_NAME}/octree_nodes.h
-        include/pcl/${SUBSYS_NAME}/octree_node_pool.h
+        include/pcl/${SUBSYS_NAME}/octree_nodes.h 
         include/pcl/${SUBSYS_NAME}/octree_key.h 
         include/pcl/${SUBSYS_NAME}/octree_pointcloud_density.h
         include/pcl/${SUBSYS_NAME}/octree_pointcloud_occupancy.h
@@ -30,6 +30,8 @@ if(build)
         include/pcl/${SUBSYS_NAME}/octree_search.h        
         include/pcl/${SUBSYS_NAME}/octree.h
         include/pcl/${SUBSYS_NAME}/octree2buf_base.h
+        include/pcl/${SUBSYS_NAME}/octree_pointcloud_adjacency.h
+        include/pcl/${SUBSYS_NAME}/octree_pointcloud_adjacency_container.h
         )
 
     set(impl_incs    
@@ -38,6 +40,8 @@ if(build)
         include/pcl/${SUBSYS_NAME}/impl/octree2buf_base.hpp   
         include/pcl/${SUBSYS_NAME}/impl/octree_iterator.hpp      
         include/pcl/${SUBSYS_NAME}/impl/octree_search.hpp        
+        include/pcl/${SUBSYS_NAME}/impl/octree_pointcloud_voxelcentroid.hpp
+        include/pcl/${SUBSYS_NAME}/impl/octree_pointcloud_adjacency.hpp
         )
 
     set(LIB_NAME pcl_${SUBSYS_NAME})
@@ -50,9 +54,5 @@ if(build)
     # Install include files
     PCL_ADD_INCLUDES(${SUBSYS_NAME} ${SUBSYS_NAME} ${incs})
     PCL_ADD_INCLUDES(${SUBSYS_NAME} ${SUBSYS_NAME}/impl ${impl_incs})
-
-    if(BUILD_TESTS)
-        add_subdirectory(test)
-    endif(BUILD_TESTS)
 
 endif(build)

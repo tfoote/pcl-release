@@ -33,7 +33,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: processing.cpp 4972 2012-03-08 11:25:49Z bouffa $
+ * $Id$
  *
  */
 

@@ -16,7 +16,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -118,7 +118,7 @@ uniform_sampling (vtkSmartPointer<vtkPolyData> polydata, size_t n_samples, pcl::
   }
 
   cloud_out.points.resize (n_samples);
-  cloud_out.width = static_cast<uint32_t> (n_samples);
+  cloud_out.width = static_cast<pcl::uint32_t> (n_samples);
   cloud_out.height = 1;
 
   for (i = 0; i < n_samples; i++)

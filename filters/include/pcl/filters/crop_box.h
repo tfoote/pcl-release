@@ -16,7 +16,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,7 +33,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: crop_box.h 4865 2012-03-01 02:07:13Z rusu $
+ * $Id: crop_box.h 1370 2011-06-19 01:06:01Z jspricke $
  *
  */
 
@@ -56,18 +56,22 @@ namespace pcl
   template<typename PointT>
   class CropBox : public FilterIndices<PointT>
   {
-    using Filter<PointT>::filter_name_;
     using Filter<PointT>::getClassName;
-    using Filter<PointT>::indices_;
-    using Filter<PointT>::input_;
 
     typedef typename Filter<PointT>::PointCloud PointCloud;
     typedef typename PointCloud::Ptr PointCloudPtr;
     typedef typename PointCloud::ConstPtr PointCloudConstPtr;
 
     public:
-      /** \brief Empty constructor. */
-      CropBox () :
+
+      typedef boost::shared_ptr< CropBox<PointT> > Ptr;
+      typedef boost::shared_ptr< const CropBox<PointT> > ConstPtr;
+
+      /** \brief Constructor.
+        * \param[in] extract_removed_indices Set to true if you want to be able to extract the indices of points being removed (default = false).
+        */
+      CropBox (bool extract_removed_indices = false) :
+        FilterIndices<PointT>::FilterIndices (extract_removed_indices),
         min_pt_ (Eigen::Vector4f (-1, -1, -1, 1)),
         max_pt_ (Eigen::Vector4f (1, 1, 1, 1)),
         rotation_ (Eigen::Vector3f::Zero ()),
@@ -162,6 +166,15 @@ namespace pcl
       }
 
     protected:
+      using PCLBase<PointT>::input_;
+      using PCLBase<PointT>::indices_;
+      using Filter<PointT>::filter_name_;
+      using FilterIndices<PointT>::negative_;
+      using FilterIndices<PointT>::keep_organized_;
+      using FilterIndices<PointT>::user_filter_value_;
+      using FilterIndices<PointT>::extract_removed_indices_;
+      using FilterIndices<PointT>::removed_indices_;
+
       /** \brief Sample of point indices into a separate PointCloud
         * \param[out] output the resultant point cloud
         */
@@ -195,18 +208,21 @@ namespace pcl
     * \ingroup filters
     */
   template<>
-  class PCL_EXPORTS CropBox<sensor_msgs::PointCloud2> : public FilterIndices<sensor_msgs::PointCloud2>
+  class PCL_EXPORTS CropBox<pcl::PCLPointCloud2> : public FilterIndices<pcl::PCLPointCloud2>
   {
-    using Filter<sensor_msgs::PointCloud2>::filter_name_;
-    using Filter<sensor_msgs::PointCloud2>::getClassName;
+    using Filter<pcl::PCLPointCloud2>::filter_name_;
+    using Filter<pcl::PCLPointCloud2>::getClassName;
 
-    typedef sensor_msgs::PointCloud2 PointCloud2;
-    typedef PointCloud2::Ptr PointCloud2Ptr;
-    typedef PointCloud2::ConstPtr PointCloud2ConstPtr;
+    typedef pcl::PCLPointCloud2 PCLPointCloud2;
+    typedef PCLPointCloud2::Ptr PCLPointCloud2Ptr;
+    typedef PCLPointCloud2::ConstPtr PCLPointCloud2ConstPtr;
 
     public:
-    /** \brief Empty constructor. */
-      CropBox () :
+      /** \brief Constructor.
+        * \param[in] extract_removed_indices Set to true if you want to be able to extract the indices of points being removed (default = false).
+        */
+       CropBox (bool extract_removed_indices = false) :
+        FilterIndices<pcl::PCLPointCloud2>::FilterIndices (extract_removed_indices),
         min_pt_(Eigen::Vector4f (-1, -1, -1, 1)),
         max_pt_(Eigen::Vector4f (1, 1, 1, 1)),
         translation_ (Eigen::Vector3f::Zero ()),
@@ -305,7 +321,7 @@ namespace pcl
         * \param output the resultant point cloud
         */
       void
-      applyFilter (PointCloud2 &output);
+      applyFilter (PCLPointCloud2 &output);
 
       /** \brief Sample of point indices
         * \param indices the resultant point cloud indices
@@ -325,5 +341,9 @@ namespace pcl
       Eigen::Affine3f transform_;
   };
 }
+
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/filters/impl/crop_box.hpp>
+#endif
 
 #endif  // PCL_FILTERS_CROP_BOX_H_

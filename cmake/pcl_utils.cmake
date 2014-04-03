@@ -50,7 +50,7 @@ macro(DISSECT_VERSION)
         PCL_MAJOR_VERSION "${PCL_VERSION}")
     string(REGEX REPLACE "^[0-9]+\\.([0-9]+).*" "\\1"
         PCL_MINOR_VERSION "${PCL_VERSION}")
-    string(REGEX REPLACE "^[0-9]+\\.[0-9]+\\.([0-9]+)" "\\1"
+    string(REGEX REPLACE "^[0-9]+\\.[0-9]+\\.([0-9]+).*" "\\1"
         PCL_REVISION_VERSION "${PCL_VERSION}")
     string(REGEX REPLACE "^[0-9]+\\.[0-9]+\\.[0-9]+(.*)" "\\1"
         PCL_CANDIDATE_VERSION "${PCL_VERSION}")
@@ -90,11 +90,11 @@ macro(SET_INSTALL_DIRS)
     set(DOC_INSTALL_DIR "share/doc/${PROJECT_NAME_LOWER}-${PCL_MAJOR_VERSION}.${PCL_MINOR_VERSION}")
     set(BIN_INSTALL_DIR "bin")
     set(PKGCFG_INSTALL_DIR "${LIB_INSTALL_DIR}/pkgconfig")
-    if(WIN32)
+    if(WIN32 AND NOT MINGW)
         set(PCLCONFIG_INSTALL_DIR "cmake")
-    else(WIN32)
+      else(WIN32 AND NOT MINGW)
         set(PCLCONFIG_INSTALL_DIR "share/${PROJECT_NAME_LOWER}-${PCL_MAJOR_VERSION}.${PCL_MINOR_VERSION}")
-    endif(WIN32)
+      endif(WIN32 AND NOT MINGW)
 endmacro(SET_INSTALL_DIRS)
 
 
@@ -374,6 +374,8 @@ macro(sort_relative _list _sorted_list _to_sort_relative)
   list(LENGTH ${_to_sort_relative} to_sort_list_length)
 
   if(NOT (list_length EQUAL sorted_list_length))
+    message(STATUS "Original list: ${${_list}}")
+    message(STATUS "Sorted list: ${${_sorted_list}}")
     message(FATAL_ERROR "size mismatch between ${_sorted_list} (length ${sorted_list_length}) and ${_list} (length ${list_length})")
   endif(NOT (list_length EQUAL sorted_list_length))
 

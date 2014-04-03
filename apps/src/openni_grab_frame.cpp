@@ -46,6 +46,30 @@
 #include <pcl/visualization/pcl_visualizer.h>
 
 
+
+#define SHOW_FPS 1
+#if SHOW_FPS
+#define FPS_CALC(_WHAT_) \
+do \
+{ \
+    static unsigned count = 0;\
+    static double last = pcl::getTime ();\
+    double now = pcl::getTime (); \
+    ++count; \
+    if (now - last >= 1.0) \
+    { \
+      std::cout << "Average framerate("<< _WHAT_ << "): " << double(count)/double(now - last) << " Hz" <<  std::endl; \
+      count = 0; \
+      last = now; \
+    } \
+}while(false)
+#else
+#define FPS_CALC(_WHAT_) \
+do \
+{ \
+}while(false)
+#endif
+
 using namespace pcl::console;
 using namespace boost::filesystem;
 
@@ -55,15 +79,17 @@ class OpenNIGrabFrame
   typedef pcl::PointCloud<PointType> Cloud;
   typedef typename Cloud::ConstPtr CloudConstPtr;  
   public:
-    OpenNIGrabFrame () 
+    OpenNIGrabFrame (pcl::OpenNIGrabber &grabber)
     : visualizer_ (new pcl::visualization::PCLVisualizer ("OpenNI Viewer"))
     , writer_ ()
     , quit_ (false)
-    , trigger_ (false)
     , continuous_ (false)
+    , trigger_ (false)
     , file_name_ ("")
     , dir_name_ ("")
     , format_ (4)
+    , grabber_ (grabber)
+    , visualizer_enable_ (true)
     {
     }
 
@@ -92,6 +118,9 @@ class OpenNIGrabFrame
           case 27:
           case 'Q':
           case 'q': quit_ = true; visualizer_->close ();
+            break;
+          case 'V':
+          case 'v': visualizer_enable_ = !visualizer_enable_;
             break;
           case ' ': continuous_ = !continuous_;
             break;
@@ -122,25 +151,26 @@ class OpenNIGrabFrame
     
     void saveCloud ()
     {
+      FPS_CALC ("I/O");
       std::stringstream ss;
       ss << dir_name_ << "/" << file_name_ << "_" << boost::posix_time::to_iso_string (boost::posix_time::microsec_clock::local_time ()) << ".pcd";
 
       if (format_ & 1)
       {
         writer_.writeBinary<PointType> (ss.str (), *cloud_);
-        std::cerr << "Data saved in BINARY format to " << ss.str () << std::endl;
+        //std::cerr << "Data saved in BINARY format to " << ss.str () << std::endl;
       }
       
       if (format_ & 2)
       {
         writer_.writeBinaryCompressed<PointType> (ss.str (), *cloud_);
-        std::cerr << "Data saved in BINARY COMPRESSED format to " << ss.str () << std::endl;
+        //std::cerr << "Data saved in BINARY COMPRESSED format to " << ss.str () << std::endl;
       }
       
       if (format_ & 4)
       {
         writer_.writeBinaryCompressed<PointType> (ss.str (), *cloud_);
-        std::cerr << "Data saved in BINARY COMPRESSED format to " << ss.str () << std::endl;
+        //std::cerr << "Data saved in BINARY COMPRESSED format to " << ss.str () << std::endl;
       }
     }
     
@@ -151,23 +181,26 @@ class OpenNIGrabFrame
       visualizer_->registerMouseCallback (&OpenNIGrabFrame::mouse_callback, *this);
       visualizer_->registerKeyboardCallback(&OpenNIGrabFrame::keyboard_callback, *this);
       
-      // create a new grabber for OpenNI devices
-      pcl::Grabber* interface = new pcl::OpenNIGrabber ();
 
       // make callback function from member function
-      boost::function<void (const CloudConstPtr&)> f =
-        boost::bind (&OpenNIGrabFrame::cloud_cb_, this, _1);
+      boost::function<void (const CloudConstPtr&)> f = boost::bind (&OpenNIGrabFrame::cloud_cb_, this, _1);
 
       // connect callback function for desired signal. In this case its a point cloud with color values
-      boost::signals2::connection c = interface->registerCallback (f);
+      boost::signals2::connection c = grabber_.registerCallback (f);
 
       // start receiving point clouds
-      interface->start ();
+      grabber_.start ();
 
       // wait until user quits program with Ctrl-C, but no busy-waiting -> sleep (1);
       while (!visualizer_->wasStopped())
       {
+        boost::this_thread::sleep (boost::posix_time::microseconds (100));
+
         visualizer_->spinOnce ();
+        
+        if (!visualizer_enable_)
+          continue;
+
         if (cloud_)
         {
           CloudConstPtr cloud = getLatestCloud ();
@@ -177,18 +210,17 @@ class OpenNIGrabFrame
             visualizer_->resetCameraViewpoint ("OpenNICloud");
           }          
         }
-        boost::this_thread::sleep (boost::posix_time::microseconds (100));
       }
       
       //while (!quit_)
         //boost::this_thread::sleep (boost::posix_time::seconds (1));
    
       // stop the grabber
-      interface->stop ();
+      grabber_.stop ();
     }
 
     void
-    setOptions (std::string filename, std::string pcd_format, bool paused)
+    setOptions (std::string filename, std::string pcd_format, bool paused, bool visualizer)
     {
       boost::filesystem::path path(filename);
 
@@ -228,6 +260,7 @@ class OpenNIGrabFrame
         format_ |= 4;
     
       continuous_ = !paused;
+      visualizer_enable_ = visualizer;
     }
 
     boost::shared_ptr<pcl::visualization::PCLVisualizer> visualizer_;
@@ -240,6 +273,8 @@ class OpenNIGrabFrame
     unsigned format_;
     CloudConstPtr cloud_;
     mutable boost::mutex cloud_mutex_;
+    pcl::OpenNIGrabber &grabber_;
+    bool visualizer_enable_;
 };
 
 void
@@ -253,6 +288,9 @@ usage (char ** argv)
   print_info ("                    -XYZ  = store just a XYZ cloud\n");
   print_info ("                    -paused = start grabber in paused mode. Toggle pause by pressing the space bar\n");
   print_info ("                              or grab single frames by just pressing the left mouse button.\n");
+  print_info ("                    -imagemode = select the image mode (resolution, fps) for the grabber, see pcl::OpenNIGrabber::Mode for details.\n");
+  print_info ("                    -depthmode = select the depth mode (resolution, fps) for the grabber, see pcl::OpenNIGrabber::Mode for details.\n");
+  print_info ("                    -visualizer 0/1 = turn OFF or ON the visualization of point clouds in the viewer (can also be changed using 'v'/'V' in the viewer).\n");
 }
 
 int 
@@ -272,6 +310,10 @@ main (int argc, char** argv)
   std::string filename;
   bool paused = false;
   bool xyz = false;
+  bool visualizer = true;
+  pcl::OpenNIGrabber::Mode depth_mode = pcl::OpenNIGrabber::OpenNI_Default_Mode;
+  pcl::OpenNIGrabber::Mode image_mode = pcl::OpenNIGrabber::OpenNI_Default_Mode;
+
   if (argc > 1)
   {
     // Parse the command line arguments for .pcd file
@@ -285,18 +327,28 @@ main (int argc, char** argv)
     parse_argument (argc, argv, "-format", format);
     xyz = find_switch (argc, argv, "-XYZ");
     paused = find_switch (argc, argv, "-paused");
+    visualizer = find_switch (argc, argv, "-visualizer");
+
+    unsigned mode;
+    if (pcl::console::parse(argc, argv, "-depthmode", mode) != -1)
+      depth_mode = pcl::OpenNIGrabber::Mode (mode);
+
+    if (pcl::console::parse(argc, argv, "-imagemode", mode) != -1)
+      image_mode = pcl::OpenNIGrabber::Mode (mode);
   }
+
+  pcl::OpenNIGrabber grabber ("#1", depth_mode, image_mode);
 
   if (xyz)
   {
-    OpenNIGrabFrame<pcl::PointXYZ> grab_frame;
-    grab_frame.setOptions (filename, format, paused);
+    OpenNIGrabFrame<pcl::PointXYZ> grab_frame (grabber);
+    grab_frame.setOptions (filename, format, paused, visualizer);
     grab_frame.run ();
   }
   else
   {
-    OpenNIGrabFrame<pcl::PointXYZRGBA> grab_frame;    
-    grab_frame.setOptions (filename, format, paused);
+    OpenNIGrabFrame<pcl::PointXYZRGBA> grab_frame (grabber);
+    grab_frame.setOptions (filename, format, paused, visualizer);
     grab_frame.run ();
   }
   return (0);

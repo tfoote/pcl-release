@@ -1,7 +1,10 @@
 /*
  * Software License Agreement (BSD License)
  *
+ *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
+ *
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -14,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -31,7 +34,6 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- *  $Id: correspondence.cpp 4912 2012-03-05 16:55:55Z rusu $
  */
 
 #include <pcl/correspondence.h>
@@ -79,3 +81,14 @@ pcl::getRejectedQueryIndices (const pcl::Correspondences &correspondences_before
       indices_after.begin (),  indices_after.end (),
       inserter (indices, indices.begin ()));
 }
+
+namespace pcl
+{
+  std::ostream&
+  operator << (std::ostream& os, const Correspondence& c)
+  {
+    os << c.index_query << " " << c.index_match << " " << c.distance;
+    return (os);
+  }
+}
+

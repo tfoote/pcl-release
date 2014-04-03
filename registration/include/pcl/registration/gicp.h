@@ -1,7 +1,10 @@
 /*
  * Software License Agreement (BSD License)
  *
+ *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
+ *
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -14,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -31,7 +34,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: gicp.h 5026 2012-03-12 02:51:44Z rusu $
+ * $Id$
  *
  */
 
@@ -56,41 +59,46 @@ namespace pcl
   template <typename PointSource, typename PointTarget>
   class GeneralizedIterativeClosestPoint : public IterativeClosestPoint<PointSource, PointTarget>
   {
-    using IterativeClosestPoint<PointSource, PointTarget>::reg_name_;
-    using IterativeClosestPoint<PointSource, PointTarget>::getClassName;
-    using IterativeClosestPoint<PointSource, PointTarget>::indices_;
-    using IterativeClosestPoint<PointSource, PointTarget>::target_;
-    using IterativeClosestPoint<PointSource, PointTarget>::input_;
-    using IterativeClosestPoint<PointSource, PointTarget>::tree_;
-    using IterativeClosestPoint<PointSource, PointTarget>::nr_iterations_;
-    using IterativeClosestPoint<PointSource, PointTarget>::max_iterations_;
-    using IterativeClosestPoint<PointSource, PointTarget>::previous_transformation_;
-    using IterativeClosestPoint<PointSource, PointTarget>::final_transformation_;
-    using IterativeClosestPoint<PointSource, PointTarget>::transformation_;
-    using IterativeClosestPoint<PointSource, PointTarget>::transformation_epsilon_;
-    using IterativeClosestPoint<PointSource, PointTarget>::converged_;
-    using IterativeClosestPoint<PointSource, PointTarget>::corr_dist_threshold_;
-    using IterativeClosestPoint<PointSource, PointTarget>::inlier_threshold_;
-    using IterativeClosestPoint<PointSource, PointTarget>::min_number_correspondences_;
-    using IterativeClosestPoint<PointSource, PointTarget>::update_visualizer_;
-
-    typedef pcl::PointCloud<PointSource> PointCloudSource;
-    typedef typename PointCloudSource::Ptr PointCloudSourcePtr;
-    typedef typename PointCloudSource::ConstPtr PointCloudSourceConstPtr;
-
-    typedef pcl::PointCloud<PointTarget> PointCloudTarget;
-    typedef typename PointCloudTarget::Ptr PointCloudTargetPtr;
-    typedef typename PointCloudTarget::ConstPtr PointCloudTargetConstPtr;
-
-    typedef PointIndices::Ptr PointIndicesPtr;
-    typedef PointIndices::ConstPtr PointIndicesConstPtr;
-
-    typedef typename pcl::KdTree<PointSource> InputKdTree;
-    typedef typename pcl::KdTree<PointSource>::Ptr InputKdTreePtr;
-    
-    typedef Eigen::Matrix<double, 6, 1> Vector6d;
-
     public:
+      using IterativeClosestPoint<PointSource, PointTarget>::reg_name_;
+      using IterativeClosestPoint<PointSource, PointTarget>::getClassName;
+      using IterativeClosestPoint<PointSource, PointTarget>::indices_;
+      using IterativeClosestPoint<PointSource, PointTarget>::target_;
+      using IterativeClosestPoint<PointSource, PointTarget>::input_;
+      using IterativeClosestPoint<PointSource, PointTarget>::tree_;
+      using IterativeClosestPoint<PointSource, PointTarget>::tree_reciprocal_;
+      using IterativeClosestPoint<PointSource, PointTarget>::nr_iterations_;
+      using IterativeClosestPoint<PointSource, PointTarget>::max_iterations_;
+      using IterativeClosestPoint<PointSource, PointTarget>::previous_transformation_;
+      using IterativeClosestPoint<PointSource, PointTarget>::final_transformation_;
+      using IterativeClosestPoint<PointSource, PointTarget>::transformation_;
+      using IterativeClosestPoint<PointSource, PointTarget>::transformation_epsilon_;
+      using IterativeClosestPoint<PointSource, PointTarget>::converged_;
+      using IterativeClosestPoint<PointSource, PointTarget>::corr_dist_threshold_;
+      using IterativeClosestPoint<PointSource, PointTarget>::inlier_threshold_;
+      using IterativeClosestPoint<PointSource, PointTarget>::min_number_correspondences_;
+      using IterativeClosestPoint<PointSource, PointTarget>::update_visualizer_;
+
+      typedef pcl::PointCloud<PointSource> PointCloudSource;
+      typedef typename PointCloudSource::Ptr PointCloudSourcePtr;
+      typedef typename PointCloudSource::ConstPtr PointCloudSourceConstPtr;
+
+      typedef pcl::PointCloud<PointTarget> PointCloudTarget;
+      typedef typename PointCloudTarget::Ptr PointCloudTargetPtr;
+      typedef typename PointCloudTarget::ConstPtr PointCloudTargetConstPtr;
+
+      typedef PointIndices::Ptr PointIndicesPtr;
+      typedef PointIndices::ConstPtr PointIndicesConstPtr;
+
+      typedef typename Registration<PointSource, PointTarget>::KdTree InputKdTree;
+      typedef typename Registration<PointSource, PointTarget>::KdTreePtr InputKdTreePtr;
+
+      typedef boost::shared_ptr< GeneralizedIterativeClosestPoint<PointSource, PointTarget> > Ptr;
+      typedef boost::shared_ptr< const GeneralizedIterativeClosestPoint<PointSource, PointTarget> > ConstPtr;
+
+
+      typedef Eigen::Matrix<double, 6, 1> Vector6d;
+
       /** \brief Empty constructor. */
       GeneralizedIterativeClosestPoint () 
         : k_correspondences_(20)
@@ -109,18 +117,23 @@ namespace pcl
         rigid_transformation_estimation_ = 
           boost::bind (&GeneralizedIterativeClosestPoint<PointSource, PointTarget>::estimateRigidTransformationBFGS, 
                        this, _1, _2, _3, _4, _5); 
-        input_tree_.reset (new pcl::KdTreeFLANN<PointSource>);
       }
+      
+      /** \brief Provide a pointer to the input dataset
+        * \param cloud the const boost shared pointer to a PointCloud message
+        */
+      PCL_DEPRECATED (void setInputCloud (const PointCloudSourceConstPtr &cloud), "[pcl::registration::GeneralizedIterativeClosestPoint::setInputCloud] setInputCloud is deprecated. Please use setInputSource instead.");
 
       /** \brief Provide a pointer to the input dataset
         * \param cloud the const boost shared pointer to a PointCloud message
         */
       inline void
-      setInputCloud (const PointCloudSourceConstPtr &cloud)
+      setInputSource (const PointCloudSourceConstPtr &cloud)
       {
+
         if (cloud->points.empty ())
         {
-          PCL_ERROR ("[pcl::%s::setInputInput] Invalid or empty point cloud dataset given!\n", getClassName ().c_str ());
+          PCL_ERROR ("[pcl::%s::setInputSource] Invalid or empty point cloud dataset given!\n", getClassName ().c_str ());
           return;
         }
         PointCloudSource input = *cloud;
@@ -128,8 +141,8 @@ namespace pcl
         for (size_t i = 0; i < input.size (); ++i)
           input[i].data[3] = 1.0;
         
-        input_ = input.makeShared ();
-        input_tree_->setInputCloud (input_);
+        pcl::IterativeClosestPoint<PointSource, PointTarget>::setInputSource (cloud);
+        input_covariances_.clear ();
         input_covariances_.reserve (input_->size ());
       }
 
@@ -139,7 +152,8 @@ namespace pcl
       inline void 
       setInputTarget (const PointCloudTargetConstPtr &target)
       {
-        pcl::Registration<PointSource, PointTarget>::setInputTarget(target);
+        pcl::IterativeClosestPoint<PointSource, PointTarget>::setInputTarget(target);
+        target_covariances_.clear ();
         target_covariances_.reserve (target_->size ());
       }
 
@@ -214,22 +228,22 @@ namespace pcl
       int
       getMaximumOptimizerIterations () { return (max_inner_iterations_); }
 
-    private:
+    protected:
 
       /** \brief The number of neighbors used for covariances computation. 
-        * \default 20
+        * default: 20
         */
       int k_correspondences_;
 
       /** \brief The epsilon constant for gicp paper; this is NOT the convergence 
         * tolerence 
-        * \default 0.001
+        * default: 0.001
         */
       double gicp_epsilon_;
 
       /** The epsilon constant for rotation error. (In GICP the transformation epsilon 
         * is split in rotation part and translation part).
-        * \default 2e-3
+        * default: 2e-3
         */
       double rotation_epsilon_;
 
@@ -248,8 +262,6 @@ namespace pcl
       /** \brief Temporary pointer to the target dataset indices. */
       const std::vector<int> *tmp_idx_tgt_;
 
-      /** \brief KD tree pointer of the input cloud. */
-      InputKdTreePtr input_tree_;
       
       /** \brief Input cloud points covariances. */
       std::vector<Eigen::Matrix3d> input_covariances_;
@@ -271,7 +283,7 @@ namespace pcl
         */
       template<typename PointT>
       void computeCovariances(typename pcl::PointCloud<PointT>::ConstPtr cloud, 
-                              const typename pcl::KdTree<PointT>::Ptr tree,
+                              const typename pcl::search::KdTree<PointT>::Ptr tree,
                               std::vector<Eigen::Matrix3d>& cloud_covariances);
 
       /** \return trace of mat1^t . mat2 
@@ -326,7 +338,6 @@ namespace pcl
         const GeneralizedIterativeClosestPoint *gicp_;
       };
       
-    protected:
       boost::function<void(const pcl::PointCloud<PointSource> &cloud_src,
                            const std::vector<int> &src_indices,
                            const pcl::PointCloud<PointTarget> &cloud_tgt,

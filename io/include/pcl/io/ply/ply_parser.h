@@ -17,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -34,7 +34,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: ply_parser.h 5323 2012-03-27 12:57:27Z bouffa $
+ * $Id$
  *
  */
 
@@ -48,20 +48,6 @@
 #include <string>
 #include <vector>
 
-#include <boost/function.hpp>
-#include <boost/tuple/tuple.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/mpl/fold.hpp>
-#include <boost/mpl/inherit.hpp>
-#include <boost/mpl/inherit_linearly.hpp>
-#include <boost/mpl/joint_view.hpp>
-#include <boost/mpl/transform.hpp>
-#include <boost/mpl/vector.hpp>
-
-#include <pcl/io/ply/ply.h>
-#include <pcl/io/ply/io_operators.h>
-#include <pcl/pcl_macros.h>
-
 #ifdef BUILD_Maintainer
 #  if defined __GNUC__
 #    if __GNUC__ == 4 && __GNUC_MINOR__ > 3
@@ -74,6 +60,12 @@
 #    pragma warning(push, 1)
 #  endif
 #endif
+
+#include <pcl/io/boost.h>
+
+#include <pcl/io/ply/ply.h>
+#include <pcl/io/ply/io_operators.h>
+#include <pcl/pcl_macros.h>
 
 namespace pcl
 {
@@ -158,18 +150,27 @@ namespace pcl
              
               template <typename ScalarType>
               friend typename scalar_property_definition_callback_type<ScalarType>::type&
-              at (scalar_property_definition_callbacks_type& scalar_property_definition_callbacks)
-              {
-                return (scalar_property_definition_callbacks.get<ScalarType> ());
-              }
+              at (scalar_property_definition_callbacks_type& scalar_property_definition_callbacks);
            
               template <typename ScalarType>
               friend const typename scalar_property_definition_callback_type<ScalarType>::type&
-              at (const scalar_property_definition_callbacks_type& scalar_property_definition_callbacks)
-              {
-                return (scalar_property_definition_callbacks.get<ScalarType> ());
-              }
+              at (const scalar_property_definition_callbacks_type& scalar_property_definition_callbacks);
           };
+
+          template <typename ScalarType>
+          friend typename scalar_property_definition_callback_type<ScalarType>::type&
+          at (scalar_property_definition_callbacks_type& scalar_property_definition_callbacks)
+          {
+              return (scalar_property_definition_callbacks.get<ScalarType> ());
+          }
+
+          
+          template <typename ScalarType>
+          friend const typename scalar_property_definition_callback_type<ScalarType>::type&
+          at (const scalar_property_definition_callbacks_type& scalar_property_definition_callbacks)
+          {
+              return (scalar_property_definition_callbacks.get<ScalarType> ());
+          }
 
           template <typename SizeType, typename ScalarType>
           struct list_property_begin_callback_type
@@ -245,18 +246,27 @@ namespace pcl
 
               template <typename SizeType, typename ScalarType>
               friend typename list_property_definition_callback_type<SizeType, ScalarType>::type&
-              at (list_property_definition_callbacks_type& list_property_definition_callbacks)
-              {
-                return (list_property_definition_callbacks.get<SizeType, ScalarType> ());
-              }
+              at (list_property_definition_callbacks_type& list_property_definition_callbacks);
            
               template <typename SizeType, typename ScalarType>
               friend const typename list_property_definition_callback_type<SizeType, ScalarType>::type&
-              at (const list_property_definition_callbacks_type& list_property_definition_callbacks)
-              {
-                return (list_property_definition_callbacks.get<SizeType, ScalarType> ());
-              }
+              at (const list_property_definition_callbacks_type& list_property_definition_callbacks);
           };
+          
+          template <typename SizeType, typename ScalarType>
+          friend typename list_property_definition_callback_type<SizeType, ScalarType>::type&
+          at (list_property_definition_callbacks_type& list_property_definition_callbacks)
+          {
+              return (list_property_definition_callbacks.get<SizeType, ScalarType> ());
+          }
+          
+          template <typename SizeType, typename ScalarType>
+          friend const typename list_property_definition_callback_type<SizeType, ScalarType>::type&
+          at (const list_property_definition_callbacks_type& list_property_definition_callbacks)
+          {
+              return (list_property_definition_callbacks.get<SizeType, ScalarType> ());
+          }
+
 
           inline void
           info_callback (const info_callback_type& info_callback);

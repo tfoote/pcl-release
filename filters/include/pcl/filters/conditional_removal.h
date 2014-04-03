@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -31,13 +31,13 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: conditional_removal.h 5656 2012-05-01 06:22:33Z rusu $
+ * $Id$
  *
  */
 
 #ifndef PCL_FILTER_FIELD_VAL_CONDITION_H_
 #define PCL_FILTER_FIELD_VAL_CONDITION_H_
-
+#include <pcl/common/eigen.h>
 #include <pcl/filters/filter.h>
 
 namespace pcl
@@ -88,8 +88,8 @@ namespace pcl
   class ComparisonBase
   {
     public:
-      typedef boost::shared_ptr<ComparisonBase<PointT> > Ptr;
-      typedef boost::shared_ptr<const ComparisonBase<PointT> > ConstPtr;
+      typedef boost::shared_ptr< ComparisonBase<PointT> > Ptr;
+      typedef boost::shared_ptr< const ComparisonBase<PointT> > ConstPtr;
 
       /** \brief Constructor. */
       ComparisonBase () : capable_ (false), field_name_ (), offset_ (), op_ () {}
@@ -132,8 +132,9 @@ namespace pcl
     using ComparisonBase<PointT>::capable_;
 
     public:
-      typedef boost::shared_ptr<FieldComparison<PointT> > Ptr;
-      typedef boost::shared_ptr<const FieldComparison<PointT> > ConstPtr;
+      typedef boost::shared_ptr< FieldComparison<PointT> > Ptr;
+      typedef boost::shared_ptr< const FieldComparison<PointT> > ConstPtr;
+
 
       /** \brief Construct a FieldComparison
         * \param field_name the name of the field that contains the data we want to compare
@@ -145,8 +146,9 @@ namespace pcl
       /** \brief Copy constructor.
         * \param[in] src the field comparison object to copy into this
         */
-      FieldComparison (const FieldComparison &src) :
-        compare_val_ (src.compare_val_), point_data_ (src.point_data_)
+      FieldComparison (const FieldComparison &src) 
+        : ComparisonBase<PointT> ()
+        , compare_val_ (src.compare_val_), point_data_ (src.point_data_)
       {
       }
 
@@ -194,6 +196,9 @@ namespace pcl
     using ComparisonBase<PointT>::op_;
 
     public:
+      typedef boost::shared_ptr< PackedRGBComparison<PointT> > Ptr;
+      typedef boost::shared_ptr< const PackedRGBComparison<PointT> > ConstPtr;
+
       /** \brief Construct a PackedRGBComparison
         * \param component_name either "r", "g" or "b"
         * \param op the operator to use when making the comparison
@@ -238,6 +243,9 @@ namespace pcl
     using ComparisonBase<PointT>::op_;
 
     public:
+      typedef boost::shared_ptr< PackedHSIComparison<PointT> > Ptr;
+      typedef boost::shared_ptr< const PackedHSIComparison<PointT> > ConstPtr;
+ 
       /** \brief Construct a PackedHSIComparison 
         * \param component_name either "h", "s" or "i"
         * \param op the operator to use when making the comparison
@@ -286,6 +294,14 @@ namespace pcl
   /**\brief A comparison whether the (x,y,z) components of a given point satisfy (p'Ap + 2v'p + c [OP] 0).
    * Here [OP] stands for the defined pcl::ComparisonOps, i.e. for GT, GE, LT, LE or EQ;
    * p = (x,y,z) is a point of the point cloud; A is 3x3 matrix; v is the 3x1 vector; c is a scalar.
+   *  
+   * One can also use TfQuadraticXYZComparison for simpler geometric shapes by defining the
+   * quadratic parts (i.e. the matrix A) to be zero. By combining different instances of
+   * TfQuadraticXYZComparison one can get more complex shapes. For example, to have a simple
+   * cylinder (along the x-axis) of specific length one needs three comparisons combined as AND condition:
+   *   1. The cylinder: A = [0 0 0, 0 1 0, 0 0 1]; v = [0, 0, 0]; c = radius²; OP = LT (meaning "<")
+   *   2. X-min limit: A = 0; v = [1, 0, 0]; c = x_min; OP = GT
+   *   3. X-max ...
    *
    * \author Julian Löchner
    */
@@ -301,6 +317,9 @@ namespace pcl
       /** \brief Constructor.
        */
       TfQuadraticXYZComparison ();
+      
+      /** \brief Empty destructor */
+      virtual ~TfQuadraticXYZComparison () {}
 
       /** \brief Constructor.
        * \param op the operator "[OP]" of the comparison "p'Ap + 2v'p + c [OP] 0".
@@ -682,5 +701,9 @@ namespace pcl
       float user_filter_value_;
   };
 }
+
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/filters/impl/conditional_removal.hpp>
+#endif
 
 #endif 

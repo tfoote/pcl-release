@@ -38,11 +38,6 @@
 #ifndef PCL_REGISTRATION_VISUALIZER_H_
 #define PCL_REGISTRATION_VISUALIZER_H_
 
-// boost
-#include <boost/thread.hpp>
-#include <boost/function.hpp>
-#include <boost/bind.hpp>
-
 // PCL
 #include <pcl/registration/registration.h>
 #include <pcl/visualization/pcl_visualizer.h>
