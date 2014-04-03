@@ -16,35 +16,61 @@ if(build)
         src/filter.cpp
         src/filter_indices.cpp
         src/passthrough.cpp
+        src/shadowpoints.cpp
         src/project_inliers.cpp
         src/radius_outlier_removal.cpp
         src/random_sample.cpp
         src/normal_space.cpp
+        src/sampling_surface_normal.cpp
         src/statistical_outlier_removal.cpp
         src/voxel_grid.cpp
         src/approximate_voxel_grid.cpp
         src/bilateral.cpp
+        src/fast_bilateral.cpp
+        src/fast_bilateral_omp.cpp
         src/crop_hull.cpp
+        src/voxel_grid_covariance.cpp
+	    src/voxel_grid_label.cpp
+        src/frustum_culling.cpp
+        src/covariance_sampling.cpp
+        src/median_filter.cpp
+	src/voxel_grid_occlusion_estimation.cpp
+	    src/normal_refinement.cpp
         )
 
     set(incs
+        include/pcl/${SUBSYS_NAME}/boost.h
         include/pcl/${SUBSYS_NAME}/conditional_removal.h
         include/pcl/${SUBSYS_NAME}/crop_box.h
         include/pcl/${SUBSYS_NAME}/clipper3D.h
         include/pcl/${SUBSYS_NAME}/plane_clipper3D.h
+        include/pcl/${SUBSYS_NAME}/box_clipper3D.h
         include/pcl/${SUBSYS_NAME}/crop_hull.h
         include/pcl/${SUBSYS_NAME}/extract_indices.h
         include/pcl/${SUBSYS_NAME}/filter.h
         include/pcl/${SUBSYS_NAME}/filter_indices.h
         include/pcl/${SUBSYS_NAME}/passthrough.h
+        include/pcl/${SUBSYS_NAME}/shadowpoints.h
         include/pcl/${SUBSYS_NAME}/project_inliers.h
         include/pcl/${SUBSYS_NAME}/radius_outlier_removal.h
         include/pcl/${SUBSYS_NAME}/random_sample.h
         include/pcl/${SUBSYS_NAME}/normal_space.h
+        include/pcl/${SUBSYS_NAME}/sampling_surface_normal.h
         include/pcl/${SUBSYS_NAME}/statistical_outlier_removal.h
         include/pcl/${SUBSYS_NAME}/voxel_grid.h
         include/pcl/${SUBSYS_NAME}/approximate_voxel_grid.h
         include/pcl/${SUBSYS_NAME}/bilateral.h
+        include/pcl/${SUBSYS_NAME}/fast_bilateral.h
+        include/pcl/${SUBSYS_NAME}/fast_bilateral_omp.h
+        include/pcl/${SUBSYS_NAME}/voxel_grid_covariance.h
+        include/pcl/${SUBSYS_NAME}/convolution.h
+        include/pcl/${SUBSYS_NAME}/convolution_3d.h
+        include/pcl/${SUBSYS_NAME}/voxel_grid_label.h
+        include/pcl/${SUBSYS_NAME}/voxel_grid_occlusion_estimation.h
+        include/pcl/${SUBSYS_NAME}/frustum_culling.h
+        include/pcl/${SUBSYS_NAME}/covariance_sampling.h
+        include/pcl/${SUBSYS_NAME}/median_filter.h
+        include/pcl/${SUBSYS_NAME}/normal_refinement.h
         )
 
     set(impl_incs
@@ -52,18 +78,31 @@ if(build)
         include/pcl/${SUBSYS_NAME}/impl/crop_box.hpp
         include/pcl/${SUBSYS_NAME}/impl/crop_hull.hpp
         include/pcl/${SUBSYS_NAME}/impl/plane_clipper3D.hpp
+        include/pcl/${SUBSYS_NAME}/impl/box_clipper3D.hpp
         include/pcl/${SUBSYS_NAME}/impl/extract_indices.hpp
         include/pcl/${SUBSYS_NAME}/impl/filter.hpp
         include/pcl/${SUBSYS_NAME}/impl/filter_indices.hpp
         include/pcl/${SUBSYS_NAME}/impl/passthrough.hpp
+        include/pcl/${SUBSYS_NAME}/impl/shadowpoints.hpp
         include/pcl/${SUBSYS_NAME}/impl/project_inliers.hpp
         include/pcl/${SUBSYS_NAME}/impl/radius_outlier_removal.hpp
         include/pcl/${SUBSYS_NAME}/impl/random_sample.hpp
         include/pcl/${SUBSYS_NAME}/impl/normal_space.hpp
+        include/pcl/${SUBSYS_NAME}/impl/sampling_surface_normal.hpp
         include/pcl/${SUBSYS_NAME}/impl/statistical_outlier_removal.hpp
         include/pcl/${SUBSYS_NAME}/impl/voxel_grid.hpp
         include/pcl/${SUBSYS_NAME}/impl/approximate_voxel_grid.hpp
         include/pcl/${SUBSYS_NAME}/impl/bilateral.hpp
+        include/pcl/${SUBSYS_NAME}/impl/fast_bilateral.hpp
+        include/pcl/${SUBSYS_NAME}/impl/fast_bilateral_omp.hpp
+        include/pcl/${SUBSYS_NAME}/impl/voxel_grid_covariance.hpp
+        include/pcl/${SUBSYS_NAME}/impl/convolution.hpp
+        include/pcl/${SUBSYS_NAME}/impl/convolution_3d.hpp
+        include/pcl/${SUBSYS_NAME}/impl/voxel_grid_occlusion_estimation.hpp
+        include/pcl/${SUBSYS_NAME}/impl/frustum_culling.hpp
+        include/pcl/${SUBSYS_NAME}/impl/covariance_sampling.hpp
+        include/pcl/${SUBSYS_NAME}/impl/median_filter.hpp
+        include/pcl/${SUBSYS_NAME}/impl/normal_refinement.hpp
         )
 
     set(LIB_NAME pcl_${SUBSYS_NAME})
@@ -75,9 +114,5 @@ if(build)
     # Install include files
     PCL_ADD_INCLUDES(${SUBSYS_NAME} ${SUBSYS_NAME} ${incs})
     PCL_ADD_INCLUDES(${SUBSYS_NAME} ${SUBSYS_NAME}/impl ${impl_incs})
-
-    if(BUILD_TESTS)
-        add_subdirectory(test)
-    endif(BUILD_TESTS)
 
 endif(build)

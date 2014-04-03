@@ -3,6 +3,7 @@
  *
  *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010-2011, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
  *
  *  All rights reserved.
  *
@@ -16,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,7 +34,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: sac_model_normal_parallel_plane.h 4710 2012-02-23 17:51:24Z rusu $
+ * $Id$
  *
  */
 
@@ -84,12 +85,12 @@ namespace pcl
   template <typename PointT, typename PointNT>
   class SampleConsensusModelNormalParallelPlane : public SampleConsensusModelPlane<PointT>, public SampleConsensusModelFromNormals<PointT, PointNT>
   {
-    using SampleConsensusModel<PointT>::input_;
-    using SampleConsensusModel<PointT>::indices_;
-    using SampleConsensusModelFromNormals<PointT, PointNT>::normals_;
-    using SampleConsensusModelFromNormals<PointT, PointNT>::normal_distance_weight_;
-
     public:
+      using SampleConsensusModel<PointT>::input_;
+      using SampleConsensusModel<PointT>::indices_;
+      using SampleConsensusModelFromNormals<PointT, PointNT>::normals_;
+      using SampleConsensusModelFromNormals<PointT, PointNT>::normal_distance_weight_;
+      using SampleConsensusModel<PointT>::error_sqr_dists_;
 
       typedef typename SampleConsensusModel<PointT>::PointCloud PointCloud;
       typedef typename SampleConsensusModel<PointT>::PointCloudPtr PointCloudPtr;
@@ -102,26 +103,40 @@ namespace pcl
 
       /** \brief Constructor for base SampleConsensusModelNormalParallelPlane.
         * \param[in] cloud the input point cloud dataset
+        * \param[in] random if true set the random seed to the current time, else set to 12345 (default: false)
         */
-      SampleConsensusModelNormalParallelPlane (const PointCloudConstPtr &cloud) : 
-        SampleConsensusModelPlane<PointT> (cloud),
-        axis_ (Eigen::Vector4f::Zero ()),
-        distance_from_origin_ (0),
-        eps_angle_ (-1.0), cos_angle_ (-1.0), eps_dist_ (0.0)
+      SampleConsensusModelNormalParallelPlane (const PointCloudConstPtr &cloud,
+                                               bool random = false) 
+        : SampleConsensusModelPlane<PointT> (cloud, random)
+        , SampleConsensusModelFromNormals<PointT, PointNT> ()
+        , axis_ (Eigen::Vector4f::Zero ())
+        , distance_from_origin_ (0)
+        , eps_angle_ (-1.0)
+        , cos_angle_ (-1.0)
+        , eps_dist_ (0.0)
       {
       }
 
       /** \brief Constructor for base SampleConsensusModelNormalParallelPlane.
         * \param[in] cloud the input point cloud dataset
         * \param[in] indices a vector of point indices to be used from \a cloud
+        * \param[in] random if true set the random seed to the current time, else set to 12345 (default: false)
         */
-      SampleConsensusModelNormalParallelPlane (const PointCloudConstPtr &cloud, const std::vector<int> &indices) : 
-        SampleConsensusModelPlane<PointT> (cloud, indices),
-        axis_ (Eigen::Vector4f::Zero ()),
-        distance_from_origin_ (0),
-        eps_angle_ (-1.0), cos_angle_ (-1.0), eps_dist_ (0.0)
+      SampleConsensusModelNormalParallelPlane (const PointCloudConstPtr &cloud, 
+                                               const std::vector<int> &indices,
+                                               bool random = false) 
+        : SampleConsensusModelPlane<PointT> (cloud, indices, random)
+        , SampleConsensusModelFromNormals<PointT, PointNT> ()
+        , axis_ (Eigen::Vector4f::Zero ())
+        , distance_from_origin_ (0)
+        , eps_angle_ (-1.0)
+        , cos_angle_ (-1.0)
+        , eps_dist_ (0.0)
       {
       }
+      
+      /** \brief Empty destructor */
+      virtual ~SampleConsensusModelNormalParallelPlane () {}
 
       /** \brief Set the axis along which we need to search for a plane perpendicular to.
         * \param[in] ax the axis along which we need to search for a plane perpendicular to
@@ -221,5 +236,9 @@ namespace pcl
       double eps_dist_;
   };
 }
+
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/sample_consensus/impl/sac_model_normal_parallel_plane.hpp>
+#endif
 
 #endif  //#ifndef PCL_SAMPLE_CONSENSUS_MODEL_NORMALPARALLELPLANE_H_

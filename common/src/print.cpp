@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -31,7 +31,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: print.cpp 4681 2012-02-22 23:48:44Z mdixon $
+ * $Id$
  *
  */
 #include <pcl/console/print.h>
@@ -340,7 +340,19 @@ namespace pcl
   namespace console
   {
     static bool s_NeedVerbosityInit = true;
-    static VERBOSITY_LEVEL s_VerbosityLevel = pcl::console::L_INFO;
+#ifdef VERBOSITY_LEVEL_ALWAYS
+  static VERBOSITY_LEVEL s_VerbosityLevel = pcl::console::L_ALWAYS; 
+#elif defined VERBOSITY_LEVEL_ERROR
+  static VERBOSITY_LEVEL s_VerbosityLevel = pcl::console::L_ERROR;
+#elif defined VERBOSITY_LEVEL_WARN
+  static VERBOSITY_LEVEL s_VerbosityLevel = pcl::console::L_WARN;
+#elif defined VERBOSITY_LEVEL_DEBUG
+  static VERBOSITY_LEVEL s_VerbosityLevel = pcl::console::L_DEBUG;
+#elif defined VERBOSITY_LEVEL_VERBOSE
+  static VERBOSITY_LEVEL s_VerbosityLevel = pcl::console::L_VERBOSE; 
+#else 
+  static VERBOSITY_LEVEL s_VerbosityLevel = pcl::console::L_INFO; 
+#endif
   }
 }
 
@@ -371,7 +383,20 @@ pcl::console::isVerbosityLevelEnabled (pcl::console::VERBOSITY_LEVEL level)
 bool 
 pcl::console::initVerbosityLevel ()
 {
+#ifdef VERBOSITY_LEVEL_ALWAYS
+  s_VerbosityLevel = pcl::console::L_ALWAYS; 
+#elif defined VERBOSITY_LEVEL_ERROR
+  s_VerbosityLevel = pcl::console::L_ERROR;
+#elif defined VERBOSITY_LEVEL_WARN
+  s_VerbosityLevel = pcl::console::L_WARN;
+#elif defined VERBOSITY_LEVEL_DEBUG
+  s_VerbosityLevel = pcl::console::L_DEBUG;
+#elif defined VERBOSITY_LEVEL_VERBOSE
+  s_VerbosityLevel = pcl::console::L_VERBOSE; 
+#else 
   s_VerbosityLevel = pcl::console::L_INFO; // Default value
+#endif
+
   char* pcl_verbosity_level = getenv ( "PCL_VERBOSITY_LEVEL");
   if (pcl_verbosity_level)
   {
@@ -384,7 +409,7 @@ pcl::console::initVerbosityLevel ()
     else if (s_pcl_verbosity_level.find ("INFO") != std::string::npos)       s_VerbosityLevel = L_INFO;
     else if (s_pcl_verbosity_level.find ("DEBUG") != std::string::npos)      s_VerbosityLevel = L_DEBUG;
     else if (s_pcl_verbosity_level.find ("VERBOSE") != std::string::npos)    s_VerbosityLevel = L_VERBOSE;
-    else std::cout << "Warning: invalid PCL_VERBOSITY_LEVEL set (" << s_pcl_verbosity_level << ")" << std::endl;
+    else printf ("Warning: invalid PCL_VERBOSITY_LEVEL set (%s)\n", s_pcl_verbosity_level.c_str ());
   }
 
   s_NeedVerbosityInit = false;

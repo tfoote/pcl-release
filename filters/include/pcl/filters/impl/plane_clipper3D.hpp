@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -164,6 +164,18 @@ pcl::PlaneClipper3D<PointT>::clipPlanarPolygon3D (const std::vector<PointT>& pol
   }
 }
 
+/**
+ * @attention untested code
+ */
+template<typename PointT> void
+pcl::PlaneClipper3D<PointT>::clipPlanarPolygon3D (std::vector<PointT>& polygon) const
+{
+  std::vector<PointT> clipped;
+  clipPlanarPolygon3D (polygon, clipped);
+  polygon = clipped;
+}
+
+// /ToDo: write fast version using eigen map and single matrix vector multiplication, that uses advantages of eigens SSE operations.
 template<typename PointT> void
 pcl::PlaneClipper3D<PointT>::clipPointCloud3D (const pcl::PointCloud<PointT>& cloud_in, std::vector<int>& clipped, const std::vector<int>& indices) const
 {

@@ -33,18 +33,13 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: octree_pointcloud_singlepoint.h 6119 2012-07-03 18:50:04Z aichim $
+ * $Id$
  */
 
-#ifndef OCTREE_SINGLE_POINT_H
-#define OCTREE_SINGLE_POINT_H
+#ifndef PCL_OCTREE_SINGLE_POINT_H
+#define PCL_OCTREE_SINGLE_POINT_H
 
 #include "octree_pointcloud.h"
-
-#include "octree_base.h"
-#include "octree2buf_base.h"
-
-#include "octree_nodes.h"
 
 namespace pcl
 {
@@ -60,26 +55,26 @@ namespace pcl
      *  \author Julius Kammerl (julius@kammerl.de)
      */
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    template<typename PointT, typename LeafT = OctreeContainerDataT<int>,
-        typename BranchT = OctreeContainerEmpty<int>,
-        typename OctreeT = OctreeBase<int, LeafT, BranchT> >
+    template<typename PointT, typename LeafContainerT = OctreeContainerPointIndex,
+        typename BranchContainerT = OctreeContainerEmpty,
+        typename OctreeT = OctreeBase<LeafContainerT, BranchContainerT> >
 
-    class OctreePointCloudSinglePoint : public OctreePointCloud<PointT, LeafT,
-        BranchT, OctreeT>
+    class OctreePointCloudSinglePoint : public OctreePointCloud<PointT, LeafContainerT,
+        BranchContainerT, OctreeT>
     {
 
       public:
         // public typedefs for single/double buffering
-        typedef OctreePointCloudSinglePoint<PointT, LeafT, BranchT,
-            OctreeBase<int, LeafT, BranchT> > SingleBuffer;
-        typedef OctreePointCloudSinglePoint<PointT, LeafT, BranchT,
-            Octree2BufBase<int, LeafT, BranchT> > DoubleBuffer;
+        typedef OctreePointCloudSinglePoint<PointT, LeafContainerT, BranchContainerT,
+            OctreeBase<LeafContainerT, BranchContainerT> > SingleBuffer;
+  //      typedef OctreePointCloudSinglePoint<PointT, LeafContainerT, BranchContainerT,
+   //         Octree2BufBase<int, LeafContainerT, BranchContainerT> > DoubleBuffer;
 
         /** \brief Constructor.
          *  \param resolution_arg: octree resolution at lowest octree level
          * */
         OctreePointCloudSinglePoint (const double resolution_arg) :
-            OctreePointCloud<PointT, LeafT, BranchT, OctreeT> (resolution_arg)
+            OctreePointCloud<PointT, LeafContainerT, BranchContainerT, OctreeT> (resolution_arg)
         {
         }
 

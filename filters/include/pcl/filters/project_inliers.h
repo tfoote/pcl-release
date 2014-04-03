@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -31,7 +31,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: project_inliers.h 6144 2012-07-04 22:06:28Z rusu $
+ * $Id$
  *
  */
 
@@ -79,11 +79,19 @@ namespace pcl
 
     typedef typename SampleConsensusModel<PointT>::Ptr SampleConsensusModelPtr;
     public:
+
+      typedef boost::shared_ptr< ProjectInliers<PointT> > Ptr;
+      typedef boost::shared_ptr< const ProjectInliers<PointT> > ConstPtr;
+
+
       /** \brief Empty constructor. */
       ProjectInliers () : model_ (), sacmodel_ (), model_type_ (), copy_all_data_ (false)
       {
         filter_name_ = "ProjectInliers";
       }
+      
+      /** \brief Empty destructor */
+      virtual ~ProjectInliers () {}
 
       /** \brief The type of model to use (user given parameter).
         * \param model the model type (check \a model_types.h)
@@ -168,14 +176,14 @@ namespace pcl
     * \ingroup filters
     */
   template<>
-  class PCL_EXPORTS ProjectInliers<sensor_msgs::PointCloud2> : public Filter<sensor_msgs::PointCloud2>
+  class PCL_EXPORTS ProjectInliers<pcl::PCLPointCloud2> : public Filter<pcl::PCLPointCloud2>
   {
-    using Filter<sensor_msgs::PointCloud2>::filter_name_;
-    using Filter<sensor_msgs::PointCloud2>::getClassName;
+    using Filter<pcl::PCLPointCloud2>::filter_name_;
+    using Filter<pcl::PCLPointCloud2>::getClassName;
 
-    typedef sensor_msgs::PointCloud2 PointCloud2;
-    typedef PointCloud2::Ptr PointCloud2Ptr;
-    typedef PointCloud2::ConstPtr PointCloud2ConstPtr;
+    typedef pcl::PCLPointCloud2 PCLPointCloud2;
+    typedef PCLPointCloud2::Ptr PCLPointCloud2Ptr;
+    typedef PCLPointCloud2::ConstPtr PCLPointCloud2ConstPtr;
 
     typedef SampleConsensusModel<PointXYZ>::Ptr SampleConsensusModelPtr;
 
@@ -185,6 +193,9 @@ namespace pcl
       {
         filter_name_ = "ProjectInliers";
       }
+      
+      /** \brief Empty destructor */
+      virtual ~ProjectInliers () {}
 
       /** \brief The type of model to use (user given parameter).
         * \param[in] model the model type (check \a model_types.h)
@@ -263,7 +274,7 @@ namespace pcl
       ModelCoefficientsConstPtr model_;
 
       void
-      applyFilter (PointCloud2 &output);
+      applyFilter (PCLPointCloud2 &output);
 
     private:
       /** \brief The model that needs to be segmented. */
@@ -273,5 +284,9 @@ namespace pcl
       initSACModel (int model_type);
   };
 }
+
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/filters/impl/project_inliers.hpp>
+#endif
 
 #endif  //#ifndef PCL_FILTERS_PROJECT_INLIERS_H_

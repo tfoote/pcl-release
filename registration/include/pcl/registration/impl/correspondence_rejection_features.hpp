@@ -3,6 +3,7 @@
  *
  *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010-2011, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
  *
  *  All rights reserved.
  *
@@ -16,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,36 +34,11 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
+ * $Id$
  *
  */
 #ifndef PCL_REGISTRATION_IMPL_CORRESPONDENCE_REJECTION_FEATURES_HPP_
 #define PCL_REGISTRATION_IMPL_CORRESPONDENCE_REJECTION_FEATURES_HPP_
-
-//////////////////////////////////////////////////////////////////////////////////////////////
-void
-pcl::registration::CorrespondenceRejectorFeatures::getRemainingCorrespondences (
-    const pcl::Correspondences& original_correspondences, 
-    pcl::Correspondences& remaining_correspondences)
-{
-  unsigned int number_valid_correspondences = 0;
-  remaining_correspondences.resize (original_correspondences.size ());
-  // For each set of features, go over each correspondence from input_correspondences_
-  for (size_t i = 0; i < input_correspondences_->size (); ++i)
-  {
-    // Go over the map of features
-    for (FeaturesMap::const_iterator it = features_map_.begin (); it != features_map_.end (); ++it)
-    {
-      // Check if the score in feature space is above the given threshold
-      // (assume that the number of feature correspondenecs is the same as the number of point correspondences)
-      if (!it->second->isCorrespondenceValid (static_cast<int> (i)))
-        break;
-
-      remaining_correspondences[number_valid_correspondences] = original_correspondences[i];
-      ++number_valid_correspondences;
-    }
-  }
-  remaining_correspondences.resize (number_valid_correspondences);
-}
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 template <typename FeatureT> inline void 
@@ -98,9 +74,6 @@ pcl::registration::CorrespondenceRejectorFeatures::setTargetFeature (
 template <typename FeatureT> inline typename pcl::PointCloud<FeatureT>::ConstPtr 
 pcl::registration::CorrespondenceRejectorFeatures::getTargetFeature (const std::string &key)
 {
-  typedef pcl::PointCloud<FeatureT> FeatureCloud;
-  typedef typename FeatureCloud::ConstPtr FeatureCloudConstPtr;
-
   if (features_map_.count (key) == 0)
     return (boost::shared_ptr<const pcl::PointCloud<FeatureT> > ());
   else
@@ -117,18 +90,7 @@ pcl::registration::CorrespondenceRejectorFeatures::setDistanceThreshold (
   boost::static_pointer_cast<FeatureContainer<FeatureT> > (features_map_[key])->setDistanceThreshold (thresh);
 }
 
-//////////////////////////////////////////////////////////////////////////////////////////////
-inline bool
-pcl::registration::CorrespondenceRejectorFeatures::hasValidFeatures ()
-{
-  if (features_map_.empty ())
-    return (false);
-  FeaturesMap::const_iterator feature_itr;
-  for (feature_itr = features_map_.begin (); feature_itr != features_map_.end (); ++feature_itr)
-    if (!feature_itr->second->isValid ())
-      return (false);
-  return (true);
-}
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 template <typename FeatureT> inline void 

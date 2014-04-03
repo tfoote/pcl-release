@@ -104,7 +104,7 @@ between neighboring points increases from the viewpoint. Therefore, omitting
 **d** for scans where the local point density influences this feature dimension
 has proved to be beneficial. 
 
-.. image:: images/pfh_estimation/example_pfhs.png
+.. image:: images/pfh_estimation/example_pfhs.jpg
    :align: center
 
 .. note::
@@ -149,7 +149,8 @@ points in the input dataset.
 
      // Create an empty kdtree representation, and pass it to the PFH estimation object. 
      // Its content will be filled inside the object, based on the given input dataset (as no other search surface is given).
-     pcl::KdTreeFLANN<pcl::PointXYZ>::Ptr tree (new pcl::KdTreeFLANN<pcl::PointXYZ> ());
+     pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ> ());
+     //pcl::KdTreeFLANN<pcl::PointXYZ>::Ptr tree (new pcl::KdTreeFLANN<pcl::PointXYZ> ()); -- older call for PCL 1.5-
      pfh.setSearchMethod (tree);
 
      // Output datasets
@@ -192,4 +193,23 @@ the input point cloud that contains the normals (could be equal to cloud if
 neighbors from *cloud*, *nr_split* is the number of subdivisions to use for the
 binning process for each feature interval, and *pfh_histogram* is the output
 resultant histogram as an array of float values.
+
+.. note::
+  
+  For efficiency reasons, the **compute** method in **PFHEstimation** does not check if the normals contains NaN or infinite values.
+  Passing such values to **compute()** will result in undefined output.
+  It is advisable to check the normals, at least during the design of the processing chain or when setting the parameters.
+  This can be done by inserting the following code before the call to **compute()**:
+
+  .. code-block:: cpp
+
+     for (int i = 0; i < normals->points.size(); i++)
+     {
+       if (!pcl::isFinite<pcl::Normal>(normals->points[i]))
+       {
+         PCL_WARN("normals[%d] is not finite\n", i);
+       }
+     }
+
+  In production code, preprocessing steps and parameters should be set so that normals are finite or raise an error.
 

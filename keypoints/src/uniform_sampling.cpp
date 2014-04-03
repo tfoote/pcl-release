@@ -32,7 +32,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: uniform_sampling.cpp 2414 2011-09-07 07:01:06Z svn $
+ * $Id$
  */
 
 #include <pcl/keypoints/uniform_sampling.h>

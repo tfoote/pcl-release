@@ -34,7 +34,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: cvfh.h 6089 2012-07-02 18:38:08Z rusu $
+ * $Id$
  *
  */
 
@@ -42,7 +42,6 @@
 #define PCL_FEATURES_CVFH_H_
 
 #include <pcl/features/feature.h>
-#include <pcl/features/normal_3d.h>
 #include <pcl/features/vfh.h>
 #include <pcl/search/pcl_search.h>
 #include <pcl/common/common.h>
@@ -65,6 +64,9 @@ namespace pcl
   class CVFHEstimation : public FeatureFromNormals<PointInT, PointNT, PointOutT>
   {
     public:
+      typedef boost::shared_ptr<CVFHEstimation<PointInT, PointNT, PointOutT> > Ptr;
+      typedef boost::shared_ptr<const CVFHEstimation<PointInT, PointNT, PointOutT> > ConstPtr;
+
       using Feature<PointInT, PointOutT>::feature_name_;
       using Feature<PointInT, PointOutT>::getClassName;
       using Feature<PointInT, PointOutT>::indices_;
@@ -75,7 +77,6 @@ namespace pcl
 
       typedef typename Feature<PointInT, PointOutT>::PointCloudOut PointCloudOut;
       typedef typename pcl::search::Search<PointNormal>::Ptr KdTreePtr;
-      typedef typename pcl::NormalEstimation<PointNormal, PointNormal> NormalEstimator;
       typedef typename pcl::VFHEstimation<PointInT, PointNT, pcl::VFHSignature308> VFHEstimator;
 
       /** \brief Empty constructor. */
@@ -281,15 +282,11 @@ namespace pcl
       std::vector<Eigen::Vector3f> centroids_dominant_orientations_;
       /** \brief Normal centroids that were used to compute different CVFH descriptors */
       std::vector<Eigen::Vector3f> dominant_normals_;
-
-    private:
-      /** \brief Make the computeFeature (&Eigen::MatrixXf); inaccessible from outside the class
-        * \param[out] output the output point cloud 
-        */
-      void 
-      computeFeatureEigen (pcl::PointCloud<Eigen::MatrixXf> &) {}
   };
-
 }
 
-#endif  //#ifndef PCL_FEATURES_VFH_H_
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/features/impl/cvfh.hpp>
+#endif
+
+#endif  //#ifndef PCL_FEATURES_CVFH_H_

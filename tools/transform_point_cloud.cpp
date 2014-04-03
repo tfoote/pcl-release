@@ -1,7 +1,10 @@
 /*
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2011, Willow Garage, Inc.
+ *  Point Cloud Library (PCL) - www.pointclouds.org
+ *  Copyright (c) 2011-2012, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
+ *
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -14,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -31,13 +34,12 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: transform_point_cloud.cpp 1032 2011-05-18 22:43:27Z mdixon $
+ * $Id$
  *
  */
 
-#include <Eigen/Core>
-#include <sensor_msgs/PointCloud2.h>
-#include <pcl/ros/conversions.h>
+#include <pcl/PCLPointCloud2.h>
+#include <pcl/conversions.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/console/print.h>
 #include <pcl/console/parse.h>
@@ -58,6 +60,7 @@ printHelp (int, char **argv)
   print_value ("%0.1f, %0.1f, %0.1f", 0, 0, 0); print_info (")\n");
   print_info ("           -quat w,x,y,z             = rotation as quaternion\n"); 
   print_info ("           -axisangle ax,ay,az,theta = rotation in axis-angle form\n"); 
+  print_info ("           -scale x,y,z              = scale each dimension with these values\n"); 
   print_info ("           -matrix v1,v2,...,v8,v9   = a 3x3 affine transform\n");
   print_info ("           -matrix v1,v2,...,v15,v16 = a 4x4 transformation matrix\n");
   print_info ("   Note: If a rotation is not specified, it will default to no rotation.\n");
@@ -68,14 +71,15 @@ printHelp (int, char **argv)
 
 }
 
-void printElapsedTimeAndNumberOfPoints (double t, int w, int h=1)
+void 
+printElapsedTimeAndNumberOfPoints (double t, int w, int h = 1)
 {
   print_info ("[done, "); print_value ("%g", t); print_info (" ms : "); 
   print_value ("%d", w*h); print_info (" points]\n");
 }
 
 bool
-loadCloud (const std::string &filename, sensor_msgs::PointCloud2 &cloud)
+loadCloud (const std::string &filename, pcl::PCLPointCloud2 &cloud)
 {
   TicToc tt;
   print_highlight ("Loading "); print_value ("%s ", filename.c_str ());
@@ -91,24 +95,21 @@ loadCloud (const std::string &filename, sensor_msgs::PointCloud2 &cloud)
   return (true);
 }
 
-template <typename PointT>
-void
+template <typename PointT> void
 transformPointCloudHelper (PointCloud<PointT> & input, PointCloud<PointT> & output,
                            Eigen::Matrix4f &tform)
 {
   transformPointCloud (input, output, tform);
 }
 
-template <>
-void
+template <> void
 transformPointCloudHelper (PointCloud<PointNormal> & input, PointCloud<PointNormal> & output, 
                            Eigen::Matrix4f &tform)
 {
   transformPointCloudWithNormals (input, output, tform);
 }
 
-template <>
-void
+template <> void
 transformPointCloudHelper<PointXYZRGBNormal> (PointCloud<PointXYZRGBNormal> & input, 
                                               PointCloud<PointXYZRGBNormal> & output, 
                                               Eigen::Matrix4f &tform)
@@ -117,19 +118,18 @@ transformPointCloudHelper<PointXYZRGBNormal> (PointCloud<PointXYZRGBNormal> & in
 }
 
 
-template <typename PointT>
-void
-transformPointCloud2AsType (const sensor_msgs::PointCloud2 &input, sensor_msgs::PointCloud2 &output,
+template <typename PointT> void
+transformPointCloud2AsType (const pcl::PCLPointCloud2 &input, pcl::PCLPointCloud2 &output,
                             Eigen::Matrix4f &tform)
 {
   PointCloud<PointT> cloud;
-  fromROSMsg (input, cloud);
+  fromPCLPointCloud2 (input, cloud);
   transformPointCloudHelper (cloud, cloud, tform);
-  toROSMsg (cloud, output);
+  toPCLPointCloud2 (cloud, output);
 }
 
 void
-transformPointCloud2 (const sensor_msgs::PointCloud2 &input, sensor_msgs::PointCloud2 &output,
+transformPointCloud2 (const pcl::PCLPointCloud2 &input, pcl::PCLPointCloud2 &output,
                       Eigen::Matrix4f &tform)
 {
   // Check for 'rgb' and 'normals' fields
@@ -139,7 +139,7 @@ transformPointCloud2 (const sensor_msgs::PointCloud2 &input, sensor_msgs::PointC
   {
     if (input.fields[i].name == "rgb")
       has_rgb = true;
-    if (input.fields[i].name == "normals")
+    if (input.fields[i].name == "normal_x")
       has_normals = true;
   }
 
@@ -155,8 +155,8 @@ transformPointCloud2 (const sensor_msgs::PointCloud2 &input, sensor_msgs::PointC
 }
 
 void
-compute (const sensor_msgs::PointCloud2::ConstPtr &input, sensor_msgs::PointCloud2 &output,
-                Eigen::Matrix4f &tform)
+compute (const pcl::PCLPointCloud2::ConstPtr &input, pcl::PCLPointCloud2 &output,
+         Eigen::Matrix4f &tform)
 {
   TicToc tt;
   tt.tic ();
@@ -166,21 +166,76 @@ compute (const sensor_msgs::PointCloud2::ConstPtr &input, sensor_msgs::PointClou
   transformPointCloud2 (*input, output, tform);
 
   printElapsedTimeAndNumberOfPoints (tt.toc (), output.width, output.height);
-
 }
 
 void
-saveCloud (const std::string &filename, const sensor_msgs::PointCloud2 &output)
+saveCloud (const std::string &filename, const pcl::PCLPointCloud2 &output)
 {
   TicToc tt;
   tt.tic ();
 
   print_highlight ("Saving "); print_value ("%s ", filename.c_str ());
-  
-  pcl::io::savePCDFile (filename, output);
+
+  PCDWriter w;
+  w.writeBinaryCompressed (filename, output);
   
   printElapsedTimeAndNumberOfPoints (tt.toc (), output.width, output.height);
 }
+
+template <typename T> void
+multiply (pcl::PCLPointCloud2 &cloud, int field_offset, double multiplier)
+{
+  T val;
+  memcpy (&val, &cloud.data[field_offset], sizeof (T));
+  val = static_cast<T> (val * static_cast<T> (multiplier));
+  memcpy (&cloud.data[field_offset], &val, sizeof (T));
+}
+
+void
+scaleInPlace (pcl::PCLPointCloud2 &cloud, double* multiplier)
+{
+  // Obtain the x, y, and z indices
+  int x_idx = pcl::getFieldIndex (cloud, "x");
+  int y_idx = pcl::getFieldIndex (cloud, "y");
+  int z_idx = pcl::getFieldIndex (cloud, "z");
+  Eigen::Array3i xyz_offset (cloud.fields[x_idx].offset, cloud.fields[y_idx].offset, cloud.fields[z_idx].offset);
+ 
+  for (uint32_t cp = 0; cp < cloud.width * cloud.height; ++cp)
+  {
+    // Assume all 3 fields are the same (XYZ)
+    assert ((cloud.fields[x_idx].datatype == cloud.fields[y_idx].datatype));
+    assert ((cloud.fields[x_idx].datatype == cloud.fields[z_idx].datatype));
+    switch (cloud.fields[x_idx].datatype)
+    {
+      case pcl::PCLPointField::INT8:
+        for (int i = 0; i < 3; ++i) multiply<int8_t> (cloud, xyz_offset[i], multiplier[i]);
+        break;
+      case pcl::PCLPointField::UINT8:
+        for (int i = 0; i < 3; ++i) multiply<uint8_t> (cloud, xyz_offset[i], multiplier[i]);
+        break;
+      case pcl::PCLPointField::INT16:
+        for (int i = 0; i < 3; ++i) multiply<int16_t> (cloud, xyz_offset[i], multiplier[i]);
+        break;
+      case pcl::PCLPointField::UINT16:
+        for (int i = 0; i < 3; ++i) multiply<uint16_t> (cloud, xyz_offset[i], multiplier[i]);
+        break;
+      case pcl::PCLPointField::INT32:
+        for (int i = 0; i < 3; ++i) multiply<int32_t> (cloud, xyz_offset[i], multiplier[i]);
+        break;
+      case pcl::PCLPointField::UINT32:
+        for (int i = 0; i < 3; ++i) multiply<uint32_t> (cloud, xyz_offset[i], multiplier[i]);
+        break;
+      case pcl::PCLPointField::FLOAT32:
+        for (int i = 0; i < 3; ++i) multiply<float> (cloud, xyz_offset[i], multiplier[i]);
+        break;
+      case pcl::PCLPointField::FLOAT64:
+        for (int i = 0; i < 3; ++i) multiply<double> (cloud, xyz_offset[i], multiplier[i]);
+        break;
+    }
+    xyz_offset += cloud.point_step;
+  }
+}
+
 
 /* ---[ */
 int
@@ -188,7 +243,9 @@ main (int argc, char** argv)
 {
   print_info ("Transform a cloud. For more information, use: %s -h\n", argv[0]);
 
-  if (argc < 3)
+  bool help = false;
+  parse_argument (argc, argv, "-h", help);
+  if (argc < 3 || help)
   {
     printHelp (argc, argv);
     return (-1);
@@ -269,13 +326,21 @@ main (int argc, char** argv)
   }
 
   // Load the first file
-  sensor_msgs::PointCloud2::Ptr cloud (new sensor_msgs::PointCloud2);
+  pcl::PCLPointCloud2::Ptr cloud (new pcl::PCLPointCloud2);
   if (!loadCloud (argv[p_file_indices[0]], *cloud)) 
     return (-1);
 
   // Apply the transform
-  sensor_msgs::PointCloud2 output;
+  pcl::PCLPointCloud2 output;
   compute (cloud, output, tform);
+
+  // Check if a scaling parameter has been given
+  double divider[3];
+  if (parse_3x_arguments (argc, argv, "-scale", divider[0], divider[1], divider[2]) > -1)
+  {
+    print_highlight ("Scaling XYZ data with the following values: %f, %f, %f\n", divider[0], divider[1], divider[2]);
+    scaleInPlace (output, divider);
+  }
 
   // Save into the second file
   saveCloud (argv[p_file_indices[1]], output);

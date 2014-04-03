@@ -10,13 +10,9 @@ PCL_ADD_DOC(${SUBSYS_NAME})
 
 if(build)
    set(srcs 
-        src/lmeds.cpp
-        src/mlesac.cpp
-        src/msac.cpp
-        src/ransac.cpp
-        src/rmsac.cpp
-        src/rransac.cpp
+        src/sac.cpp
         src/sac_model_circle.cpp
+        src/sac_model_circle3d.cpp
         src/sac_model_cylinder.cpp
         src/sac_model_cone.cpp
         src/sac_model_line.cpp
@@ -24,16 +20,14 @@ if(build)
         src/sac_model_normal_parallel_plane.cpp
         src/sac_model_normal_plane.cpp
         src/sac_model_normal_sphere.cpp
-        src/sac_model_parallel_line.cpp
-        src/sac_model_parallel_plane.cpp
-        src/sac_model_perpendicular_plane.cpp
         src/sac_model_plane.cpp
         src/sac_model_registration.cpp
         src/sac_model_sphere.cpp
-		src/prosac.cpp
         )
-        
+
     set(incs 
+        include/pcl/${SUBSYS_NAME}/boost.h
+        include/pcl/${SUBSYS_NAME}/eigen.h
         include/pcl/${SUBSYS_NAME}/lmeds.h
         include/pcl/${SUBSYS_NAME}/method_types.h
         include/pcl/${SUBSYS_NAME}/mlesac.h
@@ -42,9 +36,11 @@ if(build)
         include/pcl/${SUBSYS_NAME}/ransac.h
         include/pcl/${SUBSYS_NAME}/rmsac.h
         include/pcl/${SUBSYS_NAME}/rransac.h
+        include/pcl/${SUBSYS_NAME}/prosac.h
         include/pcl/${SUBSYS_NAME}/sac.h
         include/pcl/${SUBSYS_NAME}/sac_model.h
         include/pcl/${SUBSYS_NAME}/sac_model_circle.h
+        include/pcl/${SUBSYS_NAME}/sac_model_circle3d.h
         include/pcl/${SUBSYS_NAME}/sac_model_cylinder.h
         include/pcl/${SUBSYS_NAME}/sac_model_cone.h
         include/pcl/${SUBSYS_NAME}/sac_model_line.h
@@ -57,10 +53,10 @@ if(build)
         include/pcl/${SUBSYS_NAME}/sac_model_perpendicular_plane.h
         include/pcl/${SUBSYS_NAME}/sac_model_plane.h
         include/pcl/${SUBSYS_NAME}/sac_model_registration.h
+        include/pcl/${SUBSYS_NAME}/sac_model_registration_2d.h
         include/pcl/${SUBSYS_NAME}/sac_model_sphere.h
-		include/pcl/${SUBSYS_NAME}/prosac.h
         )
-        
+
     set(impl_incs 
         include/pcl/${SUBSYS_NAME}/impl/lmeds.hpp
         include/pcl/${SUBSYS_NAME}/impl/mlesac.hpp
@@ -68,7 +64,9 @@ if(build)
         include/pcl/${SUBSYS_NAME}/impl/ransac.hpp
         include/pcl/${SUBSYS_NAME}/impl/rmsac.hpp
         include/pcl/${SUBSYS_NAME}/impl/rransac.hpp
+        include/pcl/${SUBSYS_NAME}/impl/prosac.hpp
         include/pcl/${SUBSYS_NAME}/impl/sac_model_circle.hpp
+        include/pcl/${SUBSYS_NAME}/impl/sac_model_circle3d.hpp
         include/pcl/${SUBSYS_NAME}/impl/sac_model_cylinder.hpp
         include/pcl/${SUBSYS_NAME}/impl/sac_model_cone.hpp
         include/pcl/${SUBSYS_NAME}/impl/sac_model_line.hpp
@@ -81,8 +79,8 @@ if(build)
         include/pcl/${SUBSYS_NAME}/impl/sac_model_perpendicular_plane.hpp
         include/pcl/${SUBSYS_NAME}/impl/sac_model_plane.hpp
         include/pcl/${SUBSYS_NAME}/impl/sac_model_registration.hpp
+        include/pcl/${SUBSYS_NAME}/impl/sac_model_registration_2d.hpp
         include/pcl/${SUBSYS_NAME}/impl/sac_model_sphere.hpp
-		include/pcl/${SUBSYS_NAME}/impl/prosac.hpp
         )
 
     set(LIB_NAME pcl_${SUBSYS_NAME})

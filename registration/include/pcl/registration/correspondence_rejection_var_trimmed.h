@@ -33,6 +33,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
+ * $Id$
  *
  */
 #ifndef PCL_REGISTRATION_CORRESPONDENCE_REJECTION_VAR_TRIMMED_H_
@@ -60,20 +61,24 @@ namespace pcl
       * \author Aravindhan K Krishnan. This code is ported from libpointmatcher (https://github.com/ethz-asl/libpointmatcher)
       * \ingroup registration
       */
-    class CorrespondenceRejectorVarTrimmed: public CorrespondenceRejector
+    class PCL_EXPORTS CorrespondenceRejectorVarTrimmed: public CorrespondenceRejector
     {
       using CorrespondenceRejector::input_correspondences_;
       using CorrespondenceRejector::rejection_name_;
       using CorrespondenceRejector::getClassName;
 
       public:
+        typedef boost::shared_ptr<CorrespondenceRejectorVarTrimmed> Ptr;
+        typedef boost::shared_ptr<const CorrespondenceRejectorVarTrimmed> ConstPtr;
 
         /** \brief Empty constructor. */
-        CorrespondenceRejectorVarTrimmed () : trimmed_distance_(0), 
-                                            min_ratio_ (0.05),
-                                            max_ratio_ (0.95),
-                                            lambda_ (0.95),
-                                            data_container_ ()
+        CorrespondenceRejectorVarTrimmed () : 
+          trimmed_distance_ (0), 
+          factor_ (),
+          min_ratio_ (0.05),
+          max_ratio_ (0.95),
+          lambda_ (0.95),
+          data_container_ ()
         {
           rejection_name_ = "CorrespondenceRejectorVarTrimmed";
         }
@@ -82,7 +87,7 @@ namespace pcl
           * \param[in] original_correspondences the set of initial correspondences given
           * \param[out] remaining_correspondences the resultant filtered set of remaining correspondences
           */
-        inline void 
+        void 
         getRemainingCorrespondences (const pcl::Correspondences& original_correspondences, 
                                      pcl::Correspondences& remaining_correspondences);
 
@@ -95,11 +100,24 @@ namespace pcl
           * \param[in] cloud a cloud containing XYZ data
           */
         template <typename PointT> inline void 
-        setInputCloud (const typename pcl::PointCloud<PointT>::ConstPtr &cloud)
+        setInputSource (const typename pcl::PointCloud<PointT>::ConstPtr &cloud)
         {
           if (!data_container_)
             data_container_.reset (new DataContainer<PointT>);
-          boost::static_pointer_cast<DataContainer<PointT> > (data_container_)->setInputCloud (cloud);
+          boost::static_pointer_cast<DataContainer<PointT> > (data_container_)->setInputSource (cloud);
+        }
+
+        /** \brief Provide a source point cloud dataset (must contain XYZ
+          * data!), used to compute the correspondence distance.  
+          * \param[in] cloud a cloud containing XYZ data
+          */
+        template <typename PointT> inline void 
+        setInputCloud (const typename pcl::PointCloud<PointT>::ConstPtr &cloud)
+        {
+          PCL_WARN ("[pcl::registration::%s::setInputCloud] setInputCloud is deprecated. Please use setInputSource instead.\n", getClassName ().c_str ());
+          if (!data_container_)
+            data_container_.reset (new DataContainer<PointT>);
+          boost::static_pointer_cast<DataContainer<PointT> > (data_container_)->setInputSource (cloud);
         }
 
         /** \brief Provide a target point cloud dataset (must contain XYZ
@@ -112,6 +130,21 @@ namespace pcl
           if (!data_container_)
             data_container_.reset (new DataContainer<PointT>);
           boost::static_pointer_cast<DataContainer<PointT> > (data_container_)->setInputTarget (target);
+        }
+        
+        /** \brief Provide a pointer to the search object used to find correspondences in
+          * the target cloud.
+          * \param[in] tree a pointer to the spatial search object.
+          * \param[in] force_no_recompute If set to true, this tree will NEVER be 
+          * recomputed, regardless of calls to setInputTarget. Only use if you are 
+          * confident that the tree will be set correctly.
+          */
+        template <typename PointT> inline void
+        setSearchMethodTarget (const boost::shared_ptr<pcl::search::KdTree<PointT> > &tree, 
+                               bool force_no_recompute = false) 
+        { 
+          boost::static_pointer_cast< DataContainer<PointT> > 
+            (data_container_)->setSearchMethodTarget (tree, force_no_recompute );
         }
 
         /** \brief Get the computed inlier ratio used for thresholding in correspondence rejection. */
@@ -169,7 +202,7 @@ namespace pcl
          */
         double max_ratio_;
 
-				/** \brief part of the term that balances the root mean square difference. This is an internal parameter
+       /** \brief part of the term that balances the root mean square difference. This is an internal parameter
          */
         double lambda_;
 
@@ -182,11 +215,11 @@ namespace pcl
 
         /** \brief finds the optimal inlier ratio. This is based on the paper 'Outlier Robust ICP for minimizing Fractional RMSD, J. M. Philips et al'
          */
-        float optimizeInlierRatio (std::vector <double> &dists);
+        inline float optimizeInlierRatio (std::vector <double> &dists);
     };
   }
 }
 
 #include <pcl/registration/impl/correspondence_rejection_var_trimmed.hpp>
 
-#endif
+#endif    // PCL_REGISTRATION_CORRESPONDENCE_REJECTION_VAR_TRIMMED_H_ 

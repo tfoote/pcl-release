@@ -3,6 +3,7 @@
  *
  *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010-2011, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
  *
  *  All rights reserved.
  *
@@ -16,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,7 +34,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: normal_3d_omp.h 4864 2012-03-01 01:11:22Z rusu $
+ * $Id$
  *
  */
 
@@ -53,11 +54,16 @@ namespace pcl
   class NormalEstimationOMP: public NormalEstimation<PointInT, PointOutT>
   {
     public:
+      typedef boost::shared_ptr<NormalEstimationOMP<PointInT, PointOutT> > Ptr;
+      typedef boost::shared_ptr<const NormalEstimationOMP<PointInT, PointOutT> > ConstPtr;
       using NormalEstimation<PointInT, PointOutT>::feature_name_;
       using NormalEstimation<PointInT, PointOutT>::getClassName;
       using NormalEstimation<PointInT, PointOutT>::indices_;
       using NormalEstimation<PointInT, PointOutT>::input_;
       using NormalEstimation<PointInT, PointOutT>::k_;
+      using NormalEstimation<PointInT, PointOutT>::vpx_;
+      using NormalEstimation<PointInT, PointOutT>::vpy_;
+      using NormalEstimation<PointInT, PointOutT>::vpz_;
       using NormalEstimation<PointInT, PointOutT>::search_parameter_;
       using NormalEstimation<PointInT, PointOutT>::surface_;
       using NormalEstimation<PointInT, PointOutT>::getViewPoint;
@@ -65,32 +71,19 @@ namespace pcl
       typedef typename NormalEstimation<PointInT, PointOutT>::PointCloudOut PointCloudOut;
 
     public:
-      /** \brief Empty constructor. */
-      NormalEstimationOMP () : threads_ (1) 
-      {
-        feature_name_ = "NormalEstimationOMP";
-      };
-
       /** \brief Initialize the scheduler and set the number of threads to use.
-        * \param nr_threads the number of hardware threads to use (-1 sets the value back to automatic)
+        * \param nr_threads the number of hardware threads to use (0 sets the value back to automatic)
         */
-      NormalEstimationOMP (unsigned int nr_threads) : threads_ (1)
+      NormalEstimationOMP (unsigned int nr_threads = 0) : threads_ (nr_threads)
       {
-        setNumberOfThreads (nr_threads);
         feature_name_ = "NormalEstimationOMP";
       }
 
       /** \brief Initialize the scheduler and set the number of threads to use.
-        * \param nr_threads the number of hardware threads to use (-1 sets the value back to automatic)
+        * \param nr_threads the number of hardware threads to use (0 sets the value back to automatic)
         */
       inline void 
-      setNumberOfThreads (unsigned int nr_threads)
-      { 
-        if (nr_threads == 0)
-          nr_threads = 1;
-        threads_ = nr_threads; 
-      }
-
+      setNumberOfThreads (unsigned int nr_threads = 0) { threads_ = nr_threads; }
 
     protected:
       /** \brief The number of threads the scheduler should use. */
@@ -103,55 +96,11 @@ namespace pcl
         */
       void 
       computeFeature (PointCloudOut &output);
-
-      /** \brief Make the computeFeature (&Eigen::MatrixXf); inaccessible from outside the class
-        * \param[out] output the output point cloud 
-        */
-      void 
-      computeFeatureEigen (pcl::PointCloud<Eigen::MatrixXf> &) {}
   };
-
-  /** \brief NormalEstimationOMP estimates local surface properties at each 3D point, such as surface normals and
-    * curvatures, in parallel, using the OpenMP standard.
-    * \author Radu Bogdan Rusu
-    * \ingroup features
-    */
-  template <typename PointInT>
-  class NormalEstimationOMP<PointInT, Eigen::MatrixXf>: public NormalEstimationOMP<PointInT, pcl::Normal>
-  {
-    public:
-      using NormalEstimationOMP<PointInT, pcl::Normal>::indices_;
-      using NormalEstimationOMP<PointInT, pcl::Normal>::search_parameter_;
-      using NormalEstimationOMP<PointInT, pcl::Normal>::k_;
-      using NormalEstimationOMP<PointInT, pcl::Normal>::input_;
-      using NormalEstimationOMP<PointInT, pcl::Normal>::surface_;
-      using NormalEstimationOMP<PointInT, pcl::Normal>::getViewPoint;
-      using NormalEstimationOMP<PointInT, pcl::Normal>::threads_;
-      using NormalEstimationOMP<PointInT, pcl::Normal>::compute;
-
-      /** \brief Default constructor.
-        */
-      NormalEstimationOMP () : NormalEstimationOMP<PointInT, pcl::Normal> () {}
-
-      /** \brief Initialize the scheduler and set the number of threads to use.
-        * \param nr_threads the number of hardware threads to use (-1 sets the value back to automatic)
-        */
-      NormalEstimationOMP (unsigned int nr_threads) : NormalEstimationOMP<PointInT, pcl::Normal> (nr_threads) {}
-
-    private:
-      /** \brief Estimate normals for all points given in <setInputCloud (), setIndices ()> using the surface in
-        * setSearchSurface () and the spatial locator in setSearchMethod ()
-        * \param output the resultant point cloud model dataset that contains surface normals and curvatures
-        */
-      void 
-      computeFeatureEigen (pcl::PointCloud<Eigen::MatrixXf> &output);
-
-      /** \brief Make the compute (&PointCloudOut); inaccessible from outside the class
-        * \param[out] output the output point cloud 
-        */
-      void 
-      compute (pcl::PointCloud<pcl::Normal> &) {}
-    };
 }
+
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/features/impl/normal_3d_omp.hpp>
+#endif
 
 #endif  //#ifndef PCL_NORMAL_3D_OMP_H_

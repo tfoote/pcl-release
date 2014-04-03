@@ -1,7 +1,10 @@
 /*
  * Software License Agreement (BSD License)
  *
+ *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2009-2010, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
+ *
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -14,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -31,16 +34,16 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: sac_model_cylinder.hpp 6144 2012-07-04 22:06:28Z rusu $
+ * $Id$
  *
  */
 
 #ifndef PCL_SAMPLE_CONSENSUS_IMPL_SAC_MODEL_CYLINDER_H_
 #define PCL_SAMPLE_CONSENSUS_IMPL_SAC_MODEL_CYLINDER_H_
 
+#include <pcl/sample_consensus/eigen.h>
 #include <pcl/sample_consensus/sac_model_cylinder.h>
 #include <pcl/common/concatenate.h>
-#include <unsupported/Eigen/NonLinearOptimization>
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 template <typename PointT, typename PointNT> bool
@@ -67,6 +70,13 @@ pcl::SampleConsensusModelCylinder<PointT, PointNT>::computeModelCoefficients (
     return (false);
   }
 
+  if (fabs (input_->points[samples[0]].x - input_->points[samples[1]].x) <= std::numeric_limits<float>::epsilon () && 
+      fabs (input_->points[samples[0]].y - input_->points[samples[1]].y) <= std::numeric_limits<float>::epsilon () && 
+      fabs (input_->points[samples[0]].z - input_->points[samples[1]].z) <= std::numeric_limits<float>::epsilon ()) 
+  {
+    return (false);
+  }
+  
   Eigen::Vector4f p1 (input_->points[samples[0]].x, input_->points[samples[0]].y, input_->points[samples[0]].z, 0);
   Eigen::Vector4f p2 (input_->points[samples[1]].x, input_->points[samples[1]].y, input_->points[samples[1]].z, 0);
 
@@ -173,6 +183,7 @@ pcl::SampleConsensusModelCylinder<PointT, PointNT>::selectWithinDistance (
 
   int nr_p = 0;
   inliers.resize (indices_->size ());
+  error_sqr_dists_.resize (indices_->size ());
 
   Eigen::Vector4f line_pt  (model_coefficients[0], model_coefficients[1], model_coefficients[2], 0);
   Eigen::Vector4f line_dir (model_coefficients[3], model_coefficients[4], model_coefficients[5], 0);
@@ -197,14 +208,17 @@ pcl::SampleConsensusModelCylinder<PointT, PointNT>::selectWithinDistance (
     double d_normal = fabs (getAngle3D (n, dir));
     d_normal = (std::min) (d_normal, M_PI - d_normal);
 
-    if (fabs (normal_distance_weight_ * d_normal + (1 - normal_distance_weight_) * d_euclid) < threshold)
+    double distance = fabs (normal_distance_weight_ * d_normal + (1 - normal_distance_weight_) * d_euclid); 
+    if (distance < threshold)
     {
       // Returns the indices of the points whose distances are smaller than the threshold
       inliers[nr_p] = (*indices_)[i];
-      nr_p++;
+      error_sqr_dists_[nr_p] = distance;
+      ++nr_p;
     }
   }
   inliers.resize (nr_p);
+  error_sqr_dists_.resize (nr_p);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -331,7 +345,7 @@ pcl::SampleConsensusModelCylinder<PointT, PointNT>::projectPoints (
       float k = (p.dot (line_dir) - ptdotdir) * dirdotdir;
 
       pcl::Vector4fMap pp = projected_points.points[inliers[i]].getVector4fMap ();
-      pp = line_pt + k * line_dir;
+      pp.matrix () = line_pt + k * line_dir;
 
       Eigen::Vector4f dir = p - pp;
       dir.normalize ();
@@ -361,7 +375,7 @@ pcl::SampleConsensusModelCylinder<PointT, PointNT>::projectPoints (
 
       float k = (p.dot (line_dir) - ptdotdir) * dirdotdir;
       // Calculate the projection of the point on the line
-      pp = line_pt + k * line_dir;
+      pp.matrix () = line_pt + k * line_dir;
 
       Eigen::Vector4f dir = p - pp;
       dir.normalize ();

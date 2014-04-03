@@ -1,7 +1,10 @@
 /*
  * Software License Agreement (BSD License)
  *
+ *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
+ *
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -14,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -31,7 +34,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: warp_point_rigid_6d.h 5026 2012-03-12 02:51:44Z rusu $
+ * $Id$
  *
  */
 
@@ -43,31 +46,56 @@
 
 namespace pcl
 {
-
-  template <class PointSourceT, class PointTargetT>
-  class WarpPointRigid6D : public WarpPointRigid<PointSourceT, PointTargetT>
+  namespace registration
   {
-  public:
-    WarpPointRigid6D ()
-      : WarpPointRigid<PointSourceT, PointTargetT> (6) {}
-
-    virtual void setParam (const Eigen::VectorXf& p)
+    /** \brief @b WarpPointRigid3D enables 6D (3D rotation + 3D translation) 
+      * transformations for points.
+      * 
+      * \note The class is templated on the source and target point types as well as on the output scalar of the transformation matrix (i.e., float or double). Default: float.
+      * \author Radu B. Rusu
+      * \ingroup registration
+      */
+    template <typename PointSourceT, typename PointTargetT, typename Scalar = float>
+    class WarpPointRigid6D : public WarpPointRigid<PointSourceT, PointTargetT, Scalar>
     {
-      assert(p.rows () == this->getDimension ());
-      Eigen::Matrix4f& trans = this->transform_matrix_;      
+      public:
+        using WarpPointRigid<PointSourceT, PointTargetT, Scalar>::transform_matrix_;
 
-      trans = Eigen::Matrix4f::Zero ();
-      trans (3,3) = 1;
+        typedef typename WarpPointRigid<PointSourceT, PointTargetT, Scalar>::Matrix4 Matrix4;
+        typedef typename WarpPointRigid<PointSourceT, PointTargetT, Scalar>::VectorX VectorX;
 
-      // Copy the rotation and translation components
-      trans.block <4, 1> (0, 3) = Eigen::Vector4f(p[0], p[1], p[2], 1.0);
+        typedef boost::shared_ptr<WarpPointRigid6D<PointSourceT, PointTargetT, Scalar> > Ptr;
+        typedef boost::shared_ptr<const WarpPointRigid6D<PointSourceT, PointTargetT, Scalar> > ConstPtr;
 
-      // Compute w from the unit quaternion
-      Eigen::Quaternionf q (0, p[3], p[4], p[5]);
-      q.w () = sqrt (1 - q.dot (q));
-      trans.topLeftCorner<3, 3> () = q.toRotationMatrix();
-    }
-  };
+        WarpPointRigid6D () : WarpPointRigid<PointSourceT, PointTargetT, Scalar> (6) {}
+      
+        /** \brief Empty destructor */
+        virtual ~WarpPointRigid6D () {}
+
+        /** \brief Set warp parameters. 
+          * \note Assumes the quaternion parameters are normalized. 
+          * \param[in] p warp parameters (tx ty tz qx qy qz)
+          */
+        virtual void 
+        setParam (const VectorX& p)
+        {
+          assert (p.rows () == this->getDimension ());
+
+          // Copy the rotation and translation components
+          transform_matrix_.setZero ();
+          transform_matrix_ (0, 3) = p[0];
+          transform_matrix_ (1, 3) = p[1];
+          transform_matrix_ (2, 3) = p[2];
+          transform_matrix_ (3, 3) = 1;
+          
+          // Compute w from the unit quaternion
+          Eigen::Quaternion<Scalar> q (0, p[3], p[4], p[5]);
+          q.w () = static_cast<Scalar> (sqrt (1 - q.dot (q)));
+          q.normalize ();
+          transform_matrix_.topLeftCorner (3, 3) = q.toRotationMatrix ();
+        }
+    };
+  }
 }
 
 #endif

@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -31,7 +31,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: extract_polygonal_prism_data.hpp 5026 2012-03-12 02:51:44Z rusu $
+ * $Id$
  *
  */
 
@@ -138,6 +138,30 @@ pcl::isXYPointIn2DXYPolygon (const PointT &point, const pcl::PointCloud<PointT> 
     xold = xnew;
     yold = ynew;
   }
+
+  // And a last check for the polygon line formed by the last and the first points
+  double xnew = polygon.points[0].x;
+  double ynew = polygon.points[0].y;
+  if (xnew > xold)
+  {
+    x1 = xold;
+    x2 = xnew;
+    y1 = yold;
+    y2 = ynew;
+  }
+  else
+  {
+    x1 = xnew;
+    x2 = xold;
+    y1 = ynew;
+    y2 = yold;
+  }
+
+  if ( (xnew < point.x) == (point.x <= xold) && (point.y - y1) * (x2 - x1) < (y2 - y1) * (point.x - x1) )
+  {
+    in_poly = !in_poly;
+  }
+
   return (in_poly);
 }
 

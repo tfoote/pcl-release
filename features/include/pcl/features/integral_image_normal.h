@@ -3,6 +3,7 @@
  *
  *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010-2011, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
  *
  *  All rights reserved.
  *
@@ -16,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -60,6 +61,8 @@ namespace pcl
     using Feature<PointInT, PointOutT>::k_;
 
     public:
+      typedef boost::shared_ptr<IntegralImageNormalEstimation<PointInT, PointOutT> > Ptr;
+      typedef boost::shared_ptr<const IntegralImageNormalEstimation<PointInT, PointOutT> > ConstPtr;
 
       /** \brief Different types of border handling. */
         enum BorderPolicy
@@ -176,6 +179,12 @@ namespace pcl
       void
       setNormalSmoothingSize (float normal_smoothing_size)
       {
+        if (normal_smoothing_size <= 0)
+        {
+          PCL_ERROR ("[pcl::%s::setNormalSmoothingSize] Invalid normal smoothing size given! (%f). Allowed ranges are: 0 < N. Defaulting to %f.\n", 
+                      feature_name_.c_str (), normal_smoothing_size, normal_smoothing_size_);
+          return;
+        }
         normal_smoothing_size_ = normal_smoothing_size;
       }
 
@@ -305,6 +314,39 @@ namespace pcl
       initData ();
 
     private:
+
+      /** \brief Flip (in place) the estimated normal of a point towards a given viewpoint
+        * \param point a given point
+        * \param vp_x the X coordinate of the viewpoint
+        * \param vp_y the X coordinate of the viewpoint
+        * \param vp_z the X coordinate of the viewpoint
+        * \param nx the resultant X component of the plane normal
+        * \param ny the resultant Y component of the plane normal
+        * \param nz the resultant Z component of the plane normal
+        * \ingroup features
+        */
+      inline void
+      flipNormalTowardsViewpoint (const PointInT &point, 
+                                  float vp_x, float vp_y, float vp_z,
+                                  float &nx, float &ny, float &nz)
+      {
+        // See if we need to flip any plane normals
+        vp_x -= point.x;
+        vp_y -= point.y;
+        vp_z -= point.z;
+
+        // Dot product between the (viewpoint - point) and the plane normal
+        float cos_theta = (vp_x * nx + vp_y * ny + vp_z * nz);
+
+        // Flip the plane normal
+        if (cos_theta < 0)
+        {
+          nx *= -1;
+          ny *= -1;
+          nz *= -1;
+        }
+      }
+
       /** \brief The normal estimation method to use. Currently, 3 implementations are provided:
         *
         * - COVARIANCE_MATRIX
@@ -396,12 +438,6 @@ namespace pcl
       void
       initSimple3DGradientMethod ();
 
-    private:
-      /** \brief Make the computeFeature (&Eigen::MatrixXf); inaccessible from outside the class
-        * \param[out] output the output point cloud
-        */
-      void
-      computeFeatureEigen (pcl::PointCloud<Eigen::MatrixXf> &) {}
     public:
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   };
@@ -410,6 +446,9 @@ namespace pcl
 #pragma GCC diagnostic warning "-Weffc++"
 #endif
 
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/features/impl/integral_image_normal.hpp>
+#endif
 
 #endif
 

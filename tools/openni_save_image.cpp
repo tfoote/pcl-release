@@ -16,7 +16,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -35,18 +35,16 @@
  *	
  */
 
-#include <boost/thread/thread.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
 #include <pcl/common/time.h> //fps calculations
 #include <pcl/io/openni_grabber.h>
 #include <pcl/io/openni_camera/openni_driver.h>
 #include <pcl/console/parse.h>
-
 #include <vector>
 #include <string>
 
 #include <pcl/visualization/vtk.h>
 #include <pcl/visualization/pcl_visualizer.h>
+#include "boost.h"
 
 #define SHOW_FPS 1
 #if SHOW_FPS
@@ -232,6 +230,7 @@ main(int argc, char ** argv)
 {
   std::string device_id ("");
   pcl::OpenNIGrabber::Mode image_mode = pcl::OpenNIGrabber::OpenNI_Default_Mode;
+  pcl::OpenNIGrabber::Mode depth_mode = pcl::OpenNIGrabber::OpenNI_Default_Mode;
   
   if (argc >= 2)
   {
@@ -286,11 +285,15 @@ main(int argc, char ** argv)
       cout << "Device Id not set, using first device." << endl;
   }
   
-  unsigned mode;
-  if (pcl::console::parse (argc, argv, "-imagemode", mode) != -1)
-    image_mode = pcl::OpenNIGrabber::Mode (mode);
+  unsigned imagemode;
+  if (pcl::console::parse (argc, argv, "-imagemode", imagemode) != -1)
+    image_mode = pcl::OpenNIGrabber::Mode (imagemode);
+  unsigned depthmode;
+  if (pcl::console::parse (argc, argv, "-depthmode", depthmode) != -1)
+    depth_mode = pcl::OpenNIGrabber::Mode (depthmode);
   
-  pcl::OpenNIGrabber grabber (device_id, pcl::OpenNIGrabber::OpenNI_Default_Mode, image_mode);
+
+  pcl::OpenNIGrabber grabber (device_id, depth_mode, image_mode);
   SimpleOpenNIViewer v (grabber);
   v.run ();
 

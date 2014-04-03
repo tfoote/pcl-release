@@ -33,7 +33,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: convex_hull.h 5026 2012-03-12 02:51:44Z rusu $
+ * $Id$
  *
  */
 
@@ -78,6 +78,9 @@ namespace pcl
       using PCLBase<PointInT>::deinitCompute;
 
     public:
+      typedef boost::shared_ptr<ConvexHull<PointInT> > Ptr;
+      typedef boost::shared_ptr<const ConvexHull<PointInT> > ConstPtr;
+
       using MeshConstruction<PointInT>::reconstruct;
 
       typedef pcl::PointCloud<PointInT> PointCloud;
@@ -90,22 +93,29 @@ namespace pcl
                       x_axis_ (1.0, 0.0, 0.0), y_axis_ (0.0, 1.0, 0.0), z_axis_ (0.0, 0.0, 1.0)
       {
       };
+      
+      /** \brief Empty destructor */
+      virtual ~ConvexHull () {}
 
-      /** \brief Compute a convex hull for all points given 
+      /** \brief Compute a convex hull for all points given.
         *
-        * \param[out] points the resultant points lying on the convex hull 
+        * \note In 2D case (i.e. if the input points belong to one plane)
+        * the \a polygons vector will have a single item, whereas in 3D
+        * case it will contain one item for each hull facet.
+        *
+        * \param[out] points the resultant points lying on the convex hull.
         * \param[out] polygons the resultant convex hull polygons, as a set of
         * vertices. The Vertices structure contains an array of point indices.
         */
       void
-      reconstruct (PointCloud &points, 
+      reconstruct (PointCloud &points,
                    std::vector<pcl::Vertices> &polygons);
 
-      /** \brief Compute a convex hull for all points given 
-        * \param[out] output the resultant convex hull vertices
+      /** \brief Compute a convex hull for all points given.
+        * \param[out] points the resultant points lying on the convex hull.
         */
       void
-      reconstruct (PointCloud &output);
+      reconstruct (PointCloud &points);
 
       /** \brief If set to true, the qhull library is called to compute the total area and volume of the convex hull.
         * NOTE: When this option is activated, the qhull library produces output to the console.
@@ -237,18 +247,22 @@ namespace pcl
       std::string qhull_flags;
 
       /* \brief x-axis - for checking valid projections. */
-      const Eigen::Vector3f x_axis_;
+      const Eigen::Vector3d x_axis_;
 
       /* \brief y-axis - for checking valid projections. */
-      const Eigen::Vector3f y_axis_;
+      const Eigen::Vector3d y_axis_;
 
       /* \brief z-axis - for checking valid projections. */
-      const Eigen::Vector3f z_axis_;
+      const Eigen::Vector3d z_axis_;
 
       public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   };
 }
+
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/surface/impl/convex_hull.hpp>
+#endif
 
 #endif  //#ifndef PCL_CONVEX_HULL_2D_H_
 #endif

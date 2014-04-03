@@ -3,6 +3,7 @@
  *
  *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010-2012, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
  *
  *  All rights reserved.
  *
@@ -16,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -37,7 +38,6 @@
 #ifndef PCL_RANGE_IMAGE_H_
 #define PCL_RANGE_IMAGE_H_
 
-#include <pcl/common/eigen.h>
 #include <pcl/point_cloud.h>
 #include <pcl/pcl_macros.h>
 #include <pcl/point_types.h>
@@ -72,7 +72,7 @@ namespace pcl
       /** Constructor */
       PCL_EXPORTS RangeImage ();
       /** Destructor */
-      PCL_EXPORTS ~RangeImage ();
+      PCL_EXPORTS virtual ~RangeImage ();
       
       // =====STATIC VARIABLES=====
       /** The maximum number of openmp threads that can be used in this class */
@@ -113,11 +113,11 @@ namespace pcl
       getAverageViewPoint (const PointCloudTypeWithViewpoints& point_cloud);
       
       /** \brief Check if the provided data includes far ranges and add them to far_ranges
-        * \param point_cloud_data a PointCloud2 message containing the input cloud
+        * \param point_cloud_data a PCLPointCloud2 message containing the input cloud
         * \param far_ranges the resulting cloud containing those points with far ranges
         */
       PCL_EXPORTS static void
-      extractFarRanges (const sensor_msgs::PointCloud2& point_cloud_data, PointCloud<PointWithViewpoint>& far_ranges);
+      extractFarRanges (const pcl::PCLPointCloud2& point_cloud_data, PointCloud<PointWithViewpoint>& far_ranges);
       
       // =====METHODS=====
       /** \brief Get a boost shared pointer of a copy of this */
@@ -314,8 +314,8 @@ namespace pcl
                  float min_range, int& top, int& right, int& bottom, int& left);
       
       /** \brief Integrates the given far range measurements into the range image */
-      PCL_EXPORTS void
-      integrateFarRanges (const PointCloud<PointWithViewpoint>& far_ranges);
+      template <typename PointCloudType> void
+      integrateFarRanges (const PointCloudType& far_ranges);
       
       /** \brief Cut the range image to the minimal size so that it still contains all actual range readings.
         * \param border_size allows increase from the minimal size by the specified number of pixels (defaults to 0)
@@ -703,12 +703,12 @@ namespace pcl
       getIntegralImage (float*& integral_image, int*& valid_points_num_image) const;
       
       /** Get a blurred version of the range image using box filters on the provided integral image*/
-      PCL_EXPORTS void
+      PCL_EXPORTS void     // Template necessary so that this function also works in derived classes
       getBlurredImageUsingIntegralImage (int blur_radius, float* integral_image, int* valid_points_num_image,
                                          RangeImage& range_image) const;
       
       /** Get a blurred version of the range image using box filters */
-      PCL_EXPORTS void
+      PCL_EXPORTS virtual void     // Template necessary so that this function also works in derived classes
       getBlurredImage (int blur_radius, RangeImage& range_image) const;
       
       /** Get the squared euclidean distance between the two image points.
@@ -748,8 +748,12 @@ namespace pcl
       
       /** Return a newly created Range image.
        *  Can be reimplmented in derived classes like RangeImagePlanar to return an image of the same type. */
-      virtual RangeImage* 
+      PCL_EXPORTS virtual RangeImage* 
       getNew () const { return new RangeImage; }
+
+      /** Copy other to *this. Necessary for use in virtual functions that need to copy derived RangeImage classes (like RangeImagePlanar) */
+      PCL_EXPORTS virtual void
+      copyTo (RangeImage& other) const;
 
       
       // =====MEMBER VARIABLES=====

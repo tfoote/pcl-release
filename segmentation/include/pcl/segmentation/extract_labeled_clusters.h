@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -57,8 +57,8 @@ namespace pcl
   extractLabeledEuclideanClusters (
       const PointCloud<PointT> &cloud, const boost::shared_ptr<search::Search<PointT> > &tree, 
       float tolerance, std::vector<std::vector<PointIndices> > &labeled_clusters, 
-      unsigned int min_pts_per_cluster = 1, unsigned int max_pts_per_cluster = (std::numeric_limits<int>::max) (), 
-      unsigned int max_label = (std::numeric_limits<int>::max));
+      unsigned int min_pts_per_cluster = 1, unsigned int max_pts_per_cluster = std::numeric_limits<unsigned int>::max (), 
+      unsigned int max_label = std::numeric_limits<unsigned int>::max ());
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -185,5 +185,9 @@ namespace pcl
     return (a.indices.size () < b.indices.size ());
   }
 }
+
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/segmentation/impl/extract_labeled_clusters.hpp>
+#endif
 
 #endif  //#ifndef PCL_EXTRACT_LABELED_CLUSTERS_H_

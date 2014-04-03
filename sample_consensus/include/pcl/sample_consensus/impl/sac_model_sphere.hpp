@@ -1,7 +1,10 @@
 /*
  * Software License Agreement (BSD License)
  *
+ *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2009, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
+ *
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -14,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -31,15 +34,15 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: sac_model_sphere.hpp 6144 2012-07-04 22:06:28Z rusu $
+ * $Id$
  *
  */
 
 #ifndef PCL_SAMPLE_CONSENSUS_IMPL_SAC_MODEL_SPHERE_H_
 #define PCL_SAMPLE_CONSENSUS_IMPL_SAC_MODEL_SPHERE_H_
 
+#include <pcl/sample_consensus/eigen.h>
 #include <pcl/sample_consensus/sac_model_sphere.h>
-#include <unsupported/Eigen/NonLinearOptimization>
 
 //////////////////////////////////////////////////////////////////////////
 template <typename PointT> bool
@@ -158,29 +161,33 @@ pcl::SampleConsensusModelSphere<PointT>::selectWithinDistance (
 
   int nr_p = 0;
   inliers.resize (indices_->size ());
+  error_sqr_dists_.resize (indices_->size ());
 
   // Iterate through the 3d points and calculate the distances from them to the sphere
   for (size_t i = 0; i < indices_->size (); ++i)
   {
+    double distance = fabs (sqrtf (
+                          ( input_->points[(*indices_)[i]].x - model_coefficients[0] ) *
+                          ( input_->points[(*indices_)[i]].x - model_coefficients[0] ) +
+
+                          ( input_->points[(*indices_)[i]].y - model_coefficients[1] ) *
+                          ( input_->points[(*indices_)[i]].y - model_coefficients[1] ) +
+
+                          ( input_->points[(*indices_)[i]].z - model_coefficients[2] ) *
+                          ( input_->points[(*indices_)[i]].z - model_coefficients[2] )
+                          ) - model_coefficients[3]);
     // Calculate the distance from the point to the sphere as the difference between
     // dist(point,sphere_origin) and sphere_radius
-    if (fabs (sqrtf (
-                    ( input_->points[(*indices_)[i]].x - model_coefficients[0] ) *
-                    ( input_->points[(*indices_)[i]].x - model_coefficients[0] ) +
-
-                    ( input_->points[(*indices_)[i]].y - model_coefficients[1] ) *
-                    ( input_->points[(*indices_)[i]].y - model_coefficients[1] ) +
-
-                    ( input_->points[(*indices_)[i]].z - model_coefficients[2] ) *
-                    ( input_->points[(*indices_)[i]].z - model_coefficients[2] )
-                    ) - model_coefficients[3]) < threshold)
+    if (distance < threshold)
     {
       // Returns the indices of the points whose distances are smaller than the threshold
       inliers[nr_p] = (*indices_)[i];
-      nr_p++;
+      error_sqr_dists_[nr_p] = static_cast<double> (distance);
+      ++nr_p;
     }
   }
   inliers.resize (nr_p);
+  error_sqr_dists_.resize (nr_p);
 }
 
 //////////////////////////////////////////////////////////////////////////

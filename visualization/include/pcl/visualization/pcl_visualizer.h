@@ -3,6 +3,7 @@
  *
  *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010-2011, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
  *
  *  All rights reserved.
  *
@@ -16,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,63 +34,65 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: pcl_visualizer.h 6220 2012-07-06 22:34:56Z rusu $
- *
  */
 #ifndef PCL_PCL_VISUALIZER_H_
 #define PCL_PCL_VISUALIZER_H_
 
 // PCL includes
-#include <pcl/point_types.h>
 #include <pcl/correspondence.h>
-#include <pcl/point_cloud.h>
+#include <pcl/ModelCoefficients.h>
 #include <pcl/PolygonMesh.h>
 //
 #include <pcl/console/print.h>
+#include <pcl/visualization/common/actor_map.h>
 #include <pcl/visualization/common/common.h>
-#include <pcl/visualization/common/shapes.h>
-#include <pcl/visualization/window.h>
-#include <boost/algorithm/string/split.hpp>
-#include <boost/algorithm/string/classification.hpp>
+#include <pcl/visualization/point_cloud_geometry_handlers.h>
+#include <pcl/visualization/point_cloud_color_handlers.h>
+#include <pcl/visualization/point_picking_event.h>
+#include <pcl/visualization/area_picking_event.h>
+#include <pcl/visualization/interactor_style.h>
+
 // VTK includes
-#include <vtkAxes.h>
-#include <vtkFloatArray.h>
-#include <vtkAppendPolyData.h>
-#include <vtkPointData.h>
-#include <vtkPolyData.h>
-#include <vtkUnstructuredGrid.h>
-#include <vtkTubeFilter.h>
-#include <vtkPolyDataMapper.h>
-#include <vtkDataSetMapper.h>
-#include <vtkCellArray.h>
-#include <vtkCommand.h>
-#include <vtkPLYReader.h>
-#include <vtkTransformFilter.h>
-#include <vtkPolyLine.h>
-#include <vtkVectorText.h>
-#include <vtkFollower.h>
-#if ((VTK_MAJOR_VERSION == 5) && (VTK_MINOR_VERSION <= 4))
-#include <pcl/visualization/interactor.h>
-#else
-#include <vtkRenderWindowInteractor.h>
-#endif
+class vtkPolyData;
+class vtkTextActor;
+class vtkRenderWindow;
+class vtkOrientationMarkerWidget;
+class vtkAppendPolyData;
+class vtkRenderWindow;
+class vtkRenderWindowInteractor;
+class vtkTransform;
+class vtkInteractorStyle;
+class vtkLODActor;
+class vtkProp;
+class vtkActor;
+class vtkDataSet;
+class vtkUnstructuredGrid;
 
 namespace pcl
 {
+  template <typename T> class PointCloud;
+  template <typename T> class PlanarPolygon;
+
   namespace visualization
   {
     /** \brief PCL Visualizer main class.
-      * \author Radu Bogdan Rusu
+      * \author Radu B. Rusu
       * \ingroup visualization
+      * \note This class can NOT be used across multiple threads. Only call functions of objects of this class
+      * from the same thread that they were created in! Some methods, e.g. addPointCloud, will crash if called
+      * from other threads.
       */
     class PCL_EXPORTS PCLVisualizer
     {
       public:
-        typedef PointCloudGeometryHandler<sensor_msgs::PointCloud2> GeometryHandler;
+        typedef boost::shared_ptr<PCLVisualizer> Ptr;
+        typedef boost::shared_ptr<const PCLVisualizer> ConstPtr;
+
+        typedef PointCloudGeometryHandler<pcl::PCLPointCloud2> GeometryHandler;
         typedef GeometryHandler::Ptr GeometryHandlerPtr;
         typedef GeometryHandler::ConstPtr GeometryHandlerConstPtr;
 
-        typedef PointCloudColorHandler<sensor_msgs::PointCloud2> ColorHandler;
+        typedef PointCloudColorHandler<pcl::PCLPointCloud2> ColorHandler;
         typedef ColorHandler::Ptr ColorHandlerPtr;
         typedef ColorHandler::ConstPtr ColorHandlerConstPtr;
 
@@ -98,6 +101,7 @@ namespace pcl
           * \param[in] create_interactor if true (default), create an interactor, false otherwise
           */
         PCLVisualizer (const std::string &name = "", const bool create_interactor = true);
+
         /** \brief PCL Visualizer constructor.
           * \param[in] argc
           * \param[in] argv
@@ -116,24 +120,22 @@ namespace pcl
           * See the VTK documentation for additional details.
           * \param[in] mode true for full screen, false otherwise
           */
-        inline void
-        setFullScreen (bool mode)
-        {
-          if (win_)
-            win_->SetFullScreen (mode);
-        }
+        void
+        setFullScreen (bool mode);
+
+        /** \brief Set the visualizer window name.
+          * \param[in] name the name of the window
+          */
+        void
+        setWindowName (const std::string &name);
 
         /** \brief Enables or disable the underlying window borders.
           * \note This might or might not work, depending on your window manager.
           * See the VTK documentation for additional details.
           * \param[in] mode true for borders, false otherwise
           */
-        inline void
-        setWindowBorders (bool mode)
-        {
-          if (win_)
-            win_->SetBorders (mode);
-        }
+        void
+        setWindowBorders (bool mode);
 
         /** \brief Register a callback boost::function for keyboard events
           * \param[in] cb a boost function that will be registered as a callback for a keyboard event
@@ -207,11 +209,8 @@ namespace pcl
           * \param[in] cookie    user data that is passed to the callback
           * \return a connection object that allows to disconnect the callback function.
           */
-        inline boost::signals2::connection
-        registerPointPickingCallback (void (*callback) (const pcl::visualization::PointPickingEvent&, void*), void* cookie = NULL)
-        {
-          return (registerPointPickingCallback (boost::bind (callback, _1, cookie)));
-        }
+        boost::signals2::connection
+        registerPointPickingCallback (void (*callback) (const pcl::visualization::PointPickingEvent&, void*), void* cookie = NULL);
 
         /** \brief Register a callback function for point picking events
           * \param[in] callback  the member function that will be registered as a callback for a point picking event
@@ -223,6 +222,33 @@ namespace pcl
         registerPointPickingCallback (void (T::*callback) (const pcl::visualization::PointPickingEvent&, void*), T& instance, void* cookie = NULL)
         {
           return (registerPointPickingCallback (boost::bind (callback, boost::ref (instance), _1, cookie)));
+        }
+
+        /** \brief Register a callback function for area picking events
+          * \param[in] cb a boost function that will be registered as a callback for an area picking event
+          * \return a connection object that allows to disconnect the callback function.
+          */
+        boost::signals2::connection
+        registerAreaPickingCallback (boost::function<void (const pcl::visualization::AreaPickingEvent&)> cb);
+
+        /** \brief Register a callback function for area picking events
+          * \param[in] callback  the function that will be registered as a callback for an area picking event
+          * \param[in] cookie    user data that is passed to the callback
+          * \return a connection object that allows to disconnect the callback function.
+          */
+        boost::signals2::connection
+        registerAreaPickingCallback (void (*callback) (const pcl::visualization::AreaPickingEvent&, void*), void* cookie = NULL);
+
+        /** \brief Register a callback function for area picking events
+          * \param[in] callback  the member function that will be registered as a callback for an area picking event
+          * \param[in] instance  instance to the class that implements the callback function
+          * \param[in] cookie    user data that is passed to the callback
+          * \return a connection object that allows to disconnect the callback function.
+          */
+        template<typename T> inline boost::signals2::connection
+        registerAreaPickingCallback (void (T::*callback) (const pcl::visualization::AreaPickingEvent&, void*), T& instance, void* cookie = NULL)
+        {
+          return (registerAreaPickingCallback (boost::bind (callback, boost::ref (instance), _1, cookie)));
         }
 
         /** \brief Spin method. Calls the interactor and runs an internal loop. */
@@ -237,6 +263,16 @@ namespace pcl
         void
         spinOnce (int time = 1, bool force_redraw = false);
 
+        /** \brief Adds a widget which shows an interactive axes display for orientation
+         *  \param[in] interactor - Pointer to the vtk interactor object used by the PCLVisualizer window 
+         */
+        void
+        addOrientationMarkerWidgetAxes (vtkRenderWindowInteractor* interactor);
+        
+        /** \brief Disables the Orientatation Marker Widget so it is removed from the renderer */
+        void
+        removeOrientationMarkerWidgetAxes ();
+        
         /** \brief Adds 3D axes describing a coordinate system to screen at 0,0,0.
           * \param[in] scale the scale of the axes (default: 1)
           * \param[in] viewport the view port where the 3D axes should be added (default: all)
@@ -434,7 +470,7 @@ namespace pcl
 
         /** \brief Set the pose of an existing shape. 
           * 
-          * Returns false if the shape doesn't exist, true if the pose was succesfully 
+          * Returns false if the shape doesn't exist, true if the pose was successfully 
           * updated.
           *
           * \param[in] id the shape or cloud object id (i.e., given on \a addLine etc.)
@@ -443,6 +479,18 @@ namespace pcl
           */
         bool
         updateShapePose (const std::string &id, const Eigen::Affine3f& pose);
+
+        /** \brief Set the pose of an existing point cloud.
+          *
+          * Returns false if the point cloud doesn't exist, true if the pose was successfully
+          * updated.
+          *
+          * \param[in] id the point cloud object id (i.e., given on \a addPointCloud etc.)
+          * \param[in] pose the new pose
+          * \return false if no point cloud with the specified ID was found
+          */
+        bool
+        updatePointCloudPose (const std::string &id, const Eigen::Affine3f& pose);
 
         /** \brief Add a 3d text to the scene
           * \param[in] text the text to add
@@ -470,7 +518,7 @@ namespace pcl
           */
         template <typename PointNT> bool
         addPointCloudNormals (const typename pcl::PointCloud<PointNT>::ConstPtr &cloud,
-                              int level = 100, double scale = 0.02,
+                              int level = 100, float scale = 0.02f,
                               const std::string &id = "cloud", int viewport = 0);
 
         /** \brief Add the estimated surface normals of a Point Cloud to screen.
@@ -484,7 +532,7 @@ namespace pcl
         template <typename PointT, typename PointNT> bool
         addPointCloudNormals (const typename pcl::PointCloud<PointT>::ConstPtr &cloud,
                               const typename pcl::PointCloud<PointNT>::ConstPtr &normals,
-                              int level = 100, double scale = 0.02,
+                              int level = 100, float scale = 0.02f,
                               const std::string &id = "cloud", int viewport = 0);
 
         /** \brief Add the estimated principal curvatures of a Point Cloud to screen.
@@ -501,8 +549,22 @@ namespace pcl
             const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &cloud,
             const pcl::PointCloud<pcl::Normal>::ConstPtr &normals,
             const pcl::PointCloud<pcl::PrincipalCurvatures>::ConstPtr &pcs,
-            int level = 100, double scale = 1.0,
+            int level = 100, float scale = 1.0f,
             const std::string &id = "cloud", int viewport = 0);
+
+        /** \brief Add the estimated surface intensity gradients of a Point Cloud to screen.
+          * \param[in] cloud the input point cloud dataset containing the XYZ data
+          * \param[in] gradients the input point cloud dataset containing the intensity gradient data
+          * \param[in] level display only every level'th point (default: 100)
+          * \param[in] scale the intensity gradient arrow scale (default: 1e-6m)
+          * \param[in] id the point cloud object id (default: cloud)
+          * \param[in] viewport the view port where the Point Cloud should be added (default: all)
+          */
+        template <typename PointT, typename GradientT> bool
+        addPointCloudIntensityGradients (const typename pcl::PointCloud<PointT>::ConstPtr &cloud,
+                                         const typename pcl::PointCloud<GradientT>::ConstPtr &gradients,
+                                         int level = 100, double scale = 1e-6,
+                                         const std::string &id = "cloud", int viewport = 0);
 
         /** \brief Add a Point Cloud (templated) to screen.
           * \param[in] cloud the input point cloud dataset
@@ -543,11 +605,6 @@ namespace pcl
         updatePointCloud (const typename pcl::PointCloud<PointT>::ConstPtr &cloud,
                           const PointCloudColorHandler<PointT> &color_handler,
                           const std::string &id = "cloud");
-
-//        bool
-//        updatePointCloud (const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &cloud,
-//                          const PointCloudColorHandlerRGBField<pcl::PointXYZRGB> &color_handler,
-//                          const std::string &id = "cloud");
 
         /** \brief Add a Point Cloud (templated) to screen.
           * \param[in] cloud the input point cloud dataset
@@ -640,7 +697,7 @@ namespace pcl
           * \param[in] viewport the view port where the Point Cloud should be added (default: all)
           */
         bool
-        addPointCloud (const sensor_msgs::PointCloud2::ConstPtr &cloud,
+        addPointCloud (const pcl::PCLPointCloud2::ConstPtr &cloud,
                        const GeometryHandlerConstPtr &geometry_handler,
                        const ColorHandlerConstPtr &color_handler,
                        const Eigen::Vector4f& sensor_origin,
@@ -662,7 +719,7 @@ namespace pcl
           * \param[in] viewport the view port where the Point Cloud should be added (default: all)
           */
         bool
-        addPointCloud (const sensor_msgs::PointCloud2::ConstPtr &cloud,
+        addPointCloud (const pcl::PCLPointCloud2::ConstPtr &cloud,
                        const GeometryHandlerConstPtr &geometry_handler,
                        const Eigen::Vector4f& sensor_origin,
                        const Eigen::Quaternion<float>& sensor_orientation,
@@ -683,7 +740,7 @@ namespace pcl
           * \param[in] viewport the view port where the Point Cloud should be added (default: all)
           */
         bool
-        addPointCloud (const sensor_msgs::PointCloud2::ConstPtr &cloud,
+        addPointCloud (const pcl::PCLPointCloud2::ConstPtr &cloud,
                        const ColorHandlerConstPtr &color_handler,
                        const Eigen::Vector4f& sensor_origin,
                        const Eigen::Quaternion<float>& sensor_orientation,
@@ -812,6 +869,15 @@ namespace pcl
                            const std::vector<pcl::Vertices> &vertices,
                            const std::string &id = "polygon");
 
+        /** \brief Update a PolygonMesh object on screen
+          * \param[in] polymesh the polygonal mesh
+          * \param[in] id the polygon object id (default: "polygon")
+          * \return false if no polygonmesh with the specified ID was found
+          */
+        bool
+        updatePolygonMesh (const pcl::PolygonMesh &polymesh,
+                           const std::string &id = "polygon");
+
         /** \brief Add a Polygonline from a polygonMesh object to screen
           * \param[in] polymesh the polygonal mesh from where the polylines will be extracted
           * \param[in] id the polygon object id (default: "polygon")
@@ -840,6 +906,22 @@ namespace pcl
           * \param[in] source_points The source points
           * \param[in] target_points The target points
           * \param[in] correspondences The mapping from source points to target points. Each element must be an index into target_points
+          * \param[in] nth display only the Nth correspondence (e.g., skip the rest)
+          * \param[in] id the polygon object id (default: "correspondences")
+          * \param[in] viewport the view port where the correspondences should be added (default: all)
+          */
+        template <typename PointT> bool
+        addCorrespondences (const typename pcl::PointCloud<PointT>::ConstPtr &source_points,
+                            const typename pcl::PointCloud<PointT>::ConstPtr &target_points,
+                            const pcl::Correspondences &correspondences,
+                            int nth,
+                            const std::string &id = "correspondences",
+                            int viewport = 0);
+
+        /** \brief Add the specified correspondences to the display.
+          * \param[in] source_points The source points
+          * \param[in] target_points The target points
+          * \param[in] correspondences The mapping from source points to target points. Each element must be an index into target_points
           * \param[in] id the polygon object id (default: "correspondences")
           * \param[in] viewport the view port where the correspondences should be added (default: all)
           */
@@ -848,43 +930,46 @@ namespace pcl
                             const typename pcl::PointCloud<PointT>::ConstPtr &target_points,
                             const pcl::Correspondences &correspondences,
                             const std::string &id = "correspondences",
-                            int viewport = 0);
+                            int viewport = 0)
+        {
+          // If Nth not given, display all correspondences
+          return (addCorrespondences<PointT> (source_points, target_points, 
+                                              correspondences, 1, id, viewport));
+        }
+
+        /** \brief Update the specified correspondences to the display.
+          * \param[in] source_points The source points
+          * \param[in] target_points The target points
+          * \param[in] correspondences The mapping from source points to target points. Each element must be an index into target_points
+          * \param[in] nth display only the Nth correspondence (e.g., skip the rest)
+          * \param[in] id the polygon object id (default: "correspondences")
+          */
+        template <typename PointT> bool
+        updateCorrespondences (
+            const typename pcl::PointCloud<PointT>::ConstPtr &source_points,
+            const typename pcl::PointCloud<PointT>::ConstPtr &target_points,
+            const pcl::Correspondences &correspondences,
+            int nth,
+            const std::string &id = "correspondences");
 
         /** \brief Remove the specified correspondences from the display.
           * \param[in] id the polygon correspondences object id (i.e., given on \ref addCorrespondences)
           * \param[in] viewport view port from where the correspondences should be removed (default: all)
           */
-        inline void
-        removeCorrespondences (const std::string &id = "correspondences", int viewport = 0)
-        {
-          removeShape (id, viewport);
-        }
+        void
+        removeCorrespondences (const std::string &id = "correspondences", int viewport = 0);
 
         /** \brief Get the color handler index of a rendered PointCloud based on its ID
           * \param[in] id the point cloud object id
           */
-        inline int
-        getColorHandlerIndex (const std::string &id)
-        {
-          CloudActorMap::iterator am_it = style_->getCloudActorMap ()->find (id);
-          if (am_it == cloud_actor_map_->end ())
-            return (-1);
-
-          return (am_it->second.color_handler_index_);
-        }
+        int
+        getColorHandlerIndex (const std::string &id);
 
         /** \brief Get the geometry handler index of a rendered PointCloud based on its ID
           * \param[in] id the point cloud object id
           */
-        inline int
-        getGeometryHandlerIndex (const std::string &id)
-        {
-          CloudActorMap::iterator am_it = style_->getCloudActorMap ()->find (id);
-          if (am_it != cloud_actor_map_->end ())
-            return (-1);
-
-          return (am_it->second.geometry_handler_index_);
-        }
+        int
+        getGeometryHandlerIndex (const std::string &id);
 
         /** \brief Update/set the color index of a renderered PointCloud based on its ID
           * \param[in] id the point cloud object id
@@ -923,7 +1008,14 @@ namespace pcl
         bool
         getPointCloudRenderingProperties (int property, double &value,
                                           const std::string &id = "cloud");
-
+        
+        /** \brief Set whether the point cloud is selected or not 
+         *  \param[in] selected whether the cloud is selected or not (true = selected)
+         *  \param[in] id the point cloud object id (default: cloud)
+         */
+        bool
+        setPointCloudSelected (const bool selected, const std::string &id = "cloud" );
+        
        /** \brief Set the rendering properties of a shape
          * \param[in] property the property type
          * \param[in] value the value to be set
@@ -946,38 +1038,17 @@ namespace pcl
          setShapeRenderingProperties (int property, double val1, double val2, double val3,
                                       const std::string &id, int viewport = 0);
 
-#if ((VTK_MAJOR_VERSION == 5) && (VTK_MINOR_VERSION <= 4))
         /** \brief Returns true when the user tried to close the window */
         bool
-        wasStopped () const { if (interactor_ != NULL) return (interactor_->stopped); else return true; }
+        wasStopped () const;
 
         /** \brief Set the stopped flag back to false */
         void
-        resetStoppedFlag () { if (interactor_ != NULL) interactor_->stopped = false; }
-#else
-        /** \brief Returns true when the user tried to close the window */
-        bool
-        wasStopped () const { if (interactor_ != NULL) return (stopped_); else return (true); }
-
-        /** \brief Set the stopped flag back to false */
-        void
-        resetStoppedFlag () { if (interactor_ != NULL) stopped_ = false; }
-#endif
+        resetStoppedFlag ();
 
         /** \brief Stop the interaction and close the visualizaton window. */
         void
-        close ()
-        {
-#if ((VTK_MAJOR_VERSION == 5) && (VTK_MINOR_VERSION <= 4))
-          interactor_->stopped = true;
-          // This tends to close the window...
-          interactor_->stopLoop ();
-#else
-          stopped_ = true;
-          // This tends to close the window...
-          interactor_->TerminateApp ();
-#endif
-        }
+        close ();
 
         /** \brief Create a new viewport from [xmin,ymin] -> [xmax,ymax].
           * \param[in] xmin the minimum X coordinate for the viewport (0.0 <= 1.0)
@@ -992,6 +1063,12 @@ namespace pcl
           */
         void
         createViewPort (double xmin, double ymin, double xmax, double ymax, int &viewport);
+
+        /** \brief Create a new separate camera for the given viewport.
+          * \param[in] viewport the viewport to create a new camera for.
+          */
+        void
+        createViewPortCamera (const int viewport);
 
         /** \brief Add a polygon (polyline) that represents the input point cloud (connects all
           * points in order)
@@ -1015,6 +1092,20 @@ namespace pcl
           */
         template <typename PointT> bool
         addPolygon (const typename pcl::PointCloud<PointT>::ConstPtr &cloud,
+                    const std::string &id = "polygon",
+                    int viewport = 0);
+
+        /** \brief Add a planar polygon that represents the input point cloud (connects all points in order)
+          * \param[in] polygon the polygon to draw
+          * \param[in] r the red channel of the color that the polygon should be rendered with
+          * \param[in] g the green channel of the color that the polygon should be rendered with
+          * \param[in] b the blue channel of the color that the polygon should be rendered with
+          * \param[in] id the polygon id/name (default: "polygon")
+          * \param[in] viewport (optional) the id of the new viewport (default: 0)
+          */
+        template <typename PointT> bool
+        addPolygon (const pcl::PlanarPolygon<PointT> &polygon,
+                    double r, double g, double b,
                     const std::string &id = "polygon",
                     int viewport = 0);
 
@@ -1068,6 +1159,25 @@ namespace pcl
         addArrow (const P1 &pt1, const P2 &pt2, double r, double g, double b, bool display_length,
                   const std::string &id = "arrow", int viewport = 0);
 
+        /** \brief Add a line arrow segment between two points, and display the distance between them in a given color
+          * \param[in] pt1 the first (start) point on the line
+          * \param[in] pt2 the second (end) point on the line
+          * \param[in] r_line the red channel of the color that the line should be rendered with
+          * \param[in] g_line the green channel of the color that the line should be rendered with
+          * \param[in] b_line the blue channel of the color that the line should be rendered with
+          * \param[in] r_text the red channel of the color that the text should be rendered with
+          * \param[in] g_text the green channel of the color that the text should be rendered with
+          * \param[in] b_text the blue channel of the color that the text should be rendered with
+          * \param[in] id the line id/name (default: "arrow")
+          * \param[in] viewport (optional) the id of the new viewport (default: 0)
+          */
+	      template <typename P1, typename P2> bool
+	      addArrow (const P1 &pt1, const P2 &pt2,
+		              double r_line, double g_line, double b_line,
+		              double r_text, double g_text, double b_text,
+		              const std::string &id = "arrow", int viewport = 0);
+
+
         /** \brief Add a sphere shape from a point and a radius
           * \param[in] center the center of the sphere
           * \param[in] radius the radius of the sphere
@@ -1084,7 +1194,7 @@ namespace pcl
           * \param[in] r the red channel of the color that the sphere should be rendered with
           * \param[in] g the green channel of the color that the sphere should be rendered with
           * \param[in] b the blue channel of the color that the sphere should be rendered with
-          * \param[in] id the line id/name (default: "sphere")
+          * \param[in] id the sphere id/name (default: "sphere")
           * \param[in] viewport (optional) the id of the new viewport (default: 0)
           */
         template <typename PointT> bool
@@ -1258,6 +1368,10 @@ namespace pcl
                   const std::string &id = "plane",
                   int viewport = 0);
 
+        bool
+        addPlane (const pcl::ModelCoefficients &coefficients, double x, double y, double z,
+                  const std::string &id = "plane",
+                  int viewport = 0);
         /** \brief Add a circle from a set of given model coefficients
           * \param[in] coefficients the model coefficients (x, y, radius)
           * \param[in] id the circle id/name (default: "circle")
@@ -1316,27 +1430,23 @@ namespace pcl
                  double width, double height, double depth,
                  const std::string &id = "cube",
                  int viewport = 0);
-        
-        /** \brief Add a cube from a set of bounding points
-          * \param[in] x_min is the minimum x value of the box
-          * \param[in] x_max is the maximum x value of the box
-          * \param[in] y_min is the minimum y value of the box 
-          * \param[in] y_max is the maximum y value of the box
-          * \param[in] z_min is the minimum z value of the box
-          * \param[in] z_max is the maximum z value of the box
-          * \param[in] r the red color value (default: 1.0)
-          * \param[in] g the green color value (default: 1.0)
-          * \param[in] b the blue color vlaue (default: 1.0)
+
+        /** \brief Add a cube
+          * \param[in] x_min the min X coordinate
+          * \param[in] x_max the max X coordinate
+          * \param[in] y_min the min Y coordinate
+          * \param[in] y_max the max Y coordinate
+          * \param[in] z_min the min Z coordinate
+          * \param[in] z_max the max Z coordinate
+          * \param[in] r how much red (0.0 -> 1.0)
+          * \param[in] g how much green (0.0 -> 1.0)
+          * \param[in] b how much blue (0.0 -> 1.0)
           * \param[in] id the cube id/name (default: "cube")
           * \param[in] viewport (optional) the id of the new viewport (default: 0)
           */
         bool
-        addCube (double x_min, double x_max,
-                 double y_min, double y_max,
-                 double z_min, double z_max,
-                 double r = 1.0, double g = 1.0, double b = 1.0,
-                 const std::string &id = "cube",
-                 int viewport = 0);
+        addCube (float x_min, float x_max, float y_min, float y_max, float z_min, float z_max,
+                 double r = 1.0, double g = 1.0, double b = 1.0, const std::string &id = "cube", int viewport = 0);
 
         /** \brief Changes the visual representation for all actors to surface representation. */
         void
@@ -1349,6 +1459,12 @@ namespace pcl
         /** \brief Changes the visual representation for all actors to wireframe representation. */
         void
         setRepresentationToWireframeForAllActors ();
+
+        /** \brief Sets whether the 2D overlay text showing the framerate of the window is displayed or not.
+          * \param[in] show_fps determines whether the fps text will be shown or not.
+          */
+        void
+        setShowFPS (bool show_fps);
 
         /** \brief Renders a virtual scene as seen from the camera viewpoint and returns the rendered point cloud.
           * ATT: This method will only render the scene if only on viewport exists. Otherwise, returns an empty
@@ -1380,12 +1496,10 @@ namespace pcl
         void
         renderViewTesselatedSphere (
             int xres, int yres,
-            std::vector<pcl::PointCloud<pcl::PointXYZ>,Eigen::aligned_allocator< pcl::PointCloud<pcl::PointXYZ> > > & cloud,
+            pcl::PointCloud<pcl::PointXYZ>::CloudVectorType & cloud,
             std::vector<Eigen::Matrix4f,Eigen::aligned_allocator< Eigen::Matrix4f > > & poses, std::vector<float> & enthropies, int tesselation_level,
             float view_angle = 45, float radius_sphere = 1, bool use_vertices = true);
 
-        /** \brief Camera view, window position and size. */
-        Camera camera_;
 
         /** \brief Initialize camera parameters with some default values. */
         void
@@ -1416,43 +1530,74 @@ namespace pcl
         void
         resetCameraViewpoint (const std::string &id = "cloud");
 
-        /** \brief sets the camera pose given by position, viewpoint and up vector
-          * \param posX the x co-ordinate of the camera location
-          * \param posY the y co-ordinate of the camera location
-          * \param posZ the z co-ordinate of the camera location
-          * \param viewX the x component of the view upoint of the camera
-          * \param viewY the y component of the view point of the camera
-          * \param viewZ the z component of the view point of the camera
-          * \param upX the x component of the view up direction of the camera
-          * \param upY the y component of the view up direction of the camera
-          * \param upZ the y component of the view up direction of the camera
-          * \param viewport the viewport to modify camera of, if 0, modifies all cameras
+        /** \brief Set the camera pose given by position, viewpoint and up vector
+          * \param[in] pos_x the x coordinate of the camera location
+          * \param[in] pos_y the y coordinate of the camera location
+          * \param[in] pos_z the z coordinate of the camera location
+          * \param[in] view_x the x component of the view point of the camera
+          * \param[in] view_y the y component of the view point of the camera
+          * \param[in] view_z the z component of the view point of the camera
+          * \param[in] up_x the x component of the view up direction of the camera
+          * \param[in] up_y the y component of the view up direction of the camera
+          * \param[in] up_z the y component of the view up direction of the camera
+          * \param[in] viewport the viewport to modify camera of (0 modifies all cameras)
           */
         void
-        setCameraPose (double posX, double posY, double posZ,
-                       double viewX, double viewY, double viewZ,
-                       double upX, double upY, double upZ, int viewport = 0);
+        setCameraPosition (double pos_x, double pos_y, double pos_z,
+                           double view_x, double view_y, double view_z,
+                           double up_x, double up_y, double up_z, int viewport = 0);
 
         /** \brief Set the camera location and viewup according to the given arguments
-          * \param[in] posX the x co-ordinate of the camera location
-          * \param[in] posY the y co-ordinate of the camera location
-          * \param[in] posZ the z co-ordinate of the camera location
-          * \param[in] viewX the x component of the view up direction of the camera
-          * \param[in] viewY the y component of the view up direction of the camera
-          * \param[in] viewZ the z component of the view up direction of the camera
-          * \param[in] viewport the viewport to modify camera of, if 0, modifies all cameras
+          * \param[in] pos_x the x coordinate of the camera location
+          * \param[in] pos_y the y coordinate of the camera location
+          * \param[in] pos_z the z coordinate of the camera location
+          * \param[in] up_x the x component of the view up direction of the camera
+          * \param[in] up_y the y component of the view up direction of the camera
+          * \param[in] up_z the z component of the view up direction of the camera
+          * \param[in] viewport the viewport to modify camera of (0 modifies all cameras)
           */
         void
-        setCameraPosition (double posX,double posY, double posZ,
-                           double viewX, double viewY, double viewZ, int viewport = 0);
+        setCameraPosition (double pos_x, double pos_y, double pos_z,
+                           double up_x, double up_y, double up_z, int viewport = 0);
+
+        /** \brief Set the camera parameters via an intrinsics and and extrinsics matrix
+          * \note This assumes that the pixels are square and that the center of the image is at the center of the sensor.
+          * \param[in] intrinsics the intrinsics that will be used to compute the VTK camera parameters
+          * \param[in] extrinsics the extrinsics that will be used to compute the VTK camera parameters
+          * \param[in] viewport the viewport to modify camera of (0 modifies all cameras)
+          */
+        void
+        setCameraParameters (const Eigen::Matrix3f &intrinsics, const Eigen::Matrix4f &extrinsics, int viewport = 0);
+
+        /** \brief Set the camera parameters by given a full camera data structure.
+          * \param[in] camera camera structure containing all the camera parameters.
+          * \param[in] viewport the viewport to modify camera of (0 modifies all cameras)
+          */
+        void
+        setCameraParameters (const Camera &camera, int viewport = 0);
+
+        /** \brief Set the camera clipping distances.
+          * \param[in] near the near clipping distance (no objects closer than this to the camera will be drawn)
+          * \param[in] far the far clipping distance (no objects further away than this to the camera will be drawn)
+          */
+        void
+        setCameraClipDistances (double near, double far, int viewport = 0);
+
+        /** \brief Set the camera vertical field of view.
+          * \param[in] fovy vertical field of view in radians
+          * \param[in] viewport the viewport to modify camera of (0 modifies all cameras)
+          */
+        void
+        setCameraFieldOfView (double fovy, int viewport = 0);
 
         /** \brief Get the current camera parameters. */
         void
         getCameras (std::vector<Camera>& cameras);
 
+
         /** \brief Get the current viewing pose. */
         Eigen::Affine3f
-        getViewerPose ();
+        getViewerPose (int viewport = 0);
 
         /** \brief Save the current rendered image to disk, as a PNG screenshot.
           * \param[in] file the name of the PNG file
@@ -1466,6 +1611,41 @@ namespace pcl
         {
           return (win_);
         }
+        
+        /** \brief Return a pointer to the underlying VTK Renderer Collection. */
+        vtkSmartPointer<vtkRendererCollection>
+        getRendererCollection ()
+        {
+          return (rens_);
+        }
+        
+        /** \brief Return a pointer to the CloudActorMap this visualizer uses. */
+        CloudActorMapPtr
+        getCloudActorMap ()
+        {
+          return (cloud_actor_map_);
+        }
+        
+
+        /** \brief Set the position in screen coordinates.
+          * \param[in] x where to move the window to (X)
+          * \param[in] y where to move the window to (Y)
+          */
+        void
+        setPosition (int x, int y);
+
+        /** \brief Set the window size in screen coordinates.
+          * \param[in] xw window size in horizontal (pixels)
+          * \param[in] yw window size in vertical (pixels)
+          */
+        void
+        setSize (int xw, int yw);
+
+        /** \brief Use Vertex Buffer Objects renderers.
+          * \param[in] use_vbos set to true to use VBOs 
+          */
+        void
+        setUseVbos (bool use_vbos);
 
         /** \brief Create the internal Interactor object. */
         void
@@ -1480,6 +1660,17 @@ namespace pcl
         setupInteractor (vtkRenderWindowInteractor *iren,
                          vtkRenderWindow *win);
 
+        /** \brief Set up PCLVisualizer with custom interactor style for a given vtkRenderWindowInteractor object
+          * attached to a given vtkRenderWindow
+          * \param[in,out] iren the vtkRenderWindowInteractor object to set up
+          * \param[in,out] win a vtkRenderWindow object that the interactor is attached to
+          * \param[in,out] style a vtkInteractorStyle object 
+          */
+        void
+        setupInteractor (vtkRenderWindowInteractor *iren,
+                         vtkRenderWindow *win,
+                         vtkInteractorStyle *style);
+        
         /** \brief Get a pointer to the current interactor style used. */
         inline vtkSmartPointer<PCLVisualizerInteractorStyle>
         getInteractorStyle ()
@@ -1496,50 +1687,48 @@ namespace pcl
       private:
         struct ExitMainLoopTimerCallback : public vtkCommand
         {
-          static ExitMainLoopTimerCallback* New()
+          static ExitMainLoopTimerCallback* New ()
           {
-            return new ExitMainLoopTimerCallback;
+            return (new ExitMainLoopTimerCallback);
           }
-          virtual void Execute(vtkObject* vtkNotUsed(caller), unsigned long event_id, void* call_data)
-          {
-            if (event_id != vtkCommand::TimerEvent)
-              return;
-            int timer_id = *(int*)call_data;
-            //PCL_WARN ("[pcl::visualization::PCLVisualizer::ExitMainLoopTimerCallback] Timer %d called.\n", timer_id);
-            if (timer_id != right_timer_id)
-              return;
-            // Stop vtk loop and send notification to app to wake it up
-#if ((VTK_MAJOR_VERSION == 5) && (VTK_MINOR_VERSION <= 4))
-            pcl_visualizer->interactor_->stopLoop ();
-#else
-            pcl_visualizer->interactor_->TerminateApp ();
-#endif
-          }
+          virtual void 
+          Execute (vtkObject*, unsigned long event_id, void*);
+
           int right_timer_id;
           PCLVisualizer* pcl_visualizer;
         };
+
         struct ExitCallback : public vtkCommand
         {
           static ExitCallback* New ()
           {
-            return new ExitCallback;
+            return (new ExitCallback);
           }
-          virtual void Execute (vtkObject* caller, unsigned long event_id, void* call_data)
-          {
-            if (event_id != vtkCommand::ExitEvent)
-              return;
-#if ((VTK_MAJOR_VERSION == 5) && (VTK_MINOR_VERSION <= 4))
-            pcl_visualizer->interactor_->stopped = true;
-            // This tends to close the window...
-            pcl_visualizer->interactor_->stopLoop ();
-#else
-            pcl_visualizer->stopped_ = true;
-            // This tends to close the window...
-            pcl_visualizer->interactor_->TerminateApp ();
-#endif
-          }
+          virtual void 
+          Execute (vtkObject*, unsigned long event_id, void*);
+
           PCLVisualizer* pcl_visualizer;
         };
+
+        //////////////////////////////////////////////////////////////////////////////////////////////
+        struct FPSCallback : public vtkCommand
+        {
+          static FPSCallback *New () { return (new FPSCallback); }
+
+          FPSCallback () : actor (), pcl_visualizer (), decimated () {}
+          FPSCallback (const FPSCallback& src) : vtkCommand (), actor (src.actor), pcl_visualizer (src.pcl_visualizer), decimated (src.decimated) {}
+          FPSCallback& operator = (const FPSCallback& src) { actor = src.actor; pcl_visualizer = src.pcl_visualizer; decimated = src.decimated; return (*this); }
+
+          virtual void 
+          Execute (vtkObject*, unsigned long event_id, void*);
+            
+          vtkTextActor *actor;
+          PCLVisualizer* pcl_visualizer;
+          bool decimated;
+        };
+
+        /** \brief The FPSCallback object for the current visualizer. */
+        vtkSmartPointer<FPSCallback> update_fps_;
 
 #if !((VTK_MAJOR_VERSION == 5) && (VTK_MINOR_VERSION <= 4))
         /** \brief Set to false if the interaction loop is running. */
@@ -1570,8 +1759,14 @@ namespace pcl
         /** \brief Internal list with actor pointers and viewpoint for coordinates. */
         CoordinateActorMap coordinate_actor_map_;
 
+        /** \brief Internal pointer to widget which contains a set of axes */
+        vtkSmartPointer<vtkOrientationMarkerWidget> axes_widget_;
+        
         /** \brief Boolean that holds whether or not the camera parameters were manually initialized*/
         bool camera_set_;
+
+        /** \brief Boolean that holds whether or not to use the vtkVertexBufferObjectMapper*/
+        bool use_vbos_;
 
         /** \brief Internal method. Removes a vtk actor from the screen.
           * \param[in] actor a pointer to the vtk actor object
@@ -1581,9 +1776,20 @@ namespace pcl
         removeActorFromRenderer (const vtkSmartPointer<vtkLODActor> &actor,
                                  int viewport = 0);
 
+        /** \brief Internal method. Removes a vtk actor from the screen.
+          * \param[in] actor a pointer to the vtk actor object
+          * \param[in] viewport the view port where the actor should be removed from (default: all)
+          */
+        bool
+        removeActorFromRenderer (const vtkSmartPointer<vtkActor> &actor,
+                                 int viewport = 0);
+
         /** \brief Internal method. Adds a vtk actor to screen.
           * \param[in] actor a pointer to the vtk actor object
-          * \param[in] viewport the view port where the actor should be added to (default: all)
+          * \param[in] viewport port where the actor should be added to (default: 0/all)
+          *
+          * \note If viewport is set to 0, the actor will be added to all existing 
+          * renders. To select a specific viewport use an integer between 1 and N.
           */
         void
         addActorToRenderer (const vtkSmartPointer<vtkProp> &actor,
@@ -1596,6 +1802,16 @@ namespace pcl
         bool
         removeActorFromRenderer (const vtkSmartPointer<vtkProp> &actor,
                                  int viewport = 0);
+
+        /** \brief Internal method. Creates a vtk actor from a vtk polydata object.
+          * \param[in] data the vtk polydata object to create an actor for
+          * \param[out] actor the resultant vtk actor object
+          * \param[in] use_scalars set scalar properties to the mapper if it exists in the data. Default: true.
+          */
+        void
+        createActorFromVTKDataSet (const vtkSmartPointer<vtkDataSet> &data,
+                                   vtkSmartPointer<vtkActor> &actor,
+                                   bool use_scalars = true);
 
         /** \brief Internal method. Creates a vtk actor from a vtk polydata object.
           * \param[in] data the vtk polydata object to create an actor for
@@ -1753,11 +1969,13 @@ namespace pcl
                                  const Eigen::Quaternion<float> &orientation,
                                  Eigen::Matrix4f &transformation);
 
+        //There's no reason these conversion functions shouldn't be public and static so others can use them.
+      public:
         /** \brief Convert Eigen::Matrix4f to vtkMatrix4x4
           * \param[in] m the input Eigen matrix
           * \param[out] vtk_matrix the resultant VTK matrix
           */
-        void
+        static void
         convertToVtkMatrix (const Eigen::Matrix4f &m,
                             vtkSmartPointer<vtkMatrix4x4> &vtk_matrix);
 
@@ -1766,10 +1984,18 @@ namespace pcl
           * \param[in] orientation the point cloud orientation
           * \param[out] vtk_matrix the resultant VTK 4x4 matrix
           */
-        void
+        static void
         convertToVtkMatrix (const Eigen::Vector4f &origin,
                             const Eigen::Quaternion<float> &orientation,
                             vtkSmartPointer<vtkMatrix4x4> &vtk_matrix);
+        
+        /** \brief Convert vtkMatrix4x4 to an Eigen4f
+          * \param[in] vtk_matrix the original VTK 4x4 matrix
+          * \param[out] m the resultant Eigen 4x4 matrix
+          */
+        static void
+        convertToEigenMatrix (const vtkSmartPointer<vtkMatrix4x4> &vtk_matrix,
+                              Eigen::Matrix4f &m);
 
     };
   }

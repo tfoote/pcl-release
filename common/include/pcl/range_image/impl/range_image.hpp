@@ -3,6 +3,7 @@
  *
  *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010-2012, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
  *
  *  All rights reserved.
  *
@@ -16,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -35,6 +36,9 @@
  *
  */
 
+#ifndef PCL_RANGE_IMAGE_IMPL_HPP_
+#define PCL_RANGE_IMAGE_IMPL_HPP_
+
 #include <pcl/pcl_macros.h>
 #include <pcl/common/distances.h>
 
@@ -47,28 +51,30 @@ RangeImage::asinLookUp (float value)
 {
   return (asin_lookup_table[
       static_cast<int> (
-        static_cast<float> (pcl_lrintf ( (static_cast<float> (lookup_table_size) / 2.0f) * value)) + 
-        static_cast<float> (lookup_table_size) / 2.0f)]);
+        static_cast<float> (pcl_lrintf ( (static_cast<float> (lookup_table_size-1) / 2.0f) * value)) + 
+        static_cast<float> (lookup_table_size-1) / 2.0f)]);
 }
 
 /////////////////////////////////////////////////////////////////////////
 inline float
 RangeImage::atan2LookUp (float y, float x)
 {
+  if (x==0 && y==0)
+    return 0;
   float ret;
   if (fabsf (x) < fabsf (y)) 
   {
     ret = atan_lookup_table[
       static_cast<int> (
-          static_cast<float> (pcl_lrintf ( (static_cast<float> (lookup_table_size) / 2.0f) * (x / y))) + 
-          static_cast<float> (lookup_table_size) / 2.0f)];
+          static_cast<float> (pcl_lrintf ( (static_cast<float> (lookup_table_size-1) / 2.0f) * (x / y))) + 
+          static_cast<float> (lookup_table_size-1) / 2.0f)];
     ret = static_cast<float> (x*y > 0 ? M_PI/2-ret : -M_PI/2-ret);
   }
   else
     ret = atan_lookup_table[
       static_cast<int> (
-          static_cast<float> (pcl_lrintf ( (static_cast<float> (lookup_table_size) / 2.0f) * (y / x))) + 
-          static_cast<float> (lookup_table_size)/2.0f)];
+          static_cast<float> (pcl_lrintf ( (static_cast<float> (lookup_table_size-1) / 2.0f) * (y / x))) + 
+          static_cast<float> (lookup_table_size-1)/2.0f)];
   if (x < 0)
     ret = static_cast<float> (y < 0 ? ret-M_PI : ret+M_PI);
   
@@ -79,7 +85,7 @@ RangeImage::atan2LookUp (float y, float x)
 inline float
 RangeImage::cosLookUp (float value)
 {
-  int cell_idx = static_cast<int> (pcl_lrintf ( (static_cast<float> (lookup_table_size)-1) * fabsf (value) / (2.0f * M_PI)));
+  int cell_idx = static_cast<int> (pcl_lrintf ( (static_cast<float> (lookup_table_size-1)) * fabsf (value) / (2.0f * static_cast<float> (M_PI))));
   return (cos_lookup_table[cell_idx]);
 }
 
@@ -1195,6 +1201,7 @@ RangeImage::setAngularResolution (float angular_resolution_x, float angular_reso
   angular_resolution_y_reciprocal_ = 1.0f / angular_resolution_y_;
 }
 
+/////////////////////////////////////////////////////////////////////////
 inline void 
 RangeImage::setTransformationToRangeImageSystem (const Eigen::Affine3f& to_range_image_system)
 {
@@ -1202,6 +1209,7 @@ RangeImage::setTransformationToRangeImageSystem (const Eigen::Affine3f& to_range
   to_world_system_ = to_range_image_system_.inverse ();
 }
 
+/////////////////////////////////////////////////////////////////////////
 inline void 
 RangeImage::getAngularResolution (float& angular_resolution_x, float& angular_resolution_y) const
 {  
@@ -1209,4 +1217,42 @@ RangeImage::getAngularResolution (float& angular_resolution_x, float& angular_re
   angular_resolution_y = angular_resolution_y_;
 }
 
+/////////////////////////////////////////////////////////////////////////
+template <typename PointCloudType> void 
+RangeImage::integrateFarRanges (const PointCloudType& far_ranges)
+{
+  float x_real, y_real, range_of_current_point;
+  for (typename PointCloudType::const_iterator it  = far_ranges.points.begin (); it != far_ranges.points.end (); ++it)
+  {
+    //if (!isFinite (*it))  // Check for NAN etc
+      //continue;
+    Vector3fMapConst current_point = it->getVector3fMap ();
+    
+    this->getImagePoint (current_point, x_real, y_real, range_of_current_point);
+    
+    int floor_x = static_cast<int> (pcl_lrint (floor (x_real))), 
+        floor_y = static_cast<int> (pcl_lrint (floor (y_real))),
+        ceil_x  = static_cast<int> (pcl_lrint (ceil (x_real))),
+        ceil_y  = static_cast<int> (pcl_lrint (ceil (y_real)));
+    
+    int neighbor_x[4], neighbor_y[4];
+    neighbor_x[0]=floor_x; neighbor_y[0]=floor_y;
+    neighbor_x[1]=floor_x; neighbor_y[1]=ceil_y;
+    neighbor_x[2]=ceil_x;  neighbor_y[2]=floor_y;
+    neighbor_x[3]=ceil_x;  neighbor_y[3]=ceil_y;
+    
+    for (int i=0; i<4; ++i)
+    {
+      int x=neighbor_x[i], y=neighbor_y[i];
+      if (!isInImage (x, y))
+        continue;
+      PointWithRange& image_point = getPoint (x, y);
+      if (!pcl_isfinite (image_point.range))
+        image_point.range = std::numeric_limits<float>::infinity ();
+    }
+  }
+}
+
 }  // namespace end
+#endif
+

@@ -3,6 +3,7 @@
  *
  *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010-2011, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
  *
  *  All rights reserved.
  *
@@ -16,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,7 +34,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: pfh.h 4961 2012-03-07 23:44:07Z rusu $
+ * $Id$
  *
  */
 
@@ -42,31 +43,11 @@
 
 #include <pcl/point_types.h>
 #include <pcl/features/feature.h>
+#include <pcl/features/pfh_tools.h>
 #include <map>
 
 namespace pcl
 {
-  /** \brief Compute the 4-tuple representation containing the three angles and one distance between two points
-    * represented by Cartesian coordinates and normals.
-    * \note For explanations about the features, please see the literature mentioned above (the order of the
-    * features might be different).
-    * \param[in] p1 the first XYZ point
-    * \param[in] n1 the first surface normal
-    * \param[in] p2 the second XYZ point
-    * \param[in] n2 the second surface normal
-    * \param[out] f1 the first angular feature (angle between the projection of nq_idx and u)
-    * \param[out] f2 the second angular feature (angle between nq_idx and v)
-    * \param[out] f3 the third angular feature (angle between np_idx and |p_idx - q_idx|)
-    * \param[out] f4 the distance feature (p_idx - q_idx)
-    *
-    * \note For efficiency reasons, we assume that the point data passed to the method is finite.
-    * \ingroup features
-    */
-  PCL_EXPORTS bool 
-  computePairFeatures (const Eigen::Vector4f &p1, const Eigen::Vector4f &n1, 
-                       const Eigen::Vector4f &p2, const Eigen::Vector4f &n2, 
-                       float &f1, float &f2, float &f3, float &f4);
-
   /** \brief PFHEstimation estimates the Point Feature Histogram (PFH) descriptor for a given point cloud dataset
     * containing points and normals.
     *
@@ -101,6 +82,8 @@ namespace pcl
   class PFHEstimation : public FeatureFromNormals<PointInT, PointNT, PointOutT>
   {
     public:
+      typedef boost::shared_ptr<PFHEstimation<PointInT, PointNT, PointOutT> > Ptr;
+      typedef boost::shared_ptr<const PFHEstimation<PointInT, PointNT, PointOutT> > ConstPtr;
       using Feature<PointInT, PointOutT>::feature_name_;
       using Feature<PointInT, PointOutT>::getClassName;
       using Feature<PointInT, PointOutT>::indices_;
@@ -235,76 +218,12 @@ namespace pcl
 
       /** \brief Set to true to use the internal cache for removing redundant computations. */
       bool use_cache_;
-    private:
-      /** \brief Make the computeFeature (&Eigen::MatrixXf); inaccessible from outside the class
-        * \param[out] output the output point cloud 
-        */
-      void 
-      computeFeatureEigen (pcl::PointCloud<Eigen::MatrixXf> &) {}
   };
-
-  /** \brief PFHEstimation estimates the Point Feature Histogram (PFH) descriptor for a given point cloud dataset
-    * containing points and normals.
-    *
-    * \note If you use this code in any academic work, please cite:
-    *
-    *   - R.B. Rusu, N. Blodow, Z.C. Marton, M. Beetz.
-    *     Aligning Point Cloud Views using Persistent Feature Histograms.
-    *     In Proceedings of the 21st IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS),
-    *     Nice, France, September 22-26 2008.
-    *   - R.B. Rusu, Z.C. Marton, N. Blodow, M. Beetz.
-    *     Learning Informative Point Classes for the Acquisition of Object Model Maps.
-    *     In Proceedings of the 10th International Conference on Control, Automation, Robotics and Vision (ICARCV),
-    *     Hanoi, Vietnam, December 17-20 2008.
-    *
-    * \attention 
-    * The convention for PFH features is:
-    *   - if a query point's nearest neighbors cannot be estimated, the PFH feature will be set to NaN 
-    *     (not a number)
-    *   - it is impossible to estimate a PFH descriptor for a point that
-    *     doesn't have finite 3D coordinates. Therefore, any point that contains
-    *     NaN data on x, y, or z, will have its PFH feature property set to NaN.
-    *
-    * \note The code is stateful as we do not expect this class to be multicore parallelized. Please look at
-    * \ref FPFHEstimationOMP for examples on parallel implementations of the FPFH (Fast Point Feature Histogram).
-    *
-    * \author Radu B. Rusu
-    * \ingroup features
-    */
-  template <typename PointInT, typename PointNT>
-  class PFHEstimation<PointInT, PointNT, Eigen::MatrixXf> : public PFHEstimation<PointInT, PointNT, pcl::PFHSignature125>
-  {
-    public:
-      using PFHEstimation<PointInT, PointNT, pcl::PFHSignature125>::pfh_histogram_;
-      using PFHEstimation<PointInT, PointNT, pcl::PFHSignature125>::nr_subdiv_;
-      using PFHEstimation<PointInT, PointNT, pcl::PFHSignature125>::k_;
-      using PFHEstimation<PointInT, PointNT, pcl::PFHSignature125>::indices_;
-      using PFHEstimation<PointInT, PointNT, pcl::PFHSignature125>::search_parameter_;
-      using PFHEstimation<PointInT, PointNT, pcl::PFHSignature125>::surface_;
-      using PFHEstimation<PointInT, PointNT, pcl::PFHSignature125>::input_;
-      using PFHEstimation<PointInT, PointNT, pcl::PFHSignature125>::normals_;
-      using PFHEstimation<PointInT, PointNT, pcl::PFHSignature125>::computePointPFHSignature;
-      using PFHEstimation<PointInT, PointNT, pcl::PFHSignature125>::compute;
-      using PFHEstimation<PointInT, PointNT, pcl::PFHSignature125>::feature_map_;
-      using PFHEstimation<PointInT, PointNT, pcl::PFHSignature125>::key_list_;
-
-    private:
-      /** \brief Estimate the Point Feature Histograms (PFH) descriptors at a set of points given by
-        * <setInputCloud (), setIndices ()> using the surface in setSearchSurface () and the spatial locator in
-        * setSearchMethod ()
-        * \param[out] output the resultant point cloud model dataset that contains the PFH feature estimates
-        */
-      void 
-      computeFeatureEigen (pcl::PointCloud<Eigen::MatrixXf> &output);
-
-      /** \brief Make the compute (&PointCloudOut); inaccessible from outside the class
-        * \param[out] output the output point cloud 
-        */
-      void 
-      compute (pcl::PointCloud<pcl::PFHSignature125> &) {}
-   };
 }
 
-#endif  //#ifndef PCL_PFH_H_
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/features/impl/pfh.hpp>
+#endif
 
+#endif  //#ifndef PCL_PFH_H_
 

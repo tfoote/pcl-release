@@ -16,7 +16,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,7 +33,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: point_representation.h 6126 2012-07-03 20:19:58Z aichim $
+ * $Id$
  *
  */
 #ifndef PCL_POINT_REPRESENTATION_H_
@@ -414,7 +414,24 @@ namespace pcl
   template <>
   class DefaultPointRepresentation <VFHSignature308> : public DefaultFeatureRepresentation <VFHSignature308>
   {};
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  template <>
+  class DefaultPointRepresentation <Narf36> : public PointRepresentation <Narf36>
+  {
+    public:
+      DefaultPointRepresentation ()
+      {
+        nr_dimensions_ = 36;
+        trivial_=false;
+      }
 
+      virtual void
+      copyToFloatArray (const Narf36 &p, float * out) const
+      {
+        for (int i = 0; i < nr_dimensions_; ++i)
+          out[i] = p.descriptor[i];
+      }
+  };
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   template <>
   class DefaultPointRepresentation<NormalBasedSignature12> : public DefaultFeatureRepresentation <NormalBasedSignature12>
@@ -422,7 +439,7 @@ namespace pcl
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   template <>
-  class DefaultPointRepresentation<ShapeContext> : public PointRepresentation<ShapeContext>
+  class DefaultPointRepresentation<ShapeContext1980> : public PointRepresentation<ShapeContext1980>
   {
     public:
       DefaultPointRepresentation ()
@@ -431,28 +448,7 @@ namespace pcl
       }
 
       virtual void
-      copyToFloatArray (const ShapeContext &p, float * out) const
-      {
-        for (int i = 0; i < nr_dimensions_; ++i)
-          out[i] = p.descriptor[i];
-      }
-  };
-
-  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  template <>
-  class
-  PCL_DEPRECATED_CLASS (DefaultPointRepresentation, "SHOT POINT IS DEPRECATED, USE SHOT352 FOR SHAPE AND SHOT1344 FOR SHAPE+COLOR INSTEAD")
-    <SHOT>
-    : public PointRepresentation<SHOT>
-  {
-    public:
-      DefaultPointRepresentation ()
-      {
-        nr_dimensions_ = 352;
-      }
-
-      virtual void
-      copyToFloatArray (const SHOT &p, float * out) const
+      copyToFloatArray (const ShapeContext1980 &p, float * out) const
       {
         for (int i = 0; i < nr_dimensions_; ++i)
           out[i] = p.descriptor[i];

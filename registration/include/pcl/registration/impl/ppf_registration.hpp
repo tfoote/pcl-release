@@ -1,8 +1,11 @@
 /*
  * Software License Agreement (BSD License)
  *
+ *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2011, Alexandru-Eugen Ichim
  *                      Willow Garage, Inc
+ *  Copyright (c) 2012-, Open Perception, Inc.
+ *
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -15,7 +18,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -32,14 +35,14 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: ppf_registration.hpp 5121 2012-03-16 03:03:47Z rusu $
+ * $Id$
+ *
  */
 
 
 #ifndef PCL_REGISTRATION_IMPL_PPF_REGISTRATION_H_
 #define PCL_REGISTRATION_IMPL_PPF_REGISTRATION_H_
 
-//#include <pcl/registration/ppf_registration.h>
 #include <pcl/features/ppf.h>
 #include <pcl/common/transforms.h>
 
@@ -130,9 +133,11 @@ pcl::PPFRegistration<PointSource, PointTarget>::computeTransformation (PointClou
   PoseWithVotesList voted_poses;
   std::vector <std::vector <unsigned int> > accumulator_array;
   accumulator_array.resize (input_->points.size ());
+
+  size_t aux_size = static_cast<size_t> (floor (2 * M_PI / search_method_->getAngleDiscretizationStep ()));
   for (size_t i = 0; i < input_->points.size (); ++i)
   {
-    std::vector <unsigned int> aux (static_cast<size_t> (floor(2*M_PI / search_method_->getAngleDiscretizationStep ()), 0));
+    std::vector<unsigned int> aux (aux_size);
     accumulator_array[i] = aux;
   }
   PCL_INFO ("Accumulator array size: %u x %u.\n", accumulator_array.size (), accumulator_array.back ().size ());
@@ -146,7 +151,7 @@ pcl::PPFRegistration<PointSource, PointTarget>::computeTransformation (PointClou
 
     Eigen::AngleAxisf rotation_sg (acosf (scene_reference_normal.dot (Eigen::Vector3f::UnitX ())),
                                    scene_reference_normal.cross (Eigen::Vector3f::UnitX ()). normalized());
-    Eigen::Affine3f transform_sg = Eigen::Translation3f ( rotation_sg* ((-1)*scene_reference_point)) * rotation_sg;
+    Eigen::Affine3f transform_sg (Eigen::Translation3f (rotation_sg * ((-1) * scene_reference_point)) * rotation_sg);
 
     // For every other point in the scene => now have pair (s_r, s_i) fixed
     std::vector<int> indices;
@@ -302,8 +307,8 @@ pcl::PPFRegistration<PointSource, PointTarget>::clusterPoses (typename pcl::PPFR
     rotation_average /= static_cast<float> (clusters[cluster_votes[cluster_i].first].size ());
 
     Eigen::Affine3f transform_average;
-    transform_average.translation () = translation_average;
-    transform_average.linear () = Eigen::Quaternionf (rotation_average).normalized().toRotationMatrix ();
+    transform_average.translation ().matrix () = translation_average;
+    transform_average.linear ().matrix () = Eigen::Quaternionf (rotation_average).normalized().toRotationMatrix ();
 
     result.push_back (PoseWithVotes (transform_average, cluster_votes[cluster_i].second));
   }

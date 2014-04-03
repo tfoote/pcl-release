@@ -3,6 +3,7 @@
  *
  *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010-2012, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
  *
  *  All rights reserved.
  *
@@ -16,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,133 +34,19 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: register_point_struct.h 6126 2012-07-03 20:19:58Z aichim $
+ * $Id$
  *
  */
 
-#ifndef PCL_REGISTER_POINT_STRUCT_H_
-#define PCL_REGISTER_POINT_STRUCT_H_
+#ifndef PCL_ROS_REGISTER_POINT_STRUCT_H_
+#define PCL_ROS_REGISTER_POINT_STRUCT_H_
 
-#include <pcl/point_traits.h>
-
-#include <boost/mpl/vector.hpp>
-#include <boost/mpl/for_each.hpp>
-#include <boost/mpl/assert.hpp>
-#include <boost/preprocessor/seq/enum.hpp>
-#include <boost/preprocessor/seq/for_each.hpp>
-#include <boost/preprocessor/seq/transform.hpp>
-#include <boost/preprocessor/cat.hpp>
-#include <boost/preprocessor/repetition/repeat_from_to.hpp>
-#include <boost/type_traits/is_pod.hpp>
-#include <stddef.h> //offsetof
-
-// Must be used in global namespace with name fully qualified
-#define POINT_CLOUD_REGISTER_POINT_STRUCT(name, fseq)               \
-  POINT_CLOUD_REGISTER_POINT_STRUCT_I(name,                         \
-    BOOST_PP_CAT(POINT_CLOUD_REGISTER_POINT_STRUCT_X fseq, 0))      \
-  /***/
-
-#define POINT_CLOUD_REGISTER_POINT_WRAPPER(wrapper, pod)    \
-  BOOST_MPL_ASSERT_MSG(sizeof(wrapper) == sizeof(pod), POINT_WRAPPER_AND_POD_TYPES_HAVE_DIFFERENT_SIZES, (wrapper&, pod&)); \
-  namespace pcl {                                           \
-    namespace traits {                                      \
-      template<> struct POD<wrapper> { typedef pod type; }; \
-    }                                                       \
-  }                                                         \
-  /***/
-
-// These macros help transform the unusual data structure (type, name, tag)(type, name, tag)...
-// into a proper preprocessor sequence of 3-tuples ((type, name, tag))((type, name, tag))...
-#define POINT_CLOUD_REGISTER_POINT_STRUCT_X(type, name, tag)            \
-  ((type, name, tag)) POINT_CLOUD_REGISTER_POINT_STRUCT_Y
-#define POINT_CLOUD_REGISTER_POINT_STRUCT_Y(type, name, tag)            \
-  ((type, name, tag)) POINT_CLOUD_REGISTER_POINT_STRUCT_X
-#define POINT_CLOUD_REGISTER_POINT_STRUCT_X0
-#define POINT_CLOUD_REGISTER_POINT_STRUCT_Y0
-
-// Construct type traits given full sequence of (type, name, tag) triples
-//  BOOST_MPL_ASSERT_MSG(boost::is_pod<name>::value,                    
-//                       REGISTERED_POINT_TYPE_MUST_BE_PLAIN_OLD_DATA, (name)); 
-#define POINT_CLOUD_REGISTER_POINT_STRUCT_I(name, seq)                           \
-  namespace pcl                                                                  \
-  {                                                                              \
-    namespace fields                                                             \
-    {                                                                            \
-      BOOST_PP_SEQ_FOR_EACH(POINT_CLOUD_REGISTER_FIELD_TAG, name, seq)           \
-    }                                                                            \
-    namespace traits                                                             \
-    {                                                                            \
-      BOOST_PP_SEQ_FOR_EACH(POINT_CLOUD_REGISTER_FIELD_NAME, name, seq)          \
-      BOOST_PP_SEQ_FOR_EACH(POINT_CLOUD_REGISTER_FIELD_OFFSET, name, seq)        \
-      BOOST_PP_SEQ_FOR_EACH(POINT_CLOUD_REGISTER_FIELD_DATATYPE, name, seq)      \
-      POINT_CLOUD_REGISTER_POINT_FIELD_LIST(name, POINT_CLOUD_EXTRACT_TAGS(seq)) \
-    }                                                                            \
-  }                                                                              \
-  /***/
-
-#define POINT_CLOUD_REGISTER_FIELD_TAG(r, name, elem)   \
-  struct BOOST_PP_TUPLE_ELEM(3, 2, elem);               \
-  /***/
-
-#define POINT_CLOUD_REGISTER_FIELD_NAME(r, point, elem)                 \
-  template<int dummy>                                                   \
-  struct name<point, pcl::fields::BOOST_PP_TUPLE_ELEM(3, 2, elem), dummy> \
-  {                                                                     \
-    static const char value[];                                          \
-  };                                                                    \
-                                                                        \
-  template<int dummy>                                                   \
-  const char name<point,                                                \
-                  pcl::fields::BOOST_PP_TUPLE_ELEM(3, 2, elem),         \
-                  dummy>::value[] =                                     \
-    BOOST_PP_STRINGIZE(BOOST_PP_TUPLE_ELEM(3, 2, elem));                \
-  /***/
-
-#define POINT_CLOUD_REGISTER_FIELD_OFFSET(r, name, elem)                \
-  template<> struct offset<name, pcl::fields::BOOST_PP_TUPLE_ELEM(3, 2, elem)> \
-  {                                                                     \
-    static const size_t value = offsetof(name, BOOST_PP_TUPLE_ELEM(3, 1, elem)); \
-  };                                                                    \
-  /***/
-
-// \note: the mpl::identity weirdness is to support array types without requiring the
-// user to wrap them. The basic problem is:
-// typedef float[81] type; // SYNTAX ERROR!
-// typedef float type[81]; // OK, can now use "type" as a synonym for float[81]
-#define POINT_CLOUD_REGISTER_FIELD_DATATYPE(r, name, elem)              \
-  template<> struct datatype<name, pcl::fields::BOOST_PP_TUPLE_ELEM(3, 2, elem)> \
-  {                                                                     \
-    typedef boost::mpl::identity<BOOST_PP_TUPLE_ELEM(3, 0, elem)>::type type; \
-    typedef decomposeArray<type> decomposed;                            \
-    static const uint8_t value = asEnum<decomposed::type>::value;       \
-    static const uint32_t size = decomposed::value;                     \
-  };                                                                    \
-  /***/
-
-#define POINT_CLOUD_TAG_OP(s, data, elem) pcl::fields::BOOST_PP_TUPLE_ELEM(3, 2, elem)
-
-#define POINT_CLOUD_EXTRACT_TAGS(seq) BOOST_PP_SEQ_TRANSFORM(POINT_CLOUD_TAG_OP, _, seq)
-
-#define POINT_CLOUD_REGISTER_POINT_FIELD_LIST(name, seq)        \
-  template<> struct fieldList<name>                             \
-  {                                                             \
-    typedef boost::mpl::vector<BOOST_PP_SEQ_ENUM(seq)> type;    \
-  };                                                            \
-  /***/
-
-// Disabling barely-used Fusion registration of point types for now.
-#if 0
-#define POINT_CLOUD_EXPAND_TAG_OP(s, data, elem)                \
-  (boost::mpl::identity<BOOST_PP_TUPLE_ELEM(3, 0, elem)>::type, \
-   BOOST_PP_TUPLE_ELEM(3, 1, elem),                             \
-   pcl::fields::BOOST_PP_TUPLE_ELEM(3, 2, elem))                \
-  /***/
-
-#define POINT_CLOUD_EXPAND_TAGS(seq) BOOST_PP_SEQ_TRANSFORM(POINT_CLOUD_EXPAND_TAG_OP, _, seq)
-
-#define POINT_CLOUD_REGISTER_WITH_FUSION(name, seq)                     \
-  BOOST_FUSION_ADAPT_ASSOC_STRUCT_I(name, POINT_CLOUD_EXPAND_TAGS(seq)) \
-  /***/
+#ifdef __DEPRECATED
+#warning The <pcl/ros/register_point_struct.h> header is deprecated. please use \
+<pcl/register_point_struct.h> instead.
 #endif
 
-#endif  //#ifndef PCL_REGISTER_POINT_STRUCT_H_
+#include <pcl/register_point_struct.h>
+
+
+#endif  //#ifndef PCL_ROS_REGISTER_POINT_STRUCT_H_

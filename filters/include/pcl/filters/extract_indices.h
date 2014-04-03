@@ -16,7 +16,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,7 +33,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: extract_indices.h 6144 2012-07-04 22:06:28Z rusu $
+ * $Id$
  *
  */
 
@@ -76,6 +76,10 @@ namespace pcl
       typedef typename pcl::traits::fieldList<PointT>::type FieldList;
 
     public:
+
+      typedef boost::shared_ptr< ExtractIndices<PointT> > Ptr;
+      typedef boost::shared_ptr< const ExtractIndices<PointT> > ConstPtr;
+
       /** \brief Constructor.
         * \param[in] extract_removed_indices Set to true if you want to be able to extract the indices of points being removed (default = false).
         */
@@ -92,7 +96,7 @@ namespace pcl
         * All fields of filtered points are replaced with the value set by setUserFilterValue() (default = NaN).
         * This method also automatically alters the input cloud set via setInputCloud().
         * It does not alter the value of the internal keep organized boolean as set by setKeepOrganized().
-        * \param[in/out] cloud The point cloud used for input and output.
+        * \param cloud The point cloud used for input and output.
         */
       void
       filterDirectly (PointCloudPtr &cloud);
@@ -154,12 +158,12 @@ namespace pcl
     * \ingroup filters
     */
   template<>
-  class PCL_EXPORTS ExtractIndices<sensor_msgs::PointCloud2> : public FilterIndices<sensor_msgs::PointCloud2>
+  class PCL_EXPORTS ExtractIndices<pcl::PCLPointCloud2> : public FilterIndices<pcl::PCLPointCloud2>
   {
     public:
-      typedef sensor_msgs::PointCloud2 PointCloud2;
-      typedef PointCloud2::Ptr PointCloud2Ptr;
-      typedef PointCloud2::ConstPtr PointCloud2ConstPtr;
+      typedef pcl::PCLPointCloud2 PCLPointCloud2;
+      typedef PCLPointCloud2::Ptr PCLPointCloud2Ptr;
+      typedef PCLPointCloud2::ConstPtr PCLPointCloud2ConstPtr;
 
       /** \brief Empty constructor. */
       ExtractIndices ()
@@ -169,20 +173,20 @@ namespace pcl
       }
 
     protected:
-      using PCLBase<PointCloud2>::input_;
-      using PCLBase<PointCloud2>::indices_;
-      using PCLBase<PointCloud2>::use_indices_;
-      using Filter<PointCloud2>::filter_name_;
-      using Filter<PointCloud2>::getClassName;
-      using FilterIndices<PointCloud2>::negative_;
-      using FilterIndices<PointCloud2>::keep_organized_;
-      using FilterIndices<PointCloud2>::user_filter_value_;
+      using PCLBase<PCLPointCloud2>::input_;
+      using PCLBase<PCLPointCloud2>::indices_;
+      using PCLBase<PCLPointCloud2>::use_indices_;
+      using Filter<PCLPointCloud2>::filter_name_;
+      using Filter<PCLPointCloud2>::getClassName;
+      using FilterIndices<PCLPointCloud2>::negative_;
+      using FilterIndices<PCLPointCloud2>::keep_organized_;
+      using FilterIndices<PCLPointCloud2>::user_filter_value_;
 
       /** \brief Extract point indices into a separate PointCloud
         * \param[out] output the resultant point cloud
         */
       void
-      applyFilter (PointCloud2 &output);
+      applyFilter (PCLPointCloud2 &output);
 
       /** \brief Extract point indices
         * \param indices the resultant indices
@@ -191,6 +195,10 @@ namespace pcl
       applyFilter (std::vector<int> &indices);
   };
 }
+
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/filters/impl/extract_indices.hpp>
+#endif
 
 #endif  // PCL_FILTERS_EXTRACT_INDICES_H_
 

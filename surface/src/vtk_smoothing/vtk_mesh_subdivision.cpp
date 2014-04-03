@@ -32,10 +32,10 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: vtk_mesh_subdivision.cpp 5027 2012-03-12 03:10:45Z rusu $
+ * $Id$
  *
  */
-
+#include <pcl/console/print.h>
 #include <pcl/surface/vtk_smoothing/vtk_mesh_subdivision.h>
 #include <pcl/surface/vtk_smoothing/vtk_utils.h>
 

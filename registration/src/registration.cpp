@@ -33,7 +33,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: registration.cpp 6152 2012-07-04 22:58:53Z rusu $
+ * $Id$
  *
  */
 

@@ -3,6 +3,7 @@
  *
  *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010-2011, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
  *
  *  All rights reserved.
  *
@@ -16,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,13 +34,14 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: transformation_estimation_svd.h 3756 2011-12-31 23:54:41Z rusu $
+ * $Id$
  *
  */
 #ifndef PCL_REGISTRATION_TRANSFORMATION_ESTIMATION_SVD_H_
 #define PCL_REGISTRATION_TRANSFORMATION_ESTIMATION_SVD_H_
 
 #include <pcl/registration/transformation_estimation.h>
+#include <pcl/cloud_iterator.h>
 
 namespace pcl
 {
@@ -48,14 +50,25 @@ namespace pcl
     /** @b TransformationEstimationSVD implements SVD-based estimation of
       * the transformation aligning the given correspondences.
       *
+      * \note The class is templated on the source and target point types as well as on the output scalar of the transformation matrix (i.e., float or double). Default: float.
       * \author Dirk Holz, Radu B. Rusu
       * \ingroup registration
       */
-    template <typename PointSource, typename PointTarget>
-    class TransformationEstimationSVD : public TransformationEstimation<PointSource, PointTarget>
+    template <typename PointSource, typename PointTarget, typename Scalar = float>
+    class TransformationEstimationSVD : public TransformationEstimation<PointSource, PointTarget, Scalar>
     {
       public:
-        TransformationEstimationSVD () {};
+        typedef boost::shared_ptr<TransformationEstimationSVD<PointSource, PointTarget, Scalar> > Ptr;
+        typedef boost::shared_ptr<const TransformationEstimationSVD<PointSource, PointTarget, Scalar> > ConstPtr;
+
+        typedef typename TransformationEstimation<PointSource, PointTarget, Scalar>::Matrix4 Matrix4;
+
+        /** \brief Constructor
+          * \param[in] use_umeyama Toggles whether or not to use 3rd party software*/
+        TransformationEstimationSVD (bool use_umeyama=true):
+          use_umeyama_ (use_umeyama)
+        {}
+
         virtual ~TransformationEstimationSVD () {};
 
         /** \brief Estimate a rigid rotation transformation between a source and a target point cloud using SVD.
@@ -67,7 +80,7 @@ namespace pcl
         estimateRigidTransformation (
             const pcl::PointCloud<PointSource> &cloud_src,
             const pcl::PointCloud<PointTarget> &cloud_tgt,
-            Eigen::Matrix4f &transformation_matrix);
+            Matrix4 &transformation_matrix) const;
 
         /** \brief Estimate a rigid rotation transformation between a source and a target point cloud using SVD.
           * \param[in] cloud_src the source point cloud dataset
@@ -80,7 +93,7 @@ namespace pcl
             const pcl::PointCloud<PointSource> &cloud_src,
             const std::vector<int> &indices_src,
             const pcl::PointCloud<PointTarget> &cloud_tgt,
-            Eigen::Matrix4f &transformation_matrix);
+            Matrix4 &transformation_matrix) const;
 
         /** \brief Estimate a rigid rotation transformation between a source and a target point cloud using SVD.
           * \param[in] cloud_src the source point cloud dataset
@@ -95,7 +108,7 @@ namespace pcl
             const std::vector<int> &indices_src,
             const pcl::PointCloud<PointTarget> &cloud_tgt,
             const std::vector<int> &indices_tgt,
-            Eigen::Matrix4f &transformation_matrix);
+            Matrix4 &transformation_matrix) const;
 
         /** \brief Estimate a rigid rotation transformation between a source and a target point cloud using SVD.
           * \param[in] cloud_src the source point cloud dataset
@@ -108,9 +121,19 @@ namespace pcl
             const pcl::PointCloud<PointSource> &cloud_src,
             const pcl::PointCloud<PointTarget> &cloud_tgt,
             const pcl::Correspondences &correspondences,
-            Eigen::Matrix4f &transformation_matrix);
+            Matrix4 &transformation_matrix) const;
 
       protected:
+
+        /** \brief Estimate a rigid rotation transformation between a source and a target
+          * \param[in] source_it an iterator over the source point cloud dataset
+          * \param[in] target_it an iterator over the target point cloud dataset
+          * \param[out] transformation_matrix the resultant transformation matrix
+          */
+        void
+        estimateRigidTransformation (ConstCloudIterator<PointSource>& source_it,
+                                     ConstCloudIterator<PointTarget>& target_it,
+                                     Matrix4 &transformation_matrix) const;
 
         /** \brief Obtain a 4x4 rigid transformation matrix from a correlation matrix H = src * tgt'
           * \param[in] cloud_src_demean the input source cloud, demeaned, in Eigen format
@@ -118,14 +141,17 @@ namespace pcl
           * \param[in] cloud_tgt_demean the input target cloud, demeaned, in Eigen format
           * \param[in] centroid_tgt the input target cloud, in Eigen format
           * \param[out] transformation_matrix the resultant 4x4 rigid transformation matrix
-          */ 
-        void
-        getTransformationFromCorrelation (const Eigen::MatrixXf &cloud_src_demean,
-                                          const Eigen::Vector4f &centroid_src,
-                                          const Eigen::MatrixXf &cloud_tgt_demean,
-                                          const Eigen::Vector4f &centroid_tgt,
-                                          Eigen::Matrix4f &transformation_matrix);
-    };
+          */
+        virtual void
+        getTransformationFromCorrelation (
+            const Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> &cloud_src_demean,
+            const Eigen::Matrix<Scalar, 4, 1> &centroid_src,
+            const Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> &cloud_tgt_demean,
+            const Eigen::Matrix<Scalar, 4, 1> &centroid_tgt,
+            Matrix4 &transformation_matrix) const;
+
+        bool use_umeyama_;
+     };
 
   }
 }

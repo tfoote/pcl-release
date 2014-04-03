@@ -446,7 +446,9 @@ NarfKeypoint::calculateCompleteInterestImage ()
         float max_histogram_cell_value = 0.0f;
         for (int histogram_cell=0; histogram_cell<angle_histogram_size; ++histogram_cell)
           max_histogram_cell_value = (std::max) (max_histogram_cell_value, angle_histogram[histogram_cell]);
-        interest_value = (std::min) (interest_value+max_histogram_cell_value, 1.0f);
+        //std::cout << PVARN(max_histogram_cell_value);
+        interest_value = 0.5f*(interest_value+max_histogram_cell_value);
+        //std::cout << PVARN(interest_value);
       }
     }
     
@@ -624,7 +626,7 @@ NarfKeypoint::calculateSparseInterestImage ()
       float max_histogram_cell_value = 0.0f;
       for (int histogram_cell=0; histogram_cell<angle_histogram_size; ++histogram_cell)
         max_histogram_cell_value = (std::max) (max_histogram_cell_value, angle_histogram[histogram_cell]);
-      maximum_interest_value = (std::min) (maximum_interest_value+max_histogram_cell_value, 1.0f);
+      maximum_interest_value = 0.5f * (maximum_interest_value+max_histogram_cell_value);
     }
     
     // Every point in distance search_radius cannot have a higher value
@@ -726,6 +728,15 @@ NarfKeypoint::calculateSparseInterestImage ()
         }
         angle_change_value = sqrtf (angle_change_value);
         interest_value = negative_score * angle_change_value;
+        if (parameters_.add_points_on_straight_edges)
+        {
+          float max_histogram_cell_value = 0.0f;
+          for (int histogram_cell=0; histogram_cell<angle_histogram_size; ++histogram_cell)
+            max_histogram_cell_value = (std::max) (max_histogram_cell_value, angle_histogram[histogram_cell]);
+          //std::cout << PVARN(max_histogram_cell_value);
+          interest_value = 0.5f*(interest_value+max_histogram_cell_value);
+          //std::cout << PVARN(interest_value);
+        }
       }
     }
   }
@@ -771,7 +782,7 @@ NarfKeypoint::calculateInterestPoints ()
     {
       int index = y*width + x;
       float interest_value = interest_image_[index];
-      if (interest_value < parameters_.min_interest_value)
+      if (!range_image.isValid (index) || interest_value < parameters_.min_interest_value)
         continue;
       const PointWithRange& point = range_image.getPoint (index);
       bool is_maximum = true;
@@ -864,7 +875,6 @@ NarfKeypoint::calculateInterestPoints ()
       InterestPoint interest_point;
       interest_point.getVector3fMap () = keypoint_3d.getVector3fMap ();
       interest_point.strength = interest_value;
-      interest_point.strength = interest_value;
       tmp_interest_points.push_back (interest_point);
     }
   }
@@ -893,6 +903,7 @@ NarfKeypoint::calculateInterestPoints ()
       continue;
     interest_points_->points.push_back (interest_point);
     int image_x, image_y;
+    //std::cout << interest_point.x<<","<<interest_point.y<<","<<interest_point.z<<", "<<std::flush;
     range_image.getImagePoint (interest_point.getVector3fMap (), image_x, image_y);
     if (range_image.isValid (image_x, image_y))
       is_interest_point_image_[image_y*width + image_x] = true;

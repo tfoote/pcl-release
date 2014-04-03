@@ -31,16 +31,15 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: simplification_remove_unused_vertices.h 3753 2011-12-31 23:30:57Z rusu $
+ * $Id$
  *
  */
 
 #ifndef PCL_SURFACE_SIMPLIFICATION_REMOVE_UNUSED_VERTICES_H_
 #define PCL_SURFACE_SIMPLIFICATION_REMOVE_UNUSED_VERTICES_H_
 
-#include <boost/shared_ptr.hpp>
+#include <pcl/surface/boost.h>
 #include <pcl/PolygonMesh.h>
-
 #include <pcl/pcl_macros.h>
 
 namespace pcl
@@ -50,6 +49,9 @@ namespace pcl
     class PCL_EXPORTS SimplificationRemoveUnusedVertices
     {
       public:
+        typedef boost::shared_ptr<SimplificationRemoveUnusedVertices> Ptr;
+        typedef boost::shared_ptr<const SimplificationRemoveUnusedVertices> ConstPtr;
+
         /** \brief Constructor. */
         SimplificationRemoveUnusedVertices () {};
         /** \brief Destructor. */

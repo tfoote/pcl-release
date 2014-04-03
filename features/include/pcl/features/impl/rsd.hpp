@@ -1,7 +1,10 @@
 /*
  * Software License Agreement (BSD License)
  *
+ *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2009, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
+ *
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -14,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -31,7 +34,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: rsd.hpp 5026 2012-03-12 02:51:44Z rusu $
+ * $Id$
  *
  */
 
@@ -93,10 +96,10 @@ pcl::computeRSD (boost::shared_ptr<const pcl::PointCloud<PointInT> > &surface, b
       continue; /// \note: we neglect points that are outside the specified interval!
 
     // compute bins and increase
-    int bin_d = (int) floor (nr_subdiv * dist / max_dist);
+    int bin_d = static_cast<int> (floor (nr_subdiv * dist / max_dist));
     if (compute_histogram)
     {
-      int bin_a = std::min (nr_subdiv-1, (int) floor (nr_subdiv * angle / (M_PI/2)));
+      int bin_a = std::min (nr_subdiv-1, static_cast<int> (floor (nr_subdiv * angle / (M_PI/2))));
       histogram(bin_a, bin_d)++;
     }
 
@@ -122,12 +125,12 @@ pcl::computeRSD (boost::shared_ptr<const pcl::PointCloud<PointInT> > &surface, b
       Amaxt_d += p_max * f;
     }
   }
-  float min_radius = Amint_Amin == 0 ? plane_radius : std::min (Amint_d/Amint_Amin, plane_radius);
-  float max_radius = Amaxt_Amax == 0 ? plane_radius : std::min (Amaxt_d/Amaxt_Amax, plane_radius);
+  float min_radius = Amint_Amin == 0.0f ? float (plane_radius) : float (std::min (Amint_d/Amint_Amin, plane_radius));
+  float max_radius = Amaxt_Amax == 0.0f ? float (plane_radius) : float (std::min (Amaxt_d/Amaxt_Amax, plane_radius));
 
   // Small correction of the systematic error of the estimation (based on analysis with nr_subdiv_ = 5)
-  min_radius *= 1.1;
-  max_radius *= 0.9;
+  min_radius *= 1.1f;
+  max_radius *= 0.9f;
   if (min_radius < max_radius)
   {
     radii.r_min = min_radius;
@@ -192,10 +195,10 @@ pcl::computeRSD (boost::shared_ptr<const pcl::PointCloud<PointNT> > &normals,
       continue; /// \note: we neglect points that are outside the specified interval!
 
     // compute bins and increase
-    int bin_d = (int) floor (nr_subdiv * dist / max_dist);
+    int bin_d = static_cast<int> (floor (nr_subdiv * dist / max_dist));
     if (compute_histogram)
     {
-      int bin_a = std::min (nr_subdiv-1, (int) floor (nr_subdiv * angle / (M_PI/2)));
+      int bin_a = std::min (nr_subdiv-1, static_cast<int> (floor (nr_subdiv * angle / (M_PI/2))));
       histogram(bin_a, bin_d)++;
     }
 
@@ -221,12 +224,12 @@ pcl::computeRSD (boost::shared_ptr<const pcl::PointCloud<PointNT> > &normals,
       Amaxt_d += p_max * f;
     }
   }
-  float min_radius = Amint_Amin == 0 ? plane_radius : std::min (Amint_d/Amint_Amin, plane_radius);
-  float max_radius = Amaxt_Amax == 0 ? plane_radius : std::min (Amaxt_d/Amaxt_Amax, plane_radius);
+  float min_radius = Amint_Amin == 0.0f ? float (plane_radius) : float (std::min (Amint_d/Amint_Amin, plane_radius));
+  float max_radius = Amaxt_Amax == 0.0f ? float (plane_radius) : float (std::min (Amaxt_d/Amaxt_Amax, plane_radius));
 
   // Small correction of the systematic error of the estimation (based on analysis with nr_subdiv_ = 5)
-  min_radius *= 1.1;
-  max_radius *= 0.9;
+  min_radius *= 1.1f;
+  max_radius *= 0.9f;
   if (min_radius < max_radius)
   {
     radii.r_min = min_radius;

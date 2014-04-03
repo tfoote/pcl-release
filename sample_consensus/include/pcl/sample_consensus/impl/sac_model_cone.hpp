@@ -3,6 +3,7 @@
  *
  *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2009-2012, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
  *  
  *  All rights reserved.
  *
@@ -16,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -38,9 +39,9 @@
 #ifndef PCL_SAMPLE_CONSENSUS_IMPL_SAC_MODEL_CONE_H_
 #define PCL_SAMPLE_CONSENSUS_IMPL_SAC_MODEL_CONE_H_
 
+#include <pcl/sample_consensus/eigen.h>
 #include <pcl/sample_consensus/sac_model_cone.h>
 #include <pcl/common/concatenate.h>
-#include <unsupported/Eigen/NonLinearOptimization>
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 template <typename PointT, typename PointNT> bool
@@ -197,6 +198,7 @@ pcl::SampleConsensusModelCone<PointT, PointNT>::selectWithinDistance (
 
   int nr_p = 0;
   inliers.resize (indices_->size ());
+  error_sqr_dists_.resize (indices_->size ());
 
   Eigen::Vector4f apex (model_coefficients[0], model_coefficients[1], model_coefficients[2], 0);
   Eigen::Vector4f axis_dir (model_coefficients[3], model_coefficients[4], model_coefficients[5], 0);
@@ -234,14 +236,18 @@ pcl::SampleConsensusModelCone<PointT, PointNT>::selectWithinDistance (
     double d_normal = fabs (getAngle3D (n, cone_normal));
     d_normal = (std::min) (d_normal, M_PI - d_normal);
 
-    if (fabs (normal_distance_weight_ * d_normal + (1 - normal_distance_weight_) * d_euclid) < threshold)
+    double distance = fabs (normal_distance_weight_ * d_normal + (1 - normal_distance_weight_) * d_euclid);
+    
+    if (distance < threshold)
     {
       // Returns the indices of the points whose distances are smaller than the threshold
       inliers[nr_p] = (*indices_)[i];
-      nr_p++;
+      error_sqr_dists_[nr_p] = distance;
+      ++nr_p;
     }
   }
   inliers.resize (nr_p);
+  error_sqr_dists_.resize (nr_p);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -378,7 +384,7 @@ pcl::SampleConsensusModelCone<PointT, PointNT>::projectPoints (
       float k = (pt.dot (axis_dir) - apexdotdir) * dirdotdir;
 
       pcl::Vector4fMap pp = projected_points.points[inliers[i]].getVector4fMap ();
-      pp = apex + k * axis_dir;
+      pp.matrix () = apex + k * axis_dir;
 
       Eigen::Vector4f dir = pt - pp;
       dir.normalize ();
@@ -412,7 +418,7 @@ pcl::SampleConsensusModelCone<PointT, PointNT>::projectPoints (
 
       float k = (pt.dot (axis_dir) - apexdotdir) * dirdotdir;
       // Calculate the projection of the point on the line
-      pp = apex + k * axis_dir;
+      pp.matrix () = apex + k * axis_dir;
 
       Eigen::Vector4f dir = pt - pp;
       dir.normalize ();

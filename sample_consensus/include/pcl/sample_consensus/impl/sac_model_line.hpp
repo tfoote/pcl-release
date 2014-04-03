@@ -1,7 +1,10 @@
 /*
  * Software License Agreement (BSD License)
  *
+ *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2009, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
+ *
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -14,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -31,7 +34,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: sac_model_line.hpp 6144 2012-07-04 22:06:28Z rusu $
+ * $Id$
  *
  */
 
@@ -66,6 +69,13 @@ pcl::SampleConsensusModelLine<PointT>::computeModelCoefficients (
   if (samples.size () != 2)
   {
     PCL_ERROR ("[pcl::SampleConsensusModelLine::computeModelCoefficients] Invalid set of samples given (%zu)!\n", samples.size ());
+    return (false);
+  }
+
+  if (fabs (input_->points[samples[0]].x - input_->points[samples[1]].x) <= std::numeric_limits<float>::epsilon () && 
+      fabs (input_->points[samples[0]].y - input_->points[samples[1]].y) <= std::numeric_limits<float>::epsilon () && 
+      fabs (input_->points[samples[0]].z - input_->points[samples[1]].z) <= std::numeric_limits<float>::epsilon ())
+  {
     return (false);
   }
 
@@ -121,6 +131,7 @@ pcl::SampleConsensusModelLine<PointT>::selectWithinDistance (
 
   int nr_p = 0;
   inliers.resize (indices_->size ());
+  error_sqr_dists_.resize (indices_->size ());
 
   // Obtain the line point and direction
   Eigen::Vector4f line_pt  (model_coefficients[0], model_coefficients[1], model_coefficients[2], 0);
@@ -138,10 +149,12 @@ pcl::SampleConsensusModelLine<PointT>::selectWithinDistance (
     {
       // Returns the indices of the points whose squared distances are smaller than the threshold
       inliers[nr_p] = (*indices_)[i];
-      nr_p++;
+      error_sqr_dists_[nr_p] = sqr_distance;
+      ++nr_p;
     }
   }
   inliers.resize (nr_p);
+  error_sqr_dists_.resize (nr_p);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -213,7 +226,7 @@ pcl::SampleConsensusModelLine<PointT>::optimizeModelCoefficients (
   pcl::computeCorrespondingEigenVector (covariance_matrix, eigen_values [2], eigen_vector);
   //pcl::eigen33 (covariance_matrix, eigen_vectors, eigen_values);
 
-  optimized_coefficients.template tail<3> () = eigen_vector;
+  optimized_coefficients.template tail<3> ().matrix () = eigen_vector;
 }
 
 //////////////////////////////////////////////////////////////////////////

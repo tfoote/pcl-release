@@ -3,6 +3,7 @@
  *
  *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2009-2011, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
  *
  *  All rights reserved.
  *
@@ -16,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -41,7 +42,8 @@
 #ifndef __PCL_IO_OPENNI_GRABBER__
 #define __PCL_IO_OPENNI_GRABBER__
 
-#include <Eigen/Core>
+#include <pcl/io/eigen.h>
+#include <pcl/io/boost.h>
 #include <pcl/io/grabber.h>
 #include <pcl/io/openni_camera/openni_driver.h>
 #include <pcl/io/openni_camera/openni_device_kinect.h>
@@ -50,7 +52,6 @@
 #include <pcl/io/openni_camera/openni_ir_image.h>
 #include <string>
 #include <deque>
-#include <boost/thread/mutex.hpp>
 #include <pcl/common/synchronizer.h>
 
 namespace pcl
@@ -68,6 +69,8 @@ namespace pcl
   class PCL_EXPORTS OpenNIGrabber : public Grabber
   {
     public:
+      typedef boost::shared_ptr<OpenNIGrabber> Ptr;
+      typedef boost::shared_ptr<const OpenNIGrabber> ConstPtr;
 
       typedef enum
       {
@@ -93,7 +96,6 @@ namespace pcl
       typedef void (sig_cb_openni_point_cloud_rgb) (const boost::shared_ptr<const pcl::PointCloud<pcl::PointXYZRGB> >&);
       typedef void (sig_cb_openni_point_cloud_rgba) (const boost::shared_ptr<const pcl::PointCloud<pcl::PointXYZRGBA> >&);
       typedef void (sig_cb_openni_point_cloud_i) (const boost::shared_ptr<const pcl::PointCloud<pcl::PointXYZI> >&);
-      typedef void (sig_cb_openni_point_cloud_eigen) (const boost::shared_ptr<const pcl::PointCloud<Eigen::MatrixXf> >&);
 
     public:
       /** \brief Constructor
@@ -139,102 +141,284 @@ namespace pcl
       std::vector<std::pair<int, XnMapOutputMode> >
       getAvailableImageModes () const;
 
-    private:
-      /** \brief ... */
+      /** \brief Set the RGB camera parameters (fx, fy, cx, cy)
+        * \param[in] rgb_focal_length_x the RGB focal length (fx)
+        * \param[in] rgb_focal_length_y the RGB focal length (fy)
+        * \param[in] rgb_principal_point_x the RGB principal point (cx)
+        * \param[in] rgb_principal_point_y the RGB principal point (cy)
+        * Setting the parameters to non-finite values (e.g., NaN, Inf) invalidates them
+        * and the grabber will use the default values from the camera instead.
+        */
+      inline void
+      setRGBCameraIntrinsics (const double rgb_focal_length_x, 
+                              const double rgb_focal_length_y, 
+                              const double rgb_principal_point_x,
+                              const double rgb_principal_point_y)
+      {
+        rgb_focal_length_x_ = rgb_focal_length_x;
+        rgb_focal_length_y_ = rgb_focal_length_y;
+        rgb_principal_point_x_ = rgb_principal_point_x;
+        rgb_principal_point_y_ = rgb_principal_point_y;
+      }
+      
+      /** \brief Get the RGB camera parameters (fx, fy, cx, cy)
+        * \param[out] rgb_focal_length_x the RGB focal length (fx)
+        * \param[out] rgb_focal_length_y the RGB focal length (fy)
+        * \param[out] rgb_principal_point_x the RGB principal point (cx)
+        * \param[out] rgb_principal_point_y the RGB principal point (cy)
+        */
+      inline void
+      getRGBCameraIntrinsics (double &rgb_focal_length_x, 
+                              double &rgb_focal_length_y, 
+                              double &rgb_principal_point_x,
+                              double &rgb_principal_point_y) const
+      {
+        rgb_focal_length_x = rgb_focal_length_x_;
+        rgb_focal_length_y = rgb_focal_length_y_;
+        rgb_principal_point_x = rgb_principal_point_x_;
+        rgb_principal_point_y = rgb_principal_point_y_;
+      }
+
+
+      /** \brief Set the RGB image focal length (fx = fy).
+        * \param[in] rgb_focal_length the RGB focal length (assumes fx = fy)
+        * Setting the parameter to a non-finite value (e.g., NaN, Inf) invalidates it
+        * and the grabber will use the default values from the camera instead.
+        * These parameters will be used for XYZRGBA clouds.
+        */
+      inline void
+      setRGBFocalLength (const double rgb_focal_length)
+      {
+        rgb_focal_length_x_ = rgb_focal_length_y_ = rgb_focal_length;
+      }
+
+      /** \brief Set the RGB image focal length
+        * \param[in] rgb_focal_length_x the RGB focal length (fx)
+        * \param[in] rgb_focal_ulength_y the RGB focal length (fy)
+        * Setting the parameters to non-finite values (e.g., NaN, Inf) invalidates them
+        * and the grabber will use the default values from the camera instead.
+        * These parameters will be used for XYZRGBA clouds.
+        */
+      inline void
+      setRGBFocalLength (const double rgb_focal_length_x, const double rgb_focal_length_y)
+      {
+        rgb_focal_length_x_ = rgb_focal_length_x;
+        rgb_focal_length_y_ = rgb_focal_length_y;
+      }
+
+      /** \brief Return the RGB focal length parameters (fx, fy)
+        * \param[out] rgb_focal_length_x the RGB focal length (fx)
+        * \param[out] rgb_focal_length_y the RGB focal length (fy)
+        */
+      inline void
+      getRGBFocalLength (double &rgb_focal_length_x, double &rgb_focal_length_y) const
+      {
+        rgb_focal_length_x = rgb_focal_length_x_;
+        rgb_focal_length_y = rgb_focal_length_y_;
+      }
+      
+      /** \brief Set the Depth camera parameters (fx, fy, cx, cy)
+        * \param[in] depth_focal_length_x the Depth focal length (fx)
+        * \param[in] depth_focal_length_y the Depth focal length (fy)
+        * \param[in] depth_principal_point_x the Depth principal point (cx)
+        * \param[in] depth_principal_point_y the Depth principal point (cy)
+        * Setting the parameters to non-finite values (e.g., NaN, Inf) invalidates them
+        * and the grabber will use the default values from the camera instead.
+        */
+      inline void
+      setDepthCameraIntrinsics (const double depth_focal_length_x, 
+                                const double depth_focal_length_y, 
+                                const double depth_principal_point_x,
+                                const double depth_principal_point_y)
+      {
+        depth_focal_length_x_ = depth_focal_length_x;
+        depth_focal_length_y_ = depth_focal_length_y;
+        depth_principal_point_x_ = depth_principal_point_x;
+        depth_principal_point_y_ = depth_principal_point_y;
+      }
+      
+      /** \brief Get the Depth camera parameters (fx, fy, cx, cy)
+        * \param[out] depth_focal_length_x the Depth focal length (fx)
+        * \param[out] depth_focal_length_y the Depth focal length (fy)
+        * \param[out] depth_principal_point_x the Depth principal point (cx)
+        * \param[out] depth_principal_point_y the Depth principal point (cy)
+        */
+      inline void
+      getDepthCameraIntrinsics (double &depth_focal_length_x, 
+                                double &depth_focal_length_y, 
+                                double &depth_principal_point_x,
+                                double &depth_principal_point_y) const
+      {
+        depth_focal_length_x = depth_focal_length_x_;
+        depth_focal_length_y = depth_focal_length_y_;
+        depth_principal_point_x = depth_principal_point_x_;
+        depth_principal_point_y = depth_principal_point_y_;
+      }
+
+      /** \brief Set the Depth image focal length (fx = fy).
+        * \param[in] depth_focal_length the Depth focal length (assumes fx = fy)
+        * Setting the parameter to a non-finite value (e.g., NaN, Inf) invalidates it
+        * and the grabber will use the default values from the camera instead.
+        */
+      inline void
+      setDepthFocalLength (const double depth_focal_length)
+      {
+        depth_focal_length_x_ = depth_focal_length_y_ = depth_focal_length;
+      }
+      
+
+      /** \brief Set the Depth image focal length
+        * \param[in] depth_focal_length_x the Depth focal length (fx)
+        * \param[in] depth_focal_length_y the Depth focal length (fy)
+        * Setting the parameter to non-finite values (e.g., NaN, Inf) invalidates them
+        * and the grabber will use the default values from the camera instead.
+        */
+      inline void
+      setDepthFocalLength (const double depth_focal_length_x, const double depth_focal_length_y)
+      {
+        depth_focal_length_x_ = depth_focal_length_x;
+        depth_focal_length_y_ = depth_focal_length_y;
+      }
+
+      /** \brief Return the Depth focal length parameters (fx, fy)
+        * \param[out] depth_focal_length_x the Depth focal length (fx)
+        * \param[out] depth_focal_length_y the Depth focal length (fy)
+        */
+      inline void
+      getDepthFocalLength (double &depth_focal_length_x, double &depth_focal_length_y) const
+      {
+        depth_focal_length_x = depth_focal_length_x_;
+        depth_focal_length_y = depth_focal_length_y_;
+      }
+
+      /** \brief Convert vector of raw shift values to depth values
+        * \param[in] shift_data_ptr input shift data
+        * \param[out] depth_data_ptr generated depth data
+        * \param[in] size of shift and depth buffer
+        */
+      inline void
+      convertShiftToDepth (
+          const uint16_t* shift_data_ptr,
+          uint16_t* depth_data_ptr,
+          std::size_t size) const
+      {
+        // get openni device instance
+        boost::shared_ptr<openni_wrapper::OpenNIDevice> openni_device =
+              this->getDevice ();
+
+        const uint16_t* shift_data_it = shift_data_ptr;
+        uint16_t* depth_data_it = depth_data_ptr;
+
+        // shift-to-depth lookup
+        for (std::size_t i=0; i<size; ++i)
+        {
+          *depth_data_it = openni_device->shiftToDepth(*shift_data_it);
+
+          shift_data_it++;
+          depth_data_it++;
+        }
+
+      }
+
+
+    protected:
+      /** \brief On initialization processing. */
       void
       onInit (const std::string& device_id, const Mode& depth_mode, const Mode& image_mode);
 
-      /** \brief ... */
+      /** \brief Sets up an OpenNI device. */
       void
       setupDevice (const std::string& device_id, const Mode& depth_mode, const Mode& image_mode);
 
-      /** \brief ... */
+      /** \brief Update mode maps. */
       void
       updateModeMaps ();
 
-      /** \brief ... */
+      /** \brief Start synchronization. */
       void
       startSynchronization ();
 
-      /** \brief ... */
+      /** \brief Stop synchronization. */
       void
       stopSynchronization ();
 
-      /** \brief ... */
+      /** \brief Map config modes. */
       bool
       mapConfigMode2XnMode (int mode, XnMapOutputMode &xnmode) const;
 
       // callback methods
-      /** \brief ... */
-      void
+      /** \brief RGB image callback. */
+      virtual void
       imageCallback (boost::shared_ptr<openni_wrapper::Image> image, void* cookie);
 
-      /** \brief ... */
-      void
+      /** \brief Depth image callback. */
+      virtual void
       depthCallback (boost::shared_ptr<openni_wrapper::DepthImage> depth_image, void* cookie);
 
-      /** \brief ... */
-      void
+      /** \brief IR image callback. */
+      virtual void
       irCallback (boost::shared_ptr<openni_wrapper::IRImage> ir_image, void* cookie);
 
-      /** \brief ... */
-      void
+      /** \brief RGB + Depth image callback. */
+      virtual void
       imageDepthImageCallback (const boost::shared_ptr<openni_wrapper::Image> &image,
                                const boost::shared_ptr<openni_wrapper::DepthImage> &depth_image);
 
-      /** \brief ... */
-      void
+      /** \brief IR + Depth image callback. */
+      virtual void
       irDepthImageCallback (const boost::shared_ptr<openni_wrapper::IRImage> &image,
                             const boost::shared_ptr<openni_wrapper::DepthImage> &depth_image);
 
-      /** \brief ... */
+      /** \brief Process changed signals. */
       virtual void
       signalsChanged ();
 
       // helper methods
 
-      /** \brief ... */
-      virtual inline void
+      /** \brief Check if the RGB and Depth images are required to be synchronized or not. */
+      virtual void
       checkImageAndDepthSynchronizationRequired ();
 
-      /** \brief ... */
-      virtual inline void
+      /** \brief Check if the RGB image stream is required or not. */
+      virtual void
       checkImageStreamRequired ();
 
-      /** \brief ... */
-      virtual inline void
+      /** \brief Check if the depth stream is required or not. */
+      virtual void
       checkDepthStreamRequired ();
 
-      /** \brief ... */
-      virtual inline void
+      /** \brief Check if the IR image stream is required or not. */
+      virtual void
       checkIRStreamRequired ();
 
-      /** \brief ... */
+
+      /** \brief Convert a Depth image to a pcl::PointCloud<pcl::PointXYZ>
+        * \param[in] depth the depth image to convert
+        */
       boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> >
       convertToXYZPointCloud (const boost::shared_ptr<openni_wrapper::DepthImage> &depth) const;
 
-      /** \brief ... */
+      /** \brief Convert a Depth + RGB image pair to a pcl::PointCloud<PointT>
+        * \param[in] image the RGB image to convert
+        * \param[in] depth_image the depth image to convert
+        */
       template <typename PointT> typename pcl::PointCloud<PointT>::Ptr
       convertToXYZRGBPointCloud (const boost::shared_ptr<openni_wrapper::Image> &image,
-                                 const boost::shared_ptr<openni_wrapper::DepthImage> &depth_image) const;      
-      /** \brief ... */
+                                 const boost::shared_ptr<openni_wrapper::DepthImage> &depth_image) const;
+
+      /** \brief Convert a Depth + Intensity image pair to a pcl::PointCloud<pcl::PointXYZI>
+        * \param[in] image the IR image to convert
+        * \param[in] depth_image the depth image to convert
+        */
       boost::shared_ptr<pcl::PointCloud<pcl::PointXYZI> >
       convertToXYZIPointCloud (const boost::shared_ptr<openni_wrapper::IRImage> &image,
                                const boost::shared_ptr<openni_wrapper::DepthImage> &depth_image) const;
 
+
       Synchronizer<boost::shared_ptr<openni_wrapper::Image>, boost::shared_ptr<openni_wrapper::DepthImage> > rgb_sync_;
       Synchronizer<boost::shared_ptr<openni_wrapper::IRImage>, boost::shared_ptr<openni_wrapper::DepthImage> > ir_sync_;
 
-      /** \brief Convert a pair of depth + RGB images to a PointCloud<MatrixXf> dataset.
-        * \param[in] image the RGB image
-        * \param[in] depth_image the depth image
-        * \return a PointCloud<MatrixXf> dataset
-        */
-      boost::shared_ptr<pcl::PointCloud<Eigen::MatrixXf> >
-      convertToEigenPointCloud (const boost::shared_ptr<openni_wrapper::Image> &image,
-                                const boost::shared_ptr<openni_wrapper::DepthImage> &depth_image) const;
-      
-      /** \brief the actual openni device*/
+      /** \brief The actual openni device. */
       boost::shared_ptr<openni_wrapper::OpenNIDevice> device_;
 
       std::string rgb_frame_id_;
@@ -258,7 +442,6 @@ namespace pcl
       boost::signals2::signal<sig_cb_openni_point_cloud_i>* point_cloud_i_signal_;
       boost::signals2::signal<sig_cb_openni_point_cloud_rgb>* point_cloud_rgb_signal_;
       boost::signals2::signal<sig_cb_openni_point_cloud_rgba>* point_cloud_rgba_signal_;
-      boost::signals2::signal<sig_cb_openni_point_cloud_eigen>* point_cloud_eigen_signal_;
 
       struct modeComp
       {
@@ -285,6 +468,23 @@ namespace pcl
       openni_wrapper::OpenNIDevice::CallbackHandle image_callback_handle;
       openni_wrapper::OpenNIDevice::CallbackHandle ir_callback_handle;
       bool running_;
+
+      /** \brief The RGB image focal length (fx). */
+      double rgb_focal_length_x_;
+      /** \brief The RGB image focal length (fy). */
+      double rgb_focal_length_y_;
+      /** \brief The RGB image principal point (cx). */
+      double rgb_principal_point_x_;
+      /** \brief The RGB image principal point (cy). */
+      double rgb_principal_point_y_;
+      /** \brief The depth image focal length (fx). */
+      double depth_focal_length_x_;
+      /** \brief The depth image focal length (fy). */
+      double depth_focal_length_y_;
+      /** \brief The depth image principal point (cx). */
+      double depth_principal_point_x_;
+      /** \brief The depth image principal point (cy). */
+      double depth_principal_point_y_;
 
     public:
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW

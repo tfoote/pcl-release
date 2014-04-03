@@ -3,6 +3,7 @@
  *
  *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010-2012, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
  *
  *  All rights reserved.
  *
@@ -16,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,18 +34,15 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: project_inliers.cpp 5026 2012-03-12 02:51:44Z rusu $
+ * $Id$
  *
  */
 
-#include <pcl/impl/instantiate.hpp>
-#include <pcl/point_types.h>
-#include <pcl/filters/project_inliers.h>
 #include <pcl/filters/impl/project_inliers.hpp>
 
-//////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////
 void
-pcl::ProjectInliers<sensor_msgs::PointCloud2>::applyFilter (PointCloud2 &output)
+pcl::ProjectInliers<pcl::PCLPointCloud2>::applyFilter (PCLPointCloud2 &output)
 {
   if (indices_->empty ())
   {
@@ -113,7 +111,7 @@ pcl::ProjectInliers<sensor_msgs::PointCloud2>::applyFilter (PointCloud2 &output)
   {
     if (!copy_all_fields_)
     {
-      pcl::toROSMsg<pcl::PointXYZ> (cloud_out, output);
+      pcl::toPCLPointCloud2<pcl::PointXYZ> (cloud_out, output);
     }
     else
     {
@@ -156,13 +154,13 @@ pcl::ProjectInliers<sensor_msgs::PointCloud2>::applyFilter (PointCloud2 &output)
   }
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////
 bool
-pcl::ProjectInliers<sensor_msgs::PointCloud2>::initSACModel (int model_type)
+pcl::ProjectInliers<pcl::PCLPointCloud2>::initSACModel (int model_type)
 {
   // Convert the input data
   PointCloud<PointXYZ> cloud;
-  fromROSMsg (*input_, cloud);
+  fromPCLPointCloud2 (*input_, cloud);
   PointCloud<PointXYZ>::Ptr cloud_ptr = cloud.makeShared ();
 
   // Build the model
@@ -249,9 +247,16 @@ pcl::ProjectInliers<sensor_msgs::PointCloud2>::initSACModel (int model_type)
   return (true);
 }
 
+#ifndef PCL_NO_PRECOMPILE
+#include <pcl/impl/instantiate.hpp>
+#include <pcl/point_types.h>
+
 // Instantiations of specific point types
 #ifdef PCL_ONLY_CORE_POINT_TYPES
   PCL_INSTANTIATE(ProjectInliers, (pcl::PointXYZ)(pcl::PointXYZI)(pcl::PointXYZRGB)(pcl::PointXYZRGBA))
 #else
   PCL_INSTANTIATE(ProjectInliers, PCL_XYZ_POINT_TYPES)
 #endif
+
+#endif    // PCL_NO_PRECOMPILE
+

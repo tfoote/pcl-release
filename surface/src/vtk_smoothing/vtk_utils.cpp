@@ -32,14 +32,14 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: vtk_utils.cpp 5066 2012-03-14 06:42:21Z rusu $
+ * $Id$
  *
  */
 
 
 #include <pcl/surface/vtk_smoothing/vtk_utils.h>
 
-#include <pcl/ros/conversions.h>
+#include <pcl/conversions.h>
 #include <pcl/common/common.h>
 #include <vtkCellArray.h>
 #include <vtkTriangleFilter.h>
@@ -125,7 +125,7 @@ pcl::VTKUtils::vtk2mesh (const vtkSmartPointer<vtkPolyData>& poly_data, pcl::Pol
     cloud_temp->height = 1;
     cloud_temp->is_dense = true;
 
-    pcl::toROSMsg (*cloud_temp, mesh.cloud);
+    pcl::toPCLPointCloud2 (*cloud_temp, mesh.cloud);
   }
   else // in case points do not have color information:
   {
@@ -143,7 +143,7 @@ pcl::VTKUtils::vtk2mesh (const vtkSmartPointer<vtkPolyData>& poly_data, pcl::Pol
     cloud_temp->height = 1;
     cloud_temp->is_dense = true;
 
-    pcl::toROSMsg (*cloud_temp, mesh.cloud);
+    pcl::toPCLPointCloud2 (*cloud_temp, mesh.cloud);
   }
 
   mesh.polygons.resize (nr_polygons);

@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -31,15 +31,15 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: approximate_voxel_grid.h 5026 2012-03-12 02:51:44Z rusu $
+ * $Id: voxel_grid.h 1374 2011-06-19 02:29:56Z bouffa $
  *
  */
 
 #ifndef PCL_FILTERS_APPROXIMATE_VOXEL_GRID_MAP_H_
 #define PCL_FILTERS_APPROXIMATE_VOXEL_GRID_MAP_H_
 
+#include <pcl/filters/boost.h>
 #include <pcl/filters/filter.h>
-#include <boost/mpl/size.hpp>
 
 namespace pcl
 {
@@ -118,6 +118,11 @@ namespace pcl
       };
 
     public:
+
+      typedef boost::shared_ptr< ApproximateVoxelGrid<PointT> > Ptr;
+      typedef boost::shared_ptr< const ApproximateVoxelGrid<PointT> > ConstPtr;
+
+
       /** \brief Empty constructor. */
       ApproximateVoxelGrid () : 
         pcl::Filter<PointT> (),
@@ -144,6 +149,15 @@ namespace pcl
         for (size_t i = 0; i < histsize_; i++)
           history_[i] = src.history_[i];
       }
+
+
+      /** \brief Destructor.
+        */
+      ~ApproximateVoxelGrid ()
+      {
+        delete [] history_;
+      }
+
 
       /** \brief Copy operator. 
         * \param[in] src the approximate voxel grid to copy into this. 
@@ -225,8 +239,12 @@ namespace pcl
       /** \brief Write a single point from the hash to the output cloud
         */
       void 
-      flush(PointCloud &output, size_t op, he *hhe, int rgba_index, int centroid_size);
+      flush (PointCloud &output, size_t op, he *hhe, int rgba_index, int centroid_size);
   };
 }
+
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/filters/impl/approximate_voxel_grid.hpp>
+#endif
 
 #endif  //#ifndef PCL_FILTERS_VOXEL_GRID_MAP_H_

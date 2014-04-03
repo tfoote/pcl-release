@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -31,7 +31,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: virtual_scanner.cpp 5066 2012-03-14 06:42:21Z rusu $
+ * $Id$
  *
  */
 
@@ -44,14 +44,14 @@
   * The viewpoint can be set to 1 or multiple views on a sphere.
   */
 #include <string>
-#include <pcl/ros/register_point_struct.h>
+#include <pcl/register_point_struct.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/io/vtk_lib_io.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/point_types.h>
 #include <pcl/console/parse.h>
 #include <pcl/visualization/vtk.h>
-#include <boost/random.hpp>
+#include "boost.h"
 
 using namespace pcl;
 
@@ -67,24 +67,39 @@ struct ScanParameters
 };
 
 
-////////////////////////////////////////////////////////////////////////////////
-/** \brief Loads a 3D point cloud from a given PLY fileName, and returns: a
+/** \brief Loads a 3D point cloud from a given fileName, and returns: a
   * vtkDataSet object containing the point cloud.
-  * \param file_name the name of the file containing the PLY dataset
+  * \param file_name the name of the file containing the dataset
   */
 vtkPolyData*
-loadPLYAsDataSet (const char* file_name)
+loadDataSet (const char* file_name)
 {
-  vtkPLYReader* reader = vtkPLYReader::New ();
-  reader->SetFileName (file_name);
-  reader->Update ();
-  return (reader->GetOutput ());
+  std::string extension = boost::filesystem::extension (file_name);
+  if (extension == ".ply")
+  {
+    vtkPLYReader* reader = vtkPLYReader::New ();
+    reader->SetFileName (file_name);
+    reader->Update ();
+    return (reader->GetOutput ());
+  }
+  else if (extension == ".vtk")
+  {
+    vtkPolyDataReader* reader = vtkPolyDataReader::New ();
+    reader->SetFileName (file_name);
+    reader->Update ();
+    return (reader->GetOutput ());
+  }
+  else
+  {
+    PCL_ERROR ("Needs a VTK/PLY file to continue.\n");
+    return (NULL);
+  }
 }
 
 int
 main (int argc, char** argv)
 {
-  if (argc < 3)
+  if (argc < 2)
   {
     PCL_INFO ("Usage %s [options] <model.ply | model.vtk>\n", argv[0]);
     PCL_INFO (" * where options are:\n"
@@ -118,17 +133,24 @@ main (int argc, char** argv)
     PCL_INFO ("Saving an unorganized dataset.\n");
 
   vtkSmartPointer<vtkPolyData> data;
-  // Loading PLY file
-  if (p_file_indices_ply.size () == 0)
+  // Loading PLY/VTK file
+  if (p_file_indices_ply.empty () && p_file_indices_vtk.empty ())
   {
-    PCL_ERROR ("Error: .ply file not given.\n");
-    return -1;
+    PCL_ERROR ("Error: no .PLY or .VTK files given!\n");
+    return (-1);
   }
+  
   std::stringstream filename_stream;
-  filename_stream << argv[p_file_indices_ply.at (0)];
-  filename = filename_stream.str();
-  data = loadPLYAsDataSet (filename.c_str());
-  PCL_INFO ("Loaded ply model with %d vertices/points.\n", data->GetNumberOfPoints ());
+  if (!p_file_indices_ply.empty ())
+    filename_stream << argv[p_file_indices_ply.at (0)];
+  else
+    filename_stream << argv[p_file_indices_vtk.at (0)];
+
+  filename = filename_stream.str ();
+  
+  data = loadDataSet (filename.c_str ());
+  
+  PCL_INFO ("Loaded model with %d vertices/points.\n", data->GetNumberOfPoints ());
 
   // Default scan parameters
   ScanParameters sp;
@@ -378,22 +400,24 @@ main (int argc, char** argv)
     // Saves the point cloud data to disk
     sprintf (seq, "%d", i);
     boost::trim (filename);
-    boost::split (st, filename, boost::is_any_of ("/"), boost::token_compress_on);
+    boost::split (st, filename, boost::is_any_of ("/\\"), boost::token_compress_on);
 
     std::stringstream ss;
     std::string output_dir = st.at (st.size () - 1);
-    boost::filesystem::path outpath (output_dir);
+    ss << output_dir << "_output";
+
+    boost::filesystem::path outpath (ss.str ());
     if (!boost::filesystem::exists (outpath))
     {
       if (!boost::filesystem::create_directories (outpath))
       {
-        PCL_ERROR ("Error creating directory %s.\n", output_dir.c_str ());
+        PCL_ERROR ("Error creating directory %s.\n", ss.str ().c_str ());
         return (-1);
       }
-      PCL_INFO ("Creating directory %s\n", output_dir.c_str ());
+      PCL_INFO ("Creating directory %s\n", ss.str ().c_str ());
     }
 
-    fname = st.at (st.size () - 1) + "/" + seq + ".pcd";
+    fname = ss.str () + "/" + seq + ".pcd";
 
     if (organized)
     {
@@ -407,8 +431,8 @@ main (int argc, char** argv)
     }
 
     pcl::PCDWriter writer;
-    writer.writeBinaryCompressed (fname.c_str (), cloud);
     PCL_INFO ("Wrote %zu points (%d x %d) to %s\n", cloud.points.size (), cloud.width, cloud.height, fname.c_str ());
+    writer.writeBinaryCompressed (fname.c_str (), cloud);
   } // sphere
   return (0);
 }

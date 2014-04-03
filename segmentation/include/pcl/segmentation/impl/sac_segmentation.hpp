@@ -1,7 +1,10 @@
 /*
  * Software License Agreement (BSD License)
  *
+ *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2009, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
+ *
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -14,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -31,7 +34,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: sac_segmentation.hpp 6155 2012-07-04 23:10:00Z aichim $
+ * $Id$
  *
  */
 
@@ -53,17 +56,18 @@
 // Sample Consensus models
 #include <pcl/sample_consensus/sac_model.h>
 #include <pcl/sample_consensus/sac_model_circle.h>
-#include <pcl/sample_consensus/sac_model_cylinder.h>
+#include <pcl/sample_consensus/sac_model_circle3d.h>
 #include <pcl/sample_consensus/sac_model_cone.h>
+#include <pcl/sample_consensus/sac_model_cylinder.h>
 #include <pcl/sample_consensus/sac_model_line.h>
 #include <pcl/sample_consensus/sac_model_normal_plane.h>
-#include <pcl/sample_consensus/sac_model_normal_sphere.h>
 #include <pcl/sample_consensus/sac_model_parallel_plane.h>
 #include <pcl/sample_consensus/sac_model_normal_parallel_plane.h>
 #include <pcl/sample_consensus/sac_model_parallel_line.h>
 #include <pcl/sample_consensus/sac_model_perpendicular_plane.h>
 #include <pcl/sample_consensus/sac_model_plane.h>
 #include <pcl/sample_consensus/sac_model_sphere.h>
+#include <pcl/sample_consensus/sac_model_normal_sphere.h>
 #include <pcl/sample_consensus/sac_model_stick.h>
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -137,13 +141,13 @@ pcl::SACSegmentation<PointT>::initSACModel (const int model_type)
     case SACMODEL_PLANE:
     {
       PCL_DEBUG ("[pcl::%s::initSACModel] Using a model of type: SACMODEL_PLANE\n", getClassName ().c_str ());
-      model_.reset (new SampleConsensusModelPlane<PointT> (input_, *indices_));
+      model_.reset (new SampleConsensusModelPlane<PointT> (input_, *indices_, random_));
       break;
     }
     case SACMODEL_LINE:
     {
       PCL_DEBUG ("[pcl::%s::initSACModel] Using a model of type: SACMODEL_LINE\n", getClassName ().c_str ());
-      model_.reset (new SampleConsensusModelLine<PointT> (input_, *indices_));
+      model_.reset (new SampleConsensusModelLine<PointT> (input_, *indices_, random_));
       break;
     }
     case SACMODEL_STICK:
@@ -162,7 +166,7 @@ pcl::SACSegmentation<PointT>::initSACModel (const int model_type)
     case SACMODEL_CIRCLE2D:
     {
       PCL_DEBUG ("[pcl::%s::initSACModel] Using a model of type: SACMODEL_CIRCLE2D\n", getClassName ().c_str ());
-      model_.reset (new SampleConsensusModelCircle2D<PointT> (input_, *indices_));
+      model_.reset (new SampleConsensusModelCircle2D<PointT> (input_, *indices_, random_));
       typename SampleConsensusModelCircle2D<PointT>::Ptr model_circle = boost::static_pointer_cast<SampleConsensusModelCircle2D<PointT> > (model_);
       double min_radius, max_radius;
       model_circle->getRadiusLimits (min_radius, max_radius);
@@ -173,10 +177,24 @@ pcl::SACSegmentation<PointT>::initSACModel (const int model_type)
       }
       break;
     }
+    case SACMODEL_CIRCLE3D:
+    {
+      PCL_DEBUG ("[pcl::%s::initSACModel] Using a model of type: SACMODEL_CIRCLE3D\n", getClassName ().c_str ());
+      model_.reset (new SampleConsensusModelCircle3D<PointT> (input_, *indices_));
+      typename SampleConsensusModelCircle3D<PointT>::Ptr model_circle3d = boost::static_pointer_cast<SampleConsensusModelCircle3D<PointT> > (model_);
+      double min_radius, max_radius;
+      model_circle3d->getRadiusLimits (min_radius, max_radius);
+      if (radius_min_ != min_radius && radius_max_ != max_radius)
+      {
+        PCL_DEBUG ("[pcl::%s::initSACModel] Setting radius limits to %f/%f\n", getClassName ().c_str (), radius_min_, radius_max_);
+        model_circle3d->setRadiusLimits (radius_min_, radius_max_);
+      }
+      break;
+    }
     case SACMODEL_SPHERE:
     {
       PCL_DEBUG ("[pcl::%s::initSACModel] Using a model of type: SACMODEL_SPHERE\n", getClassName ().c_str ());
-      model_.reset (new SampleConsensusModelSphere<PointT> (input_, *indices_));
+      model_.reset (new SampleConsensusModelSphere<PointT> (input_, *indices_, random_));
       typename SampleConsensusModelSphere<PointT>::Ptr model_sphere = boost::static_pointer_cast<SampleConsensusModelSphere<PointT> > (model_);
       double min_radius, max_radius;
       model_sphere->getRadiusLimits (min_radius, max_radius);
@@ -190,7 +208,7 @@ pcl::SACSegmentation<PointT>::initSACModel (const int model_type)
     case SACMODEL_PARALLEL_LINE:
     {
       PCL_DEBUG ("[pcl::%s::initSACModel] Using a model of type: SACMODEL_PARALLEL_LINE\n", getClassName ().c_str ());
-      model_.reset (new SampleConsensusModelParallelLine<PointT> (input_, *indices_));
+      model_.reset (new SampleConsensusModelParallelLine<PointT> (input_, *indices_, random_));
       typename SampleConsensusModelParallelLine<PointT>::Ptr model_parallel = boost::static_pointer_cast<SampleConsensusModelParallelLine<PointT> > (model_);
       if (axis_ != Eigen::Vector3f::Zero () && model_parallel->getAxis () != axis_)
       {
@@ -207,7 +225,7 @@ pcl::SACSegmentation<PointT>::initSACModel (const int model_type)
     case SACMODEL_PERPENDICULAR_PLANE:
     {
       PCL_DEBUG ("[pcl::%s::initSACModel] Using a model of type: SACMODEL_PERPENDICULAR_PLANE\n", getClassName ().c_str ());
-      model_.reset (new SampleConsensusModelPerpendicularPlane<PointT> (input_, *indices_));
+      model_.reset (new SampleConsensusModelPerpendicularPlane<PointT> (input_, *indices_, random_));
       typename SampleConsensusModelPerpendicularPlane<PointT>::Ptr model_perpendicular = boost::static_pointer_cast<SampleConsensusModelPerpendicularPlane<PointT> > (model_);
       if (axis_ != Eigen::Vector3f::Zero () && model_perpendicular->getAxis () != axis_)
       {
@@ -224,7 +242,7 @@ pcl::SACSegmentation<PointT>::initSACModel (const int model_type)
     case SACMODEL_PARALLEL_PLANE:
     {
       PCL_DEBUG ("[pcl::%s::initSACModel] Using a model of type: SACMODEL_PARALLEL_PLANE\n", getClassName ().c_str ());
-      model_.reset (new SampleConsensusModelParallelPlane<PointT> (input_, *indices_));
+      model_.reset (new SampleConsensusModelParallelPlane<PointT> (input_, *indices_, random_));
       typename SampleConsensusModelParallelPlane<PointT>::Ptr model_parallel = boost::static_pointer_cast<SampleConsensusModelParallelPlane<PointT> > (model_);
       if (axis_ != Eigen::Vector3f::Zero () && model_parallel->getAxis () != axis_)
       {
@@ -244,14 +262,6 @@ pcl::SACSegmentation<PointT>::initSACModel (const int model_type)
       return (false);
     }
   }
-  
-  if (samples_radius_ > 0. )
-  {
-    PCL_DEBUG ("[pcl::%s::initSAC] Setting the maximum distance to %f\n", getClassName ().c_str (), samples_radius_);
-    // Set maximum distance for radius search during random sampling
-    model_->setSamplesMaxDist(samples_radius_, samples_radius_search_);
-  }
-
   return (true);
 }
 
@@ -319,6 +329,12 @@ pcl::SACSegmentation<PointT>::initSAC (const int method_type)
     PCL_DEBUG ("[pcl::%s::initSAC] Setting the maximum number of iterations to %d\n", getClassName ().c_str (), max_iterations_);
     sac_->setMaxIterations (max_iterations_);
   }
+  if (samples_radius_ > 0.)
+  {
+    PCL_DEBUG ("[pcl::%s::initSAC] Setting the maximum sample radius to %f\n", getClassName ().c_str (), samples_radius_);
+    // Set maximum distance for radius search during random sampling
+    model_->setSamplesMaxDist (samples_radius_, samples_radius_search_);
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -346,7 +362,7 @@ pcl::SACSegmentationFromNormals<PointT, PointNT>::initSACModel (const int model_
     case SACMODEL_CYLINDER:
     {
       PCL_DEBUG ("[pcl::%s::initSACModel] Using a model of type: SACMODEL_CYLINDER\n", getClassName ().c_str ());
-      model_.reset (new SampleConsensusModelCylinder<PointT, PointNT > (input_, *indices_));
+      model_.reset (new SampleConsensusModelCylinder<PointT, PointNT > (input_, *indices_, random_));
       typename SampleConsensusModelCylinder<PointT, PointNT>::Ptr model_cylinder = boost::static_pointer_cast<SampleConsensusModelCylinder<PointT, PointNT> > (model_);
 
       // Set the input normals
@@ -378,7 +394,7 @@ pcl::SACSegmentationFromNormals<PointT, PointNT>::initSACModel (const int model_
     case SACMODEL_NORMAL_PLANE:
     {
       PCL_DEBUG ("[pcl::%s::initSACModel] Using a model of type: SACMODEL_NORMAL_PLANE\n", getClassName ().c_str ());
-      model_.reset (new SampleConsensusModelNormalPlane<PointT, PointNT> (input_, *indices_));
+      model_.reset (new SampleConsensusModelNormalPlane<PointT, PointNT> (input_, *indices_, random_));
       typename SampleConsensusModelNormalPlane<PointT, PointNT>::Ptr model_normals = boost::static_pointer_cast<SampleConsensusModelNormalPlane<PointT, PointNT> > (model_);
       // Set the input normals
       model_normals->setInputNormals (normals_);
@@ -392,7 +408,7 @@ pcl::SACSegmentationFromNormals<PointT, PointNT>::initSACModel (const int model_
     case SACMODEL_NORMAL_PARALLEL_PLANE:
     {
       PCL_DEBUG ("[pcl::%s::initSACModel] Using a model of type: SACMODEL_NORMAL_PARALLEL_PLANE\n", getClassName ().c_str ());
-      model_.reset (new SampleConsensusModelNormalParallelPlane<PointT, PointNT> (input_, *indices_));
+      model_.reset (new SampleConsensusModelNormalParallelPlane<PointT, PointNT> (input_, *indices_, random_));
       typename SampleConsensusModelNormalParallelPlane<PointT, PointNT>::Ptr model_normals = boost::static_pointer_cast<SampleConsensusModelNormalParallelPlane<PointT, PointNT> > (model_);
       // Set the input normals
       model_normals->setInputNormals (normals_);
@@ -421,7 +437,7 @@ pcl::SACSegmentationFromNormals<PointT, PointNT>::initSACModel (const int model_
     case SACMODEL_CONE:
     {
       PCL_DEBUG ("[pcl::%s::initSACModel] Using a model of type: SACMODEL_CONE\n", getClassName ().c_str ());
-      model_.reset (new SampleConsensusModelCone<PointT, PointNT > (input_, *indices_));
+      model_.reset (new SampleConsensusModelCone<PointT, PointNT> (input_, *indices_, random_));
       typename SampleConsensusModelCone<PointT, PointNT>::Ptr model_cone = boost::static_pointer_cast<SampleConsensusModelCone<PointT, PointNT> > (model_);
 
       // Set the input normals
@@ -454,7 +470,7 @@ pcl::SACSegmentationFromNormals<PointT, PointNT>::initSACModel (const int model_
     case SACMODEL_NORMAL_SPHERE:
     {
       PCL_DEBUG ("[pcl::%s::initSACModel] Using a model of type: SACMODEL_NORMAL_SPHERE\n", getClassName ().c_str ());
-      model_.reset (new SampleConsensusModelNormalSphere<PointT, PointNT> (input_, *indices_));
+      model_.reset (new SampleConsensusModelNormalSphere<PointT, PointNT> (input_, *indices_, random_));
       typename SampleConsensusModelNormalSphere<PointT, PointNT>::Ptr model_normals_sphere = boost::static_pointer_cast<SampleConsensusModelNormalSphere<PointT, PointNT> > (model_);
       // Set the input normals
       model_normals_sphere->setInputNormals (normals_);
@@ -478,13 +494,6 @@ pcl::SACSegmentationFromNormals<PointT, PointNT>::initSACModel (const int model_
     {
       return (pcl::SACSegmentation<PointT>::initSACModel (model_type));
     }
-  }
-
-  if (SACSegmentation<PointT>::samples_radius_ > 0. )
-  {
-    PCL_DEBUG ("[pcl::%s::initSAC] Setting the maximum distance to %f\n", getClassName ().c_str (), SACSegmentation<PointT>::samples_radius_);
-    // Set maximum distance for radius search during random sampling
-    model_->setSamplesMaxDist(SACSegmentation<PointT>::samples_radius_, SACSegmentation<PointT>::samples_radius_search_);
   }
 
   return (true);

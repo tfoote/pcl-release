@@ -1,8 +1,10 @@
 /*
  * Software License Agreement (BSD License)
  *
+ *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2011, Alexandru-Eugen Ichim
- *                      Willow Garage, Inc
+ *  Copyright (c) 2012-, Open Perception, Inc.
+ *
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -15,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -32,7 +34,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- *  $Id: multiscale_feature_persistence.h 4864 2012-03-01 01:11:22Z rusu $
+ *  $Id$
  */
 
 #ifndef PCL_MULTISCALE_FEATURE_PERSISTENCE_H_
@@ -62,6 +64,8 @@ namespace pcl
   class MultiscaleFeaturePersistence : public PCLBase<PointSource>
   {
     public:
+      typedef boost::shared_ptr<MultiscaleFeaturePersistence<PointSource, PointFeature> > Ptr;
+      typedef boost::shared_ptr<const MultiscaleFeaturePersistence<PointSource, PointFeature> > ConstPtr;
       typedef pcl::PointCloud<PointFeature> FeatureCloud;
       typedef typename pcl::PointCloud<PointFeature>::Ptr FeatureCloudPtr;
       typedef typename pcl::Feature<PointSource, PointFeature>::Ptr FeatureEstimatorPtr;
@@ -71,6 +75,9 @@ namespace pcl
 
       /** \brief Empty constructor */
       MultiscaleFeaturePersistence ();
+      
+      /** \brief Empty destructor */
+      virtual ~MultiscaleFeaturePersistence () {}
 
       /** \brief Method that calls computeFeatureAtScale () for each scale parameter */
       void
@@ -195,5 +202,8 @@ namespace pcl
   };
 }
 
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/features/impl/multiscale_feature_persistence.hpp>
+#endif
 
 #endif /* PCL_MULTISCALE_FEATURE_PERSISTENCE_H_ */

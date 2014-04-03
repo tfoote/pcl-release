@@ -1,7 +1,10 @@
 /*
  * Software License Agreement (BSD License)
  *
+ *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2009, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
+ *
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -14,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -31,7 +34,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: ransac.hpp 6144 2012-07-04 22:06:28Z rusu $
+ * $Id$
  *
  */
 
@@ -42,7 +45,7 @@
 
 //////////////////////////////////////////////////////////////////////////
 template <typename PointT> bool
-pcl::RandomSampleConsensus<PointT>::computeModel (int debug_verbosity_level)
+pcl::RandomSampleConsensus<PointT>::computeModel (int)
 {
   // Warn and exit if no threshold was set
   if (threshold_ == std::numeric_limits<double>::max())
@@ -57,6 +60,9 @@ pcl::RandomSampleConsensus<PointT>::computeModel (int debug_verbosity_level)
 
   std::vector<int> selection;
   Eigen::VectorXf model_coefficients;
+
+  double log_probability  = log (1.0 - probability_);
+  double one_over_indices = 1.0 / static_cast<double> (sac_model_->getIndices ()->size ());
 
   int n_inliers_count = 0;
   unsigned skipped_count = 0;
@@ -79,7 +85,7 @@ pcl::RandomSampleConsensus<PointT>::computeModel (int debug_verbosity_level)
     if (!sac_model_->computeModelCoefficients (selection, model_coefficients))
     {
       //++iterations_;
-      ++ skipped_count;
+      ++skipped_count;
       continue;
     }
 
@@ -100,26 +106,23 @@ pcl::RandomSampleConsensus<PointT>::computeModel (int debug_verbosity_level)
       model_coefficients_ = model_coefficients;
 
       // Compute the k parameter (k=log(z)/log(1-w^n))
-      double w = static_cast<double> (n_best_inliers_count) / static_cast<double> (sac_model_->getIndices ()->size ());
+      double w = static_cast<double> (n_best_inliers_count) * one_over_indices;
       double p_no_outliers = 1.0 - pow (w, static_cast<double> (selection.size ()));
       p_no_outliers = (std::max) (std::numeric_limits<double>::epsilon (), p_no_outliers);       // Avoid division by -Inf
       p_no_outliers = (std::min) (1.0 - std::numeric_limits<double>::epsilon (), p_no_outliers);   // Avoid division by 0.
-      k = log (1.0 - probability_) / log (p_no_outliers);
+      k = log_probability / log (p_no_outliers);
     }
 
     ++iterations_;
-    if (debug_verbosity_level > 1)
-      PCL_DEBUG ("[pcl::RandomSampleConsensus::computeModel] Trial %d out of %f: %d inliers (best is: %d so far).\n", iterations_, k, n_inliers_count, n_best_inliers_count);
+    PCL_DEBUG ("[pcl::RandomSampleConsensus::computeModel] Trial %d out of %f: %d inliers (best is: %d so far).\n", iterations_, k, n_inliers_count, n_best_inliers_count);
     if (iterations_ > max_iterations_)
     {
-      if (debug_verbosity_level > 0)
-        PCL_DEBUG ("[pcl::RandomSampleConsensus::computeModel] RANSAC reached the maximum number of trials.\n");
+      PCL_DEBUG ("[pcl::RandomSampleConsensus::computeModel] RANSAC reached the maximum number of trials.\n");
       break;
     }
   }
 
-  if (debug_verbosity_level > 0)
-    PCL_DEBUG ("[pcl::RandomSampleConsensus::computeModel] Model: %zu size, %d inliers.\n", model_.size (), n_best_inliers_count);
+  PCL_DEBUG ("[pcl::RandomSampleConsensus::computeModel] Model: %zu size, %d inliers.\n", model_.size (), n_best_inliers_count);
 
   if (model_.empty ())
   {

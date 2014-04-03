@@ -33,7 +33,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: example_principal_curvatures_estimation.cpp 5003 2012-03-10 02:43:45Z gedikli $
+ * $Id$
  *
  */
 

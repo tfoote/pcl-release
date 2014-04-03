@@ -31,7 +31,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: lzf.cpp 4913 2012-03-05 17:21:20Z rusu $
+ * $Id$
  *
  */
 
@@ -97,7 +97,7 @@ pcl::lzfCompress (const void *const in_data, unsigned int in_len,
   // no bit pattern traps. Since the only platform that is both non-POSIX
   // and fails to support both assumptions is windows 64 bit, we make a
   // special workaround for it.
-#if defined (WIN32) && defined (_M_X64)
+#if defined (WIN32) && defined (_M_X64) && defined (_MSC_VER)
   // workaround for missing POSIX compliance
   unsigned _int64 off; 
 #else

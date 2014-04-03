@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -31,7 +31,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: obj_io.h 3751 2011-12-31 23:18:12Z rusu $
+ * $Id: obj_io.h 1001 2011-07-13 13:07:00 ktran $
  *
  */
 
@@ -39,6 +39,8 @@
 #define OBJ_IO_H_
 #include <pcl/pcl_macros.h>
 #include <pcl/TextureMesh.h>
+#include <pcl/PolygonMesh.h>
+
 namespace pcl
 {
   namespace io

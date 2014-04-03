@@ -32,7 +32,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: convolve.cpp 5358 2012-03-28 00:16:25Z nizar $
+ * $Id$
  */
 
 #include <pcl/point_types.h>
@@ -41,6 +41,7 @@
 #include <pcl/console/print.h>
 #include <pcl/filters/convolution.h>
 #include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/common/time.h>
 
 void
 usage (char ** argv)

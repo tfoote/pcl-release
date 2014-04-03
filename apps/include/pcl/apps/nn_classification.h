@@ -33,7 +33,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: nn_classification.h 6218 2012-07-06 21:46:51Z aichim $
+ * $Id$
  *
  */
 

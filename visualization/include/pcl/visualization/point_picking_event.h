@@ -3,6 +3,7 @@
  *
  *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010-2011, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
  *
  *  All rights reserved.
  *
@@ -16,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -36,10 +37,13 @@
  */
 
 #ifndef PCL_VISUALIZATION_POINT_PICKING_EVENT_H_
-#define	PCL_VISUALIZATION_POINT_PICKING_EVENT_H_
+#define PCL_VISUALIZATION_POINT_PICKING_EVENT_H_
 
 #include <pcl/pcl_macros.h>
-#include <pcl/visualization/vtk.h>
+#include <vector>
+
+#include <vtkCommand.h>
+class vtkRenderWindowInteractor;
 
 namespace pcl
 {
@@ -54,6 +58,9 @@ namespace pcl
         }
 
         PointPickingCallback () : x_ (0), y_ (0), z_ (0), idx_ (-1), pick_first_ (false) {}
+      
+        /** \brief Empty destructor */
+        virtual ~PointPickingCallback () {}
 
         virtual void
         Execute (vtkObject *caller, unsigned long eventid, void*);
@@ -63,6 +70,9 @@ namespace pcl
 
         int
         performSinglePick (vtkRenderWindowInteractor *iren, float &x, float &y, float &z);
+
+        int
+        performAreaPick (vtkRenderWindowInteractor *iren, std::vector<int> &indices);
 
       private:
         float x_, y_, z_;
@@ -118,6 +128,21 @@ namespace pcl
           return (true);
         }
 
+        /** \brief For situations where multiple points are selected in a sequence, return the points indices.
+          * \param[out] index_1 index of the first point selected by user
+          * \param[out] index_2 index of the second point selected by user
+          * \return true, if two points are available and have been clicked by the user, false otherwise
+          */
+        inline bool
+        getPointIndices (int &index_1, int &index_2) const
+        {
+          if (idx2_ == -1)
+            return (false);
+          index_1 = idx_;
+          index_2 = idx2_;
+          return (true);
+        }
+
       private:
         int idx_, idx2_;
 
@@ -127,5 +152,5 @@ namespace pcl
   } //namespace visualization
 } //namespace pcl
 
-#endif	/* PCL_VISUALIZATION_POINT_PICKING_EVENT_H_ */
+#endif  /* PCL_VISUALIZATION_POINT_PICKING_EVENT_H_ */
 

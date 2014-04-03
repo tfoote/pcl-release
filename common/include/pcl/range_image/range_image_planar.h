@@ -1,7 +1,10 @@
 /*
  * Software License Agreement (BSD License)
  *
+ *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
+ *
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -14,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -58,12 +61,16 @@ namespace pcl
       /** Constructor */
       PCL_EXPORTS RangeImagePlanar ();
       /** Destructor */
-      PCL_EXPORTS ~RangeImagePlanar ();
+      PCL_EXPORTS virtual ~RangeImagePlanar ();
 
       /** Return a newly created RangeImagePlanar.
        *  Reimplmentation to return an image of the same type. */
       virtual RangeImage* 
       getNew () const { return new RangeImagePlanar; }
+
+      /** Copy *this to other. Derived version - also copying additonal RangeImagePlanar members */
+      PCL_EXPORTS virtual void
+      copyTo (RangeImage& other) const;
       
       // =====PUBLIC METHODS=====
       /** \brief Get a boost shared pointer of a copy of this */
@@ -182,6 +189,23 @@ namespace pcl
       PCL_EXPORTS virtual void 
       getHalfImage (RangeImage& half_image) const;
       
+      //! Getter for the focal length in X
+      inline float
+      getFocalLengthX () const { return focal_length_x_; }
+      
+      //! Getter for the focal length in Y
+      inline float
+      getFocalLengthY () const { return focal_length_y_; }
+      
+      //! Getter for the principal point in X
+      inline float
+      getCenterX () const { return center_x_; }
+      
+      //! Getter for the principal point in Y
+      inline float
+      getCenterY () const { return center_y_; }
+
+
     protected:
       float focal_length_x_, focal_length_y_; //!< The focal length of the image in pixels
       float focal_length_x_reciprocal_, focal_length_y_reciprocal_;  //!< 1/focal_length -> for internal use

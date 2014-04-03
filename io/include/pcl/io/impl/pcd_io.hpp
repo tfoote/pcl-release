@@ -33,7 +33,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: pcd_io.hpp 4968 2012-03-08 06:39:52Z rusu $
+ * $Id$
  *
  */
 
@@ -44,17 +44,18 @@
 #include <fcntl.h>
 #include <string>
 #include <stdlib.h>
-#include <boost/algorithm/string.hpp>
-#include <pcl/channel_properties.h>
+#include <pcl/io/boost.h>
 #include <pcl/console/print.h>
+#include <pcl/io/pcd_io.h>
+
 #ifdef _WIN32
 # include <io.h>
 # ifndef WIN32_LEAN_AND_MEAN
 #  define WIN32_LEAN_AND_MEAN
-# endif WIN32_LEAN_AND_MEAN
+# endif // WIN32_LEAN_AND_MEAN
 # ifndef NOMINMAX
 #  define NOMINMAX
-# endif NOMINMAX
+# endif // NOMINMAX
 # include <windows.h>
 # define pcl_open                    _open
 # define pcl_close(fd)               _close(fd)
@@ -79,7 +80,7 @@ pcl::PCDWriter::generateHeader (const pcl::PointCloud<PointT> &cloud, const int 
          "\nVERSION 0.7"
          "\nFIELDS";
 
-  std::vector<sensor_msgs::PointField> fields;
+  std::vector<pcl::PCLPointField> fields;
   pcl::getFields (cloud, fields);
  
   std::stringstream field_names, field_types, field_sizes, field_counts;
@@ -138,7 +139,7 @@ pcl::PCDWriter::writeBinary (const std::string &file_name,
 
 #if _WIN32
   HANDLE h_native_file = CreateFileA (file_name.c_str (), GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-  if(h_native_file == INVALID_HANDLE_VALUE)
+  if (h_native_file == INVALID_HANDLE_VALUE)
   {
     throw pcl::IOException ("[pcl::PCDWriter::writeBinary] Error during CreateFile!");
     return (-1);
@@ -151,8 +152,11 @@ pcl::PCDWriter::writeBinary (const std::string &file_name,
     return (-1);
   }
 #endif
+  // Mandatory lock file
+  boost::interprocess::file_lock file_lock;
+  setLockingPermissions (file_name, file_lock);
 
-  std::vector<sensor_msgs::PointField> fields;
+  std::vector<pcl::PCLPointField> fields;
   std::vector<int> fields_sizes;
   size_t fsize = 0;
   size_t data_size = 0;
@@ -181,10 +185,14 @@ pcl::PCDWriter::writeBinary (const std::string &file_name,
 
 #else
   // Stretch the file size to the size of the data
-  int result = static_cast<int> (pcl_lseek (fd, getpagesize () + data_size - 1, SEEK_SET));
+  off_t result = pcl_lseek (fd, getpagesize () + data_size - 1, SEEK_SET);
+
   if (result < 0)
   {
     pcl_close (fd);
+    resetLockingPermissions (file_name, file_lock);
+    PCL_ERROR ("[pcl::PCDWriter::writeBinary] lseek errno: %d strerror: %s\n", errno, strerror (errno));
+
     throw pcl::IOException ("[pcl::PCDWriter::writeBinary] Error during lseek ()!");
     return (-1);
   }
@@ -193,6 +201,7 @@ pcl::PCDWriter::writeBinary (const std::string &file_name,
   if (result != 1)
   {
     pcl_close (fd);
+    resetLockingPermissions (file_name, file_lock);
     throw pcl::IOException ("[pcl::PCDWriter::writeBinary] Error during write ()!");
     return (-1);
   }
@@ -201,6 +210,7 @@ pcl::PCDWriter::writeBinary (const std::string &file_name,
   if (map == reinterpret_cast<char*> (-1)) //MAP_FAILED)
   {
     pcl_close (fd);
+    resetLockingPermissions (file_name, file_lock);
     throw pcl::IOException ("[pcl::PCDWriter::writeBinary] Error during mmap ()!");
     return (-1);
   }
@@ -234,6 +244,7 @@ pcl::PCDWriter::writeBinary (const std::string &file_name,
   if (munmap (map, (data_idx + data_size)) == -1)
   {
     pcl_close (fd);
+    resetLockingPermissions (file_name, file_lock);
     throw pcl::IOException ("[pcl::PCDWriter::writeBinary] Error during munmap ()!");
     return (-1);
   }
@@ -244,6 +255,7 @@ pcl::PCDWriter::writeBinary (const std::string &file_name,
 #else
   pcl_close (fd);
 #endif
+  resetLockingPermissions (file_name, file_lock);
   return (0);
 }
 
@@ -265,7 +277,7 @@ pcl::PCDWriter::writeBinaryCompressed (const std::string &file_name,
 
 #if _WIN32
   HANDLE h_native_file = CreateFileA (file_name.c_str (), GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-  if(h_native_file == INVALID_HANDLE_VALUE)
+  if (h_native_file == INVALID_HANDLE_VALUE)
   {
     throw pcl::IOException ("[pcl::PCDWriter::writeBinaryCompressed] Error during CreateFile!");
     return (-1);
@@ -279,7 +291,11 @@ pcl::PCDWriter::writeBinaryCompressed (const std::string &file_name,
   }
 #endif
 
-  std::vector<sensor_msgs::PointField> fields;
+  // Mandatory lock file
+  boost::interprocess::file_lock file_lock;
+  setLockingPermissions (file_name, file_lock);
+
+  std::vector<pcl::PCLPointField> fields;
   size_t fsize = 0;
   size_t data_size = 0;
   size_t nri = 0;
@@ -357,16 +373,20 @@ pcl::PCDWriter::writeBinaryCompressed (const std::string &file_name,
 #if !_WIN32
     pcl_close (fd);
 #endif
+    resetLockingPermissions (file_name, file_lock);
     throw pcl::IOException ("[pcl::PCDWriter::writeBinaryCompressed] Error during compression!");
     return (-1);
   }
 
 #if !_WIN32
   // Stretch the file size to the size of the data
-  int result = static_cast<int> (pcl_lseek (fd, getpagesize () + data_size - 1, SEEK_SET));
+  off_t result = pcl_lseek (fd, getpagesize () + data_size - 1, SEEK_SET);
   if (result < 0)
   {
     pcl_close (fd);
+    resetLockingPermissions (file_name, file_lock);
+    PCL_ERROR ("[pcl::PCDWriter::writeBinary] lseek errno: %d strerror: %s\n", errno, strerror (errno));
+    
     throw pcl::IOException ("[pcl::PCDWriter::writeBinaryCompressed] Error during lseek ()!");
     return (-1);
   }
@@ -375,6 +395,7 @@ pcl::PCDWriter::writeBinaryCompressed (const std::string &file_name,
   if (result != 1)
   {
     pcl_close (fd);
+    resetLockingPermissions (file_name, file_lock);
     throw pcl::IOException ("[pcl::PCDWriter::writeBinaryCompressed] Error during write ()!");
     return (-1);
   }
@@ -391,6 +412,7 @@ pcl::PCDWriter::writeBinaryCompressed (const std::string &file_name,
   if (map == reinterpret_cast<char*> (-1)) //MAP_FAILED)
   {
     pcl_close (fd);
+    resetLockingPermissions (file_name, file_lock);
     throw pcl::IOException ("[pcl::PCDWriter::writeBinaryCompressed] Error during mmap ()!");
     return (-1);
   }
@@ -414,16 +436,19 @@ pcl::PCDWriter::writeBinaryCompressed (const std::string &file_name,
   if (munmap (map, (compressed_final_size)) == -1)
   {
     pcl_close (fd);
+    resetLockingPermissions (file_name, file_lock);
     throw pcl::IOException ("[pcl::PCDWriter::writeBinaryCompressed] Error during munmap ()!");
     return (-1);
   }
 #endif
+
   // Close file
 #if _WIN32
   CloseHandle (h_native_file);
 #else
   pcl_close (fd);
 #endif
+  resetLockingPermissions (file_name, file_lock);
 
   free (only_valid_data);
   free (temp_buf);
@@ -456,10 +481,14 @@ pcl::PCDWriter::writeASCII (const std::string &file_name, const pcl::PointCloud<
     return (-1);
   }
   
+  // Mandatory lock file
+  boost::interprocess::file_lock file_lock;
+  setLockingPermissions (file_name, file_lock);
+
   fs.precision (precision);
   fs.imbue (std::locale::classic ());
 
-  std::vector<sensor_msgs::PointField> fields;
+  std::vector<pcl::PCLPointField> fields;
   pcl::getFields (cloud, fields);
 
   // Write the header information
@@ -485,7 +514,7 @@ pcl::PCDWriter::writeASCII (const std::string &file_name, const pcl::PointCloud<
       {
         switch (fields[d].datatype)
         {
-          case sensor_msgs::PointField::INT8:
+          case pcl::PCLPointField::INT8:
           {
             int8_t value;
             memcpy (&value, reinterpret_cast<const char*> (&cloud.points[i]) + fields[d].offset + c * sizeof (int8_t), sizeof (int8_t));
@@ -495,7 +524,7 @@ pcl::PCDWriter::writeASCII (const std::string &file_name, const pcl::PointCloud<
               stream << boost::numeric_cast<uint32_t>(value);
             break;
           }
-          case sensor_msgs::PointField::UINT8:
+          case pcl::PCLPointField::UINT8:
           {
             uint8_t value;
             memcpy (&value, reinterpret_cast<const char*> (&cloud.points[i]) + fields[d].offset + c * sizeof (uint8_t), sizeof (uint8_t));
@@ -505,7 +534,7 @@ pcl::PCDWriter::writeASCII (const std::string &file_name, const pcl::PointCloud<
               stream << boost::numeric_cast<uint32_t>(value);
             break;
           }
-          case sensor_msgs::PointField::INT16:
+          case pcl::PCLPointField::INT16:
           {
             int16_t value;
             memcpy (&value, reinterpret_cast<const char*> (&cloud.points[i]) + fields[d].offset + c * sizeof (int16_t), sizeof (int16_t));
@@ -515,7 +544,7 @@ pcl::PCDWriter::writeASCII (const std::string &file_name, const pcl::PointCloud<
               stream << boost::numeric_cast<int16_t>(value);
             break;
           }
-          case sensor_msgs::PointField::UINT16:
+          case pcl::PCLPointField::UINT16:
           {
             uint16_t value;
             memcpy (&value, reinterpret_cast<const char*> (&cloud.points[i]) + fields[d].offset + c * sizeof (uint16_t), sizeof (uint16_t));
@@ -525,7 +554,7 @@ pcl::PCDWriter::writeASCII (const std::string &file_name, const pcl::PointCloud<
               stream << boost::numeric_cast<uint16_t>(value);
             break;
           }
-          case sensor_msgs::PointField::INT32:
+          case pcl::PCLPointField::INT32:
           {
             int32_t value;
             memcpy (&value, reinterpret_cast<const char*> (&cloud.points[i]) + fields[d].offset + c * sizeof (int32_t), sizeof (int32_t));
@@ -535,7 +564,7 @@ pcl::PCDWriter::writeASCII (const std::string &file_name, const pcl::PointCloud<
               stream << boost::numeric_cast<int32_t>(value);
             break;
           }
-          case sensor_msgs::PointField::UINT32:
+          case pcl::PCLPointField::UINT32:
           {
             uint32_t value;
             memcpy (&value, reinterpret_cast<const char*> (&cloud.points[i]) + fields[d].offset + c * sizeof (uint32_t), sizeof (uint32_t));
@@ -545,7 +574,7 @@ pcl::PCDWriter::writeASCII (const std::string &file_name, const pcl::PointCloud<
               stream << boost::numeric_cast<uint32_t>(value);
             break;
           }
-          case sensor_msgs::PointField::FLOAT32:
+          case pcl::PCLPointField::FLOAT32:
           {
             float value;
             memcpy (&value, reinterpret_cast<const char*> (&cloud.points[i]) + fields[d].offset + c * sizeof (float), sizeof (float));
@@ -555,7 +584,7 @@ pcl::PCDWriter::writeASCII (const std::string &file_name, const pcl::PointCloud<
               stream << boost::numeric_cast<float>(value);
             break;
           }
-          case sensor_msgs::PointField::FLOAT64:
+          case pcl::PCLPointField::FLOAT64:
           {
             double value;
             memcpy (&value, reinterpret_cast<const char*> (&cloud.points[i]) + fields[d].offset + c * sizeof (double), sizeof (double));
@@ -581,6 +610,7 @@ pcl::PCDWriter::writeASCII (const std::string &file_name, const pcl::PointCloud<
     fs << result << "\n";
   }
   fs.close ();              // Close file
+  resetLockingPermissions (file_name, file_lock);
   return (0);
 }
 
@@ -604,7 +634,7 @@ pcl::PCDWriter::writeBinary (const std::string &file_name,
 
 #if _WIN32
   HANDLE h_native_file = CreateFileA (file_name.c_str (), GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-  if(h_native_file == INVALID_HANDLE_VALUE)
+  if (h_native_file == INVALID_HANDLE_VALUE)
   {
     throw pcl::IOException ("[pcl::PCDWriter::writeBinary] Error during CreateFile!");
     return (-1);
@@ -617,8 +647,11 @@ pcl::PCDWriter::writeBinary (const std::string &file_name,
     return (-1);
   }
 #endif
+  // Mandatory lock file
+  boost::interprocess::file_lock file_lock;
+  setLockingPermissions (file_name, file_lock);
 
-  std::vector<sensor_msgs::PointField> fields;
+  std::vector<pcl::PCLPointField> fields;
   std::vector<int> fields_sizes;
   size_t fsize = 0;
   size_t data_size = 0;
@@ -647,10 +680,13 @@ pcl::PCDWriter::writeBinary (const std::string &file_name,
 
 #else
   // Stretch the file size to the size of the data
-  int result = static_cast<int> (pcl_lseek (fd, getpagesize () + data_size - 1, SEEK_SET));
+  off_t result = pcl_lseek (fd, getpagesize () + data_size - 1, SEEK_SET);
   if (result < 0)
   {
     pcl_close (fd);
+    resetLockingPermissions (file_name, file_lock);
+    PCL_ERROR ("[pcl::PCDWriter::writeBinary] lseek errno: %d strerror: %s\n", errno, strerror (errno));
+    
     throw pcl::IOException ("[pcl::PCDWriter::writeBinary] Error during lseek ()!");
     return (-1);
   }
@@ -659,6 +695,7 @@ pcl::PCDWriter::writeBinary (const std::string &file_name,
   if (result != 1)
   {
     pcl_close (fd);
+    resetLockingPermissions (file_name, file_lock);
     throw pcl::IOException ("[pcl::PCDWriter::writeBinary] Error during write ()!");
     return (-1);
   }
@@ -667,6 +704,7 @@ pcl::PCDWriter::writeBinary (const std::string &file_name,
   if (map == reinterpret_cast<char*> (-1)) //MAP_FAILED)
   {
     pcl_close (fd);
+    resetLockingPermissions (file_name, file_lock);
     throw pcl::IOException ("[pcl::PCDWriter::writeBinary] Error during mmap ()!");
     return (-1);
   }
@@ -700,6 +738,7 @@ pcl::PCDWriter::writeBinary (const std::string &file_name,
   if (munmap (map, (data_idx + data_size)) == -1)
   {
     pcl_close (fd);
+    resetLockingPermissions (file_name, file_lock);
     throw pcl::IOException ("[pcl::PCDWriter::writeBinary] Error during munmap ()!");
     return (-1);
   }
@@ -710,6 +749,8 @@ pcl::PCDWriter::writeBinary (const std::string &file_name,
 #else
   pcl_close (fd);
 #endif
+  
+  resetLockingPermissions (file_name, file_lock);
   return (0);
 }
 
@@ -739,10 +780,15 @@ pcl::PCDWriter::writeASCII (const std::string &file_name,
     throw pcl::IOException ("[pcl::PCDWriter::writeASCII] Could not open file for writing!");
     return (-1);
   }
+
+  // Mandatory lock file
+  boost::interprocess::file_lock file_lock;
+  setLockingPermissions (file_name, file_lock);
+
   fs.precision (precision);
   fs.imbue (std::locale::classic ());
 
-  std::vector<sensor_msgs::PointField> fields;
+  std::vector<pcl::PCLPointField> fields;
   pcl::getFields (cloud, fields);
 
   // Write the header information
@@ -769,7 +815,7 @@ pcl::PCDWriter::writeASCII (const std::string &file_name,
       {
         switch (fields[d].datatype)
         {
-          case sensor_msgs::PointField::INT8:
+          case pcl::PCLPointField::INT8:
           {
             int8_t value;
             memcpy (&value, reinterpret_cast<const char*> (&cloud.points[indices[i]]) + fields[d].offset + c * sizeof (int8_t), sizeof (int8_t));
@@ -779,7 +825,7 @@ pcl::PCDWriter::writeASCII (const std::string &file_name,
               stream << boost::numeric_cast<uint32_t>(value);
             break;
           }
-          case sensor_msgs::PointField::UINT8:
+          case pcl::PCLPointField::UINT8:
           {
             uint8_t value;
             memcpy (&value, reinterpret_cast<const char*> (&cloud.points[indices[i]]) + fields[d].offset + c * sizeof (uint8_t), sizeof (uint8_t));
@@ -789,7 +835,7 @@ pcl::PCDWriter::writeASCII (const std::string &file_name,
               stream << boost::numeric_cast<uint32_t>(value);
             break;
           }
-          case sensor_msgs::PointField::INT16:
+          case pcl::PCLPointField::INT16:
           {
             int16_t value;
             memcpy (&value, reinterpret_cast<const char*> (&cloud.points[indices[i]]) + fields[d].offset + c * sizeof (int16_t), sizeof (int16_t));
@@ -799,7 +845,7 @@ pcl::PCDWriter::writeASCII (const std::string &file_name,
               stream << boost::numeric_cast<int16_t>(value);
             break;
           }
-          case sensor_msgs::PointField::UINT16:
+          case pcl::PCLPointField::UINT16:
           {
             uint16_t value;
             memcpy (&value, reinterpret_cast<const char*> (&cloud.points[indices[i]]) + fields[d].offset + c * sizeof (uint16_t), sizeof (uint16_t));
@@ -809,7 +855,7 @@ pcl::PCDWriter::writeASCII (const std::string &file_name,
               stream << boost::numeric_cast<uint16_t>(value);
             break;
           }
-          case sensor_msgs::PointField::INT32:
+          case pcl::PCLPointField::INT32:
           {
             int32_t value;
             memcpy (&value, reinterpret_cast<const char*> (&cloud.points[indices[i]]) + fields[d].offset + c * sizeof (int32_t), sizeof (int32_t));
@@ -819,7 +865,7 @@ pcl::PCDWriter::writeASCII (const std::string &file_name,
               stream << boost::numeric_cast<int32_t>(value);
             break;
           }
-          case sensor_msgs::PointField::UINT32:
+          case pcl::PCLPointField::UINT32:
           {
             uint32_t value;
             memcpy (&value, reinterpret_cast<const char*> (&cloud.points[indices[i]]) + fields[d].offset + c * sizeof (uint32_t), sizeof (uint32_t));
@@ -829,7 +875,7 @@ pcl::PCDWriter::writeASCII (const std::string &file_name,
               stream << boost::numeric_cast<uint32_t>(value);
             break;
           }
-          case sensor_msgs::PointField::FLOAT32:
+          case pcl::PCLPointField::FLOAT32:
           {
             float value;
             memcpy (&value, reinterpret_cast<const char*> (&cloud.points[indices[i]]) + fields[d].offset + c * sizeof (float), sizeof (float));
@@ -839,7 +885,7 @@ pcl::PCDWriter::writeASCII (const std::string &file_name,
               stream << boost::numeric_cast<float>(value);
             break;
           }
-          case sensor_msgs::PointField::FLOAT64:
+          case pcl::PCLPointField::FLOAT64:
           {
             double value;
             memcpy (&value, reinterpret_cast<const char*> (&cloud.points[indices[i]]) + fields[d].offset + c * sizeof (double), sizeof (double));
@@ -865,6 +911,9 @@ pcl::PCDWriter::writeASCII (const std::string &file_name,
     fs << result << "\n";
   }
   fs.close ();              // Close file
+  
+  resetLockingPermissions (file_name, file_lock);
+
   return (0);
 }
 

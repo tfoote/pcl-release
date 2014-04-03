@@ -2,7 +2,7 @@
  * Software License Agreement (BSD License)
  *
  *  Point Cloud Library (PCL) - www.pointclouds.org
- *  Copyright (c) 2012, Open Perception, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
  *
  *  All rights reserved.
  *
@@ -16,7 +16,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Open Perception, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,30 +33,10 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
+ * $Id$
  *
  */
 #ifndef PCL_REGISTRATION_IMPL_CORRESPONDENCE_REJECTION_SURFACE_NORMAL_HPP_
 #define PCL_REGISTRATION_IMPL_CORRESPONDENCE_REJECTION_SURFACE_NORMAL_HPP_
-
-//////////////////////////////////////////////////////////////////////////////////////////////
-void
-pcl::registration::CorrespondenceRejectorSurfaceNormal::getRemainingCorrespondences (
-    const pcl::Correspondences& original_correspondences, 
-    pcl::Correspondences& remaining_correspondences)
-{
-  assert (data_container_ && "DataContainer object is not initialized");
-
-  unsigned int number_valid_correspondences = 0;
-  remaining_correspondences.resize (original_correspondences.size ());
-  for (size_t i = 0; i < original_correspondences.size (); ++i)
-  {
-    if (boost::static_pointer_cast<DataContainer<pcl::PointXYZ, pcl::PointNormal> > 
-        (data_container_)->getCorrespondenceScoreFromNormals (original_correspondences[i]) > threshold_)
-    {
-      remaining_correspondences[number_valid_correspondences] = original_correspondences[i];
-      ++number_valid_correspondences;
-    }
-  }
-}
 
 #endif /* PCL_REGISTRATION_IMPL_CORRESPONDENCE_REJECTION_SURFACE_NORMAL_HPP_ */

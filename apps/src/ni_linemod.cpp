@@ -37,10 +37,10 @@
  *
  */
 
-#include <boost/thread/thread.hpp>
 #include <pcl/apps/timer.h>
 #include <pcl/common/common.h>
 #include <pcl/common/angles.h>
+#include <pcl/common/time.h>
 #include <pcl/io/openni_grabber.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/search/organized.h>
@@ -191,7 +191,7 @@ class NILinemod
     
     /////////////////////////////////////////////////////////////////////////
     void 
-    mouse_callback (const visualization::MouseEvent& mouse_event, void*)
+    mouse_callback (const visualization::MouseEvent&, void*)
     {
       //if (mouse_event.getType() == visualization::MouseEvent::MouseButtonPress && mouse_event.getButton() == visualization::MouseEvent::LeftButton)
       //{
@@ -297,7 +297,7 @@ class NILinemod
     segment (const PointT &picked_point, 
              int picked_idx,
              PlanarRegion<PointT> &region,
-             PointIndices &indices,
+             PointIndices &,
              CloudPtr &object)
     {
       // First frame is segmented using an organized multi plane segmentation approach from points and their normals
@@ -396,9 +396,9 @@ class NILinemod
       search_.nearestKSearch (picked_pt, 1, indices, distances);
 
       // Get the [u, v] in pixel coordinates for the ImageViewer. Remember that 0,0 is bottom left.
-      uint32_t width  = search_.getInputCloud ()->width,
-               height = search_.getInputCloud ()->height;
-      int v = height - indices[0] / width,
+      uint32_t width  = search_.getInputCloud ()->width;
+//               height = search_.getInputCloud ()->height;
+      int v = indices[0] / width,
           u = indices[0] % width;
 
       // Add some marker to the image
@@ -487,8 +487,6 @@ class NILinemod
       grabber_.start ();
       
       bool image_init = false, cloud_init = false;
-      unsigned char* rgb_data = 0;
-      unsigned rgb_data_size = 0;
 
       while (!cloud_viewer_.wasStopped () && !image_viewer_.wasStopped ())
       {

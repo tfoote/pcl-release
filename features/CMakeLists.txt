@@ -1,6 +1,6 @@
 set(SUBSYS_NAME features)
 set(SUBSYS_DESC "Point cloud features library")
-set(SUBSYS_DEPS common search kdtree octree)
+set(SUBSYS_DEPS common search kdtree octree filters)
 
 set(build TRUE)
 PCL_SUBSYS_OPTION(build ${SUBSYS_NAME} ${SUBSYS_DESC} ON)
@@ -12,14 +12,22 @@ if(build)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
     set(incs
+        include/pcl/${SUBSYS_NAME}/boost.h
+        include/pcl/${SUBSYS_NAME}/eigen.h
+        include/pcl/${SUBSYS_NAME}/board.h
         include/pcl/${SUBSYS_NAME}/cvfh.h
+        include/pcl/${SUBSYS_NAME}/our_cvfh.h
+        include/pcl/${SUBSYS_NAME}/crh.h
+        include/pcl/${SUBSYS_NAME}/don.h
         include/pcl/${SUBSYS_NAME}/feature.h
         include/pcl/${SUBSYS_NAME}/fpfh.h
         include/pcl/${SUBSYS_NAME}/fpfh_omp.h
+        include/pcl/${SUBSYS_NAME}/gfpfh.h
         include/pcl/${SUBSYS_NAME}/integral_image2D.h
         include/pcl/${SUBSYS_NAME}/integral_image_normal.h
         include/pcl/${SUBSYS_NAME}/intensity_gradient.h
         include/pcl/${SUBSYS_NAME}/intensity_spin.h
+        include/pcl/${SUBSYS_NAME}/linear_least_squares_normal.h
         include/pcl/${SUBSYS_NAME}/moment_invariants.h
         include/pcl/${SUBSYS_NAME}/multiscale_feature_persistence.h
         include/pcl/${SUBSYS_NAME}/narf.h
@@ -28,6 +36,7 @@ if(build)
         include/pcl/${SUBSYS_NAME}/normal_3d_omp.h
         include/pcl/${SUBSYS_NAME}/normal_based_signature.h
         include/pcl/${SUBSYS_NAME}/pfh.h
+        include/pcl/${SUBSYS_NAME}/pfh_tools.h
         include/pcl/${SUBSYS_NAME}/pfhrgb.h
         include/pcl/${SUBSYS_NAME}/ppf.h
         include/pcl/${SUBSYS_NAME}/ppfrgb.h
@@ -49,14 +58,20 @@ if(build)
         )
 
     set(impl_incs
+        include/pcl/${SUBSYS_NAME}/impl/board.hpp
         include/pcl/${SUBSYS_NAME}/impl/cvfh.hpp
+        include/pcl/${SUBSYS_NAME}/impl/our_cvfh.hpp
+        include/pcl/${SUBSYS_NAME}/impl/crh.hpp
+        include/pcl/${SUBSYS_NAME}/impl/don.hpp
         include/pcl/${SUBSYS_NAME}/impl/feature.hpp
         include/pcl/${SUBSYS_NAME}/impl/fpfh.hpp
         include/pcl/${SUBSYS_NAME}/impl/fpfh_omp.hpp
+        include/pcl/${SUBSYS_NAME}/impl/gfpfh.hpp
         include/pcl/${SUBSYS_NAME}/impl/integral_image2D.hpp
         include/pcl/${SUBSYS_NAME}/impl/integral_image_normal.hpp
         include/pcl/${SUBSYS_NAME}/impl/intensity_gradient.hpp
         include/pcl/${SUBSYS_NAME}/impl/intensity_spin.hpp
+        include/pcl/${SUBSYS_NAME}/impl/linear_least_squares_normal.hpp
         include/pcl/${SUBSYS_NAME}/impl/moment_invariants.hpp
         include/pcl/${SUBSYS_NAME}/impl/multiscale_feature_persistence.hpp
         include/pcl/${SUBSYS_NAME}/impl/narf.hpp
@@ -85,28 +100,27 @@ if(build)
         )
 
     set(srcs
+        src/board.cpp
         src/boundary.cpp
         src/cvfh.cpp
+        src/our_cvfh.cpp
+        src/crh.cpp
+        src/don.cpp
         src/fpfh.cpp
-        src/fpfh_omp.cpp
+        src/gfpfh.cpp
         src/integral_image_normal.cpp
         src/intensity_gradient.cpp
         src/intensity_spin.cpp
+        src/linear_least_squares_normal.cpp
         src/moment_invariants.cpp
         src/multiscale_feature_persistence.cpp
         src/narf.cpp
-        src/narf_descriptor.cpp
         src/normal_3d.cpp
-        src/normal_3d_omp.cpp
         src/normal_based_signature.cpp
         src/pfh.cpp
-        src/pfhrgb.cpp
         src/ppf.cpp
-        src/ppfrgb.cpp
         src/shot.cpp
-        src/shot_omp.cpp
         src/shot_lrf.cpp
-        src/shot_lrf_omp.cpp
         src/spin_image.cpp
         src/principal_curvatures.cpp
         src/rift.cpp
@@ -117,18 +131,14 @@ if(build)
         src/3dsc.cpp
         src/usc.cpp
         src/range_image_border_extractor.cpp
-        )
+       )
 
     set(LIB_NAME pcl_${SUBSYS_NAME})
     PCL_ADD_LIBRARY(${LIB_NAME} ${SUBSYS_NAME} ${srcs} ${incs} ${impl_incs})
-    target_link_libraries(${LIB_NAME} pcl_common pcl_search pcl_kdtree pcl_octree)
+    target_link_libraries(${LIB_NAME} pcl_common pcl_search pcl_kdtree pcl_octree pcl_filters)
     PCL_MAKE_PKGCONFIG(${LIB_NAME} ${SUBSYS_NAME} "${SUBSYS_DESC}" "${SUBSYS_DEPS}" "" "" "" "")
     # Install headers
     PCL_ADD_INCLUDES(${SUBSYS_NAME} ${SUBSYS_NAME} ${incs})
     PCL_ADD_INCLUDES(${SUBSYS_NAME} ${SUBSYS_NAME}/impl ${impl_incs})
-
-    if(BUILD_TESTS)
-        add_subdirectory(test)
-    endif(BUILD_TESTS)
 
 endif(build)

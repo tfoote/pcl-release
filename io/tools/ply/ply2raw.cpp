@@ -33,7 +33,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *	
- * $Id: ply2raw.cpp 4918 2012-03-05 17:41:10Z nizar $
+ * $Id$
  *
  */
 
@@ -42,8 +42,7 @@
 #include <fstream>
 #include <iostream>
 
-#include <boost/bind.hpp>
-
+#include <pcl/io/boost.h>
 #include <pcl/io/ply/ply_parser.h>
 
 /** Class ply_to_raw_converter converts a PLY file to a povray (www.povray.org) RAW file

@@ -33,7 +33,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: uniform_sampling.h 2414 2011-09-07 07:01:06Z svn $
+ * $Id$
  *
  */
 
@@ -70,6 +70,9 @@ namespace pcl
     using Keypoint<PointInT, int>::getClassName;
 
     public:
+      typedef boost::shared_ptr<UniformSampling<PointInT> > Ptr;
+      typedef boost::shared_ptr<const UniformSampling<PointInT> > ConstPtr;
+
       /** \brief Empty constructor. */
       UniformSampling () :
         leaves_ (),
@@ -131,6 +134,10 @@ namespace pcl
       detectKeypoints (PointCloudOut &output);
   };
 }
+
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/keypoints/impl/uniform_sampling.hpp>
+#endif
 
 #endif  //#ifndef PCL_KEYPOINTS_UNIFORM_SAMPLING_H_
 

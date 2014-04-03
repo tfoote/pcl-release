@@ -31,13 +31,14 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: texture_mapping.hpp 6064 2012-06-29 17:57:23Z raph $
+ * $Id$
  *
  */
 
 #ifndef PCL_SURFACE_IMPL_TEXTURE_MAPPING_HPP_
 #define PCL_SURFACE_IMPL_TEXTURE_MAPPING_HPP_
 
+#include <pcl/common/distances.h>
 #include <pcl/surface/texture_mapping.h>
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -299,7 +300,7 @@ pcl::TextureMapping<PointInT>::mapMultipleTexturesToMeshUV (pcl::TextureMesh &te
   pcl::PointCloud<pcl::PointXYZ>::Ptr camera_transformed_cloud (new pcl::PointCloud<pcl::PointXYZ>);
 
   // convert mesh's cloud to pcl format for ease
-  pcl::fromROSMsg (tex_mesh.cloud, *originalCloud);
+  pcl::fromPCLPointCloud2 (tex_mesh.cloud, *originalCloud);
 
   // texture coordinates for each mesh
   std::vector<std::vector<Eigen::Vector2f> > texture_map;
@@ -488,7 +489,7 @@ pcl::TextureMapping<PointInT>::removeOccludedPoints (const pcl::TextureMesh &tex
   pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_cloud (new pcl::PointCloud<pcl::PointXYZ>);
 
   // load points into a PCL format
-  pcl::fromROSMsg (tex_mesh.cloud, *cloud);
+  pcl::fromPCLPointCloud2 (tex_mesh.cloud, *cloud);
 
   std::vector<int> visible, occluded;
   removeOccludedPoints (cloud, filtered_cloud, octree_voxel_size, visible, occluded);
@@ -541,7 +542,7 @@ pcl::TextureMapping<PointInT>::removeOccludedPoints (const pcl::TextureMesh &tex
   PointCloudPtr cloud (new PointCloud);
 
   // load points into a PCL format
-  pcl::fromROSMsg (tex_mesh.cloud, *cloud);
+  pcl::fromPCLPointCloud2 (tex_mesh.cloud, *cloud);
 
   std::vector<int> visible, occluded;
   removeOccludedPoints (cloud, filtered_cloud, octree_voxel_size, visible, occluded);
@@ -576,7 +577,7 @@ pcl::TextureMapping<PointInT>::sortFacesByCamera (pcl::TextureMesh &tex_mesh, pc
   pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_cloud (new pcl::PointCloud<pcl::PointXYZ>);
 
   // load points into a PCL format
-  pcl::fromROSMsg (tex_mesh.cloud, *original_cloud);
+  pcl::fromPCLPointCloud2 (tex_mesh.cloud, *original_cloud);
 
   // for each camera
   for (size_t cam = 0; cam < cameras.size (); ++cam)
@@ -732,7 +733,7 @@ pcl::TextureMapping<PointInT>::showOcclusions (pcl::TextureMesh &tex_mesh, pcl::
 {
   // load points into a PCL format
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::fromROSMsg (tex_mesh.cloud, *cloud);
+  pcl::fromPCLPointCloud2 (tex_mesh.cloud, *cloud);
 
   showOcclusions (cloud, colored_cloud, octree_voxel_size, show_nb_occlusions, max_occlusions);
 }
@@ -747,7 +748,7 @@ pcl::TextureMapping<PointInT>::textureMeshwithMultipleCameras (pcl::TextureMesh 
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr mesh_cloud (new pcl::PointCloud<pcl::PointXYZ>);
 
-  pcl::fromROSMsg (mesh.cloud, *mesh_cloud);
+  pcl::fromPCLPointCloud2 (mesh.cloud, *mesh_cloud);
 
   std::vector<pcl::Vertices> faces;
 
@@ -872,7 +873,8 @@ pcl::TextureMapping<PointInT>::textureMeshwithMultipleCameras (pcl::TextureMesh 
               //get its circumsribed circle
               double radius;
               pcl::PointXY center;
-              getTriangleCircumcenterAndSize (uv_coord1, uv_coord2, uv_coord3, center, radius);
+              // getTriangleCircumcenterAndSize (uv_coord1, uv_coord2, uv_coord3, center, radius);
+              getTriangleCircumcscribedCircleCentroid(uv_coord1, uv_coord2, uv_coord3, center, radius); // this function yields faster results than getTriangleCircumcenterAndSize
 
               // get points inside circ.circle
               if (kdtree.radiusSearch (center, radius, idxNeighbors, neighborsSquaredDistance) > 0 )
@@ -1014,6 +1016,22 @@ pcl::TextureMapping<PointInT>::getTriangleCircumcenterAndSize(const pcl::PointXY
 
   radius = sqrt( (circomcenter.x - p1.x)*(circomcenter.x - p1.x)  + (circomcenter.y - p1.y)*(circomcenter.y - p1.y));//2.0* (p1.x*(p2.y - p3.y)  + p2.x*(p3.y - p1.y) + p3.x*(p1.y - p2.y));
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+template<typename PointInT> inline void
+pcl::TextureMapping<PointInT>::getTriangleCircumcscribedCircleCentroid ( const pcl::PointXY &p1, const pcl::PointXY &p2, const pcl::PointXY &p3, pcl::PointXY &circumcenter, double &radius)
+{
+  // compute centroid's coordinates (translate back to original coordinates)
+  circumcenter.x = static_cast<float> (p1.x + p2.x + p3.x ) / 3;
+  circumcenter.y = static_cast<float> (p1.y + p2.y + p3.y ) / 3;
+  double r1 = (circumcenter.x - p1.x) * (circumcenter.x - p1.x) + (circumcenter.y - p1.y) * (circumcenter.y - p1.y)  ;
+  double r2 = (circumcenter.x - p2.x) * (circumcenter.x - p2.x) + (circumcenter.y - p2.y) * (circumcenter.y - p2.y)  ;
+  double r3 = (circumcenter.x - p3.x) * (circumcenter.x - p3.x) + (circumcenter.y - p3.y) * (circumcenter.y - p3.y)  ;
+
+  // radius
+  radius = std::sqrt( std::max( r1, std::max( r2, r3) )) ;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 template<typename PointInT> inline bool

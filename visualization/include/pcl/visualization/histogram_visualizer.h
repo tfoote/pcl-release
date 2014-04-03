@@ -33,16 +33,17 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: histogram_visualizer.h 6161 2012-07-05 17:37:29Z rusu $
+ * $Id$
  *
  */
 #ifndef PCL_PCL_HISTOGRAM_VISUALIZER_H_
 #define PCL_PCL_HISTOGRAM_VISUALIZER_H_
 
 #include <pcl/visualization/interactor_style.h>
-#include <pcl/visualization/vtk.h>
 #include <pcl/visualization/common/common.h>
 #include <pcl/visualization/common/ren_win_interact_map.h>
+
+class vtkRenderWindowInteractor;
 
 namespace pcl
 {
@@ -77,10 +78,9 @@ namespace pcl
           * \param[in] r the red component of the RGB color
           * \param[in] g the green component of the RGB color
           * \param[in] b the blue component of the RGB color
-          * \param[in] viewport the view port (default: all)
           */
         void 
-        setBackgroundColor (const double &r, const double &g, const double &b, int viewport = 0);
+        setBackgroundColor (const double &r, const double &g, const double &b);
 
         /** \brief Add a histogram feature to screen as a separate window, from a cloud containing a single histogram.
           * \param[in] cloud the PointCloud dataset containing the histogram
@@ -102,7 +102,7 @@ namespace pcl
           * \param[in] win_height the height of the window
           */
         bool 
-        addFeatureHistogram (const sensor_msgs::PointCloud2 &cloud, 
+        addFeatureHistogram (const pcl::PCLPointCloud2 &cloud,
                              const std::string &field_name, 
                              const std::string &id = "cloud", int win_width = 640, int win_height = 200);
 
@@ -129,7 +129,7 @@ namespace pcl
           * \param[in] win_height the height of the window
           */
         bool 
-        addFeatureHistogram (const sensor_msgs::PointCloud2 &cloud, 
+        addFeatureHistogram (const pcl::PCLPointCloud2 &cloud,
                              const std::string &field_name, 
                              const int index,
                              const std::string &id = "cloud", int win_width = 640, int win_height = 200);
@@ -149,7 +149,7 @@ namespace pcl
           * \param[in] id the point cloud object id (default: cloud)
           */
         bool 
-        updateFeatureHistogram (const sensor_msgs::PointCloud2 &cloud, 
+        updateFeatureHistogram (const pcl::PCLPointCloud2 &cloud,
                                 const std::string &field_name, 
                                 const std::string &id = "cloud");
                              
@@ -172,7 +172,7 @@ namespace pcl
           * \param[in] id the point cloud object id (default: cloud)
           */
         bool 
-        updateFeatureHistogram (const sensor_msgs::PointCloud2 &cloud, 
+        updateFeatureHistogram (const pcl::PCLPointCloud2 &cloud,
                                 const std::string &field_name, const int index,
                                 const std::string &id = "cloud");         
 
@@ -230,22 +230,8 @@ namespace pcl
             return (new ExitMainLoopTimerCallback);
           }
           virtual void 
-          Execute (vtkObject* vtkNotUsed (caller), unsigned long event_id, void* call_data)
-          {
-            if (event_id != vtkCommand::TimerEvent)
-              return;
-            int timer_id = *(reinterpret_cast<int*> (call_data));
+          Execute (vtkObject*, unsigned long event_id, void* call_data);
 
-            if (timer_id != right_timer_id)
-              return;
-
-            // Stop vtk loop and send notification to app to wake it up
-#if ((VTK_MAJOR_VERSION == 5) && (VTK_MINOR_VERSION <= 4))
-            interact->stopLoop ();
-#else
-            interact->TerminateApp ();
-#endif
-          }
           int right_timer_id;
 #if ((VTK_MAJOR_VERSION == 5) && (VTK_MINOR_VERSION <= 4))
           PCLVisualizerInteractor *interact;
@@ -264,12 +250,8 @@ namespace pcl
           }
 
           virtual void 
-          Execute (vtkObject*, unsigned long event_id, void*)
-          {
-            if (event_id != vtkCommand::ExitEvent)
-              return;
-            his->stopped_ = true;
-          }
+          Execute (vtkObject*, unsigned long event_id, void*);
+
           PCLHistogramVisualizer *his;
         };
 

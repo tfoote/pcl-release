@@ -16,7 +16,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,7 +33,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: normal_estimation.cpp 1032 2011-05-18 22:43:27Z marton $
+ * $Id$
  *
  */
 
@@ -87,23 +87,20 @@ compute (const PointCloud<PointNormal>::Ptr &input, pcl::PolygonMesh &output,
   
   print_highlight (stderr, "Computing ");
 
-
   PointCloud<PointNormal>::Ptr cloud (new PointCloud<PointNormal> ());
-  for (size_t i = 0; i < cloud->size (); ++i)
+  for (size_t i = 0; i < input->size (); ++i)
     if (pcl_isfinite (input->points[i].x))
       cloud->push_back (input->points[i]);
 
   cloud->width = static_cast<uint32_t> (cloud->size ());
   cloud->height = 1;
-  cloud->is_dense = false;
-
+  cloud->is_dense = true;
 
   GreedyProjectionTriangulation<PointNormal> gpt;
   gpt.setSearchMethod (pcl::search::KdTree<pcl::PointNormal>::Ptr (new pcl::search::KdTree<pcl::PointNormal>));
   gpt.setInputCloud (cloud);
   gpt.setSearchRadius (radius);
   gpt.setMu (mu);
-
 
   gpt.reconstruct (output);
 

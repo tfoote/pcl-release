@@ -1,9 +1,10 @@
 #ifndef PCL_TRACKING_IMPL_TRACKER_H_
 #define PCL_TRACKING_IMPL_TRACKER_H_
 
-#include <boost/random.hpp>
 #include <pcl/common/eigen.h>
 #include <ctime>
+#include <pcl/tracking/boost.h>
+#include <pcl/tracking/tracker.h>
 
 template <typename PointInT, typename StateT> bool
 pcl::tracking::Tracker<PointInT, StateT>::initCompute ()
@@ -25,7 +26,6 @@ pcl::tracking::Tracker<PointInT, StateT>::initCompute ()
 
   return (true);
 }
-
 
 template <typename PointInT, typename StateT> void
 pcl::tracking::Tracker<PointInT, StateT>::compute ()

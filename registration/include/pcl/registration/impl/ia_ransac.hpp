@@ -3,6 +3,7 @@
  *
  *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010-2012, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
  *
  *  All rights reserved.
  *
@@ -16,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,7 +34,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: ia_ransac.hpp 5066 2012-03-14 06:42:21Z rusu $
+ * $Id$
  *
  */
 
@@ -110,9 +111,7 @@ pcl::SampleConsensusInitialAlignment<PointSource, PointTarget, FeatureT>::select
       iterations_without_a_sample = 0;
     }
     else
-    {
       ++iterations_without_a_sample;
-    }
 
     // If no valid samples can be found, relax the inter-sample distance requirements
     if (iterations_without_a_sample >= max_iterations_without_a_sample)
@@ -126,7 +125,6 @@ pcl::SampleConsensusInitialAlignment<PointSource, PointTarget, FeatureT>::select
       iterations_without_a_sample = 0;
     }
   }
-
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -176,6 +174,7 @@ pcl::SampleConsensusInitialAlignment<PointSource, PointTarget, FeatureT>::comput
 template <typename PointSource, typename PointTarget, typename FeatureT> void 
 pcl::SampleConsensusInitialAlignment<PointSource, PointTarget, FeatureT>::computeTransformation (PointCloudSource &output, const Eigen::Matrix4f& guess)
 {
+  // Some sanity checks first
   if (!input_features_)
   {
     PCL_ERROR ("[pcl::%s::computeTransformation] ", getClassName ().c_str ());
@@ -189,10 +188,25 @@ pcl::SampleConsensusInitialAlignment<PointSource, PointTarget, FeatureT>::comput
     return;
   }
 
-  if (!error_functor_)
+  if (input_->size () != input_features_->size ())
   {
-    error_functor_.reset (new TruncatedError (static_cast<float> (corr_dist_threshold_)));
+    PCL_ERROR ("[pcl::%s::computeTransformation] ", getClassName ().c_str ());
+    PCL_ERROR ("The source points and source feature points need to be in a one-to-one relationship! Current input cloud sizes: %ld vs %ld.\n",
+               input_->size (), input_features_->size ());
+    return;
   }
+
+  if (target_->size () != target_features_->size ())
+  {
+    PCL_ERROR ("[pcl::%s::computeTransformation] ", getClassName ().c_str ());
+    PCL_ERROR ("The target points and target feature points need to be in a one-to-one relationship! Current input cloud sizes: %ld vs %ld.\n",
+               target_->size (), target_features_->size ());
+    return;
+  }
+
+  if (!error_functor_)
+    error_functor_.reset (new TruncatedError (static_cast<float> (corr_dist_threshold_)));
+
 
   std::vector<int> sample_indices (nr_samples_);
   std::vector<int> corresponding_indices (nr_samples_);
@@ -201,11 +215,12 @@ pcl::SampleConsensusInitialAlignment<PointSource, PointTarget, FeatureT>::comput
 
   final_transformation_ = guess;
   int i_iter = 0;
-  if (!guess.isApprox(Eigen::Matrix4f::Identity (), 0.01f)) 
-  { //If guess is not the Identity matrix we check it.
-	  transformPointCloud (*input_, input_transformed, final_transformation_);
-	  lowest_error = computeErrorMetric (input_transformed, static_cast<float> (corr_dist_threshold_));
-	  i_iter = 1;
+  if (!guess.isApprox (Eigen::Matrix4f::Identity (), 0.01f)) 
+  {
+    // If guess is not the Identity matrix we check it.
+    transformPointCloud (*input_, input_transformed, final_transformation_);
+    lowest_error = computeErrorMetric (input_transformed, static_cast<float> (corr_dist_threshold_));
+    i_iter = 1;
   }
 
   for (; i_iter < max_iterations_; ++i_iter)

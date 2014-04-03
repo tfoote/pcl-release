@@ -1,7 +1,10 @@
 /*
  * Software License Agreement (BSD License)
  *
+ *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
+ *
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -14,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -31,18 +34,28 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: gicp.hpp 6152 2012-07-04 22:58:53Z rusu $
+ * $Id$
  *
  */
+#ifndef PCL_REGISTRATION_IMPL_GICP_HPP_
+#define PCL_REGISTRATION_IMPL_GICP_HPP_
 
-#include <boost/unordered_map.hpp>
+#include <pcl/registration/boost.h>
 #include <pcl/registration/exceptions.h>
+
+///////////////////////////////////////////////////////////////////////////////////////////
+template <typename PointSource, typename PointTarget> void
+pcl::GeneralizedIterativeClosestPoint<PointSource, PointTarget>::setInputCloud (
+    const typename pcl::GeneralizedIterativeClosestPoint<PointSource, PointTarget>::PointCloudSourceConstPtr &cloud)
+{
+  setInputSource (cloud);
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////
 template <typename PointSource, typename PointTarget> 
 template<typename PointT> void
 pcl::GeneralizedIterativeClosestPoint<PointSource, PointTarget>::computeCovariances(typename pcl::PointCloud<PointT>::ConstPtr cloud, 
-                                                                                    const typename pcl::KdTree<PointT>::Ptr kdtree,
+                                                                                    const typename pcl::search::KdTree<PointT>::Ptr kdtree,
                                                                                     std::vector<Eigen::Matrix3d>& cloud_covariances)
 {
   if (k_correspondences_ > int (cloud->size ()))
@@ -338,6 +351,7 @@ pcl::GeneralizedIterativeClosestPoint<PointSource, PointTarget>::OptimizationFun
 template <typename PointSource, typename PointTarget> inline void
 pcl::GeneralizedIterativeClosestPoint<PointSource, PointTarget>::computeTransformation (PointCloudSource &output, const Eigen::Matrix4f& guess)
 {
+  pcl::IterativeClosestPoint<PointSource, PointTarget>::initComputeReciprocal ();
   using namespace std;
   // Difference between consecutive transforms
   double delta = 0;
@@ -346,9 +360,11 @@ pcl::GeneralizedIterativeClosestPoint<PointSource, PointTarget>::computeTransfor
   // Set the mahalanobis matrices to identity
   mahalanobis_.resize (N, Eigen::Matrix3d::Identity ());
   // Compute target cloud covariance matrices
-  computeCovariances<PointTarget> (target_, tree_, target_covariances_);
+  if (target_covariances_.empty ())
+    computeCovariances<PointTarget> (target_, tree_, target_covariances_);
   // Compute input cloud covariance matrices
-  computeCovariances<PointSource> (input_, input_tree_, input_covariances_);
+  if (input_covariances_.empty ())
+    computeCovariances<PointSource> (input_, tree_reciprocal_, input_covariances_);
 
   base_transformation_ = guess;
   nr_iterations_ = 0;
@@ -459,8 +475,9 @@ pcl::GeneralizedIterativeClosestPoint<PointSource, PointTarget>::applyState(Eige
   R = Eigen::AngleAxisf (static_cast<float> (x[5]), Eigen::Vector3f::UnitZ ())
     * Eigen::AngleAxisf (static_cast<float> (x[4]), Eigen::Vector3f::UnitY ())
     * Eigen::AngleAxisf (static_cast<float> (x[3]), Eigen::Vector3f::UnitX ());
-  t.topLeftCorner<3,3> () = R * t.topLeftCorner<3,3> ();
+  t.topLeftCorner<3,3> ().matrix () = R * t.topLeftCorner<3,3> ().matrix ();
   Eigen::Vector4f T (static_cast<float> (x[0]), static_cast<float> (x[1]), static_cast<float> (x[2]), 0.0f);
   t.col (3) += T;
 }
 
+#endif //PCL_REGISTRATION_IMPL_GICP_HPP_

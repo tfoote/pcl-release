@@ -33,7 +33,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: example_spin_images.cpp 4516 2012-02-17 08:03:46Z nizar $
+ * $Id$
  *
  */
 

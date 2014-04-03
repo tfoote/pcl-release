@@ -31,30 +31,65 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: common.h 4426 2012-02-13 06:14:56Z rusu $
+ * $Id$
  *
  */
 #ifndef PCL_PCL_VISUALIZER_COMMON_H_
 #define PCL_PCL_VISUALIZER_COMMON_H_
-#include <vtkCommand.h>
-#include <vtkTextActor.h>
+
+#if defined __GNUC__
+#pragma GCC system_header
+#endif
 
 #include <pcl/pcl_macros.h>
-#include <Eigen/Dense>
+#include <pcl/visualization/eigen.h>
+#include <vtkMatrix4x4.h>
 
 namespace pcl
 {
+  struct RGB;
+
   namespace visualization
   {
     /** \brief Get (good) random values for R/G/B.
-      * \param r the resultant R color value
-      * \param g the resultant G color value
-      * \param b the resultant B color value
-      * \param min minimum value for the colors
-      * \param max maximum value for the colors
+      * \param[out] r the resultant R color value
+      * \param[out] g the resultant G color value
+      * \param[out] b the resultant B color value
+      * \param[in] min minimum value for the colors
+      * \param[in] max maximum value for the colors
       */
     PCL_EXPORTS void
     getRandomColors (double &r, double &g, double &b, double min = 0.2, double max = 2.8);
+
+    /** \brief Get (good) random values for R/G/B.
+      * \param[out] rgb the resultant RGB color value
+      * \param[in] min minimum value for the colors
+      * \param[in] max maximum value for the colors
+      */
+    PCL_EXPORTS void
+    getRandomColors (pcl::RGB &rgb, double min = 0.2, double max = 2.8);
+
+    PCL_EXPORTS Eigen::Matrix4d
+    vtkToEigen (vtkMatrix4x4* vtk_matrix);
+
+    PCL_EXPORTS Eigen::Vector2i
+    worldToView (const Eigen::Vector4d &world_pt, const Eigen::Matrix4d &view_projection_matrix, int width, int height);
+
+    PCL_EXPORTS void
+    getViewFrustum (const Eigen::Matrix4d &view_projection_matrix, double planes[24]);
+
+    enum FrustumCull
+    {
+      PCL_INSIDE_FRUSTUM,
+      PCL_INTERSECT_FRUSTUM,
+      PCL_OUTSIDE_FRUSTUM
+    };
+
+    PCL_EXPORTS int
+    cullFrustum (double planes[24], const Eigen::Vector3d &min_bb, const Eigen::Vector3d &max_bb);
+
+    PCL_EXPORTS float
+    viewScreenArea (const Eigen::Vector3d &eye, const Eigen::Vector3d &min_bb, const Eigen::Vector3d &max_bb, const Eigen::Matrix4d &view_projection_matrix, int width, int height);
 
     enum RenderingProperties
     {
@@ -64,7 +99,8 @@ namespace pcl
       PCL_VISUALIZER_FONT_SIZE,
       PCL_VISUALIZER_COLOR,
       PCL_VISUALIZER_REPRESENTATION,
-      PCL_VISUALIZER_IMMEDIATE_RENDERING
+      PCL_VISUALIZER_IMMEDIATE_RENDERING,
+      PCL_VISUALIZER_SHADING
     };
 
     enum RenderingRepresentationProperties
@@ -74,31 +110,43 @@ namespace pcl
       PCL_VISUALIZER_REPRESENTATION_SURFACE
     };
 
+    enum ShadingRepresentationProperties
+    {
+      PCL_VISUALIZER_SHADING_FLAT,
+      PCL_VISUALIZER_SHADING_GOURAUD,
+      PCL_VISUALIZER_SHADING_PHONG
+    };
+
     //////////////////////////////////////////////////////////////////////////////////////////////
     /** \brief Camera class holds a set of camera parameters together with the window pos/size. */
     class PCL_EXPORTS Camera
     {
       public:
-        // focal point or lookAt
+        /** \brief Focal point or lookAt.
+          * \note The view direction can be obtained by (focal-pos).normalized ()
+          */
         double focal[3];
 
-        // position of the camera
+        /** \brief Position of the camera. */
         double pos[3];
 
-        // up vector of the camera
+        /** \brief Up vector of the camera.
+          * \note Not to be confused with the view direction, bad naming here. */
         double view[3];
 
-        // clipping planes clip[0] is near clipping plane or also the image plane, and clip [1] is the far clipping plane
+        /** \brief Clipping planes depths.
+          * clip[0] is near clipping plane, and clip [1] is the far clipping plane
+          */
         double clip[2];
 
-        // field of view angle in y direction (radians)
+        /** \brief Field of view angle in y direction (radians). */
         double fovy;
 
-        // the following variables are the actual position and size of the window on the screen
-        // and NOT the viewport! except for the size, which is the same
-        // the viewport is assumed to be centered and same size as the window.
+        // the following variables are the actual position and size of the window on the screen and NOT the viewport!
+        // except for the size, which is the same the viewport is assumed to be centered and same size as the window.
         double window_size[2];
         double window_pos[2];
+
 
         /** \brief Computes View matrix for Camera (Based on gluLookAt)
           * \param[out] view_mat the resultant matrix
@@ -120,7 +168,7 @@ namespace pcl
           * It is very inefficient to use this for every point in the point cloud!
           */
         template<typename PointT> void 
-        cvtWindowCoordinates (const PointT& pt, Eigen::Vector4d& window_cord);
+        cvtWindowCoordinates (const PointT& pt, Eigen::Vector4d& window_cord) const;
 
         /** \brief converts point to window coordiantes
           * \param[in] pt xyz point to be converted
@@ -133,20 +181,11 @@ namespace pcl
           * matrices like a camera disortion matrix can also be added.
           */
         template<typename PointT> void 
-        cvtWindowCoordinates (const PointT& pt, Eigen::Vector4d& window_cord, const Eigen::Matrix4d& composite_mat);
-    };
-
-    //////////////////////////////////////////////////////////////////////////////////////////////
-    class PCL_EXPORTS FPSCallback : public vtkCommand
-    {
-      public:
-        static FPSCallback *New () { return new FPSCallback;}
-        inline void setTextActor (vtkTextActor *txt) { this->actor_ = txt; }
-        virtual void Execute (vtkObject *, unsigned long, void*);
-      protected:
-        vtkTextActor *actor_;
+        cvtWindowCoordinates (const PointT& pt, Eigen::Vector4d& window_cord, const Eigen::Matrix4d& composite_mat) const;
     };
   }
 }
+
+#include <pcl/visualization/common/impl/common.hpp>
 
 #endif

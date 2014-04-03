@@ -33,7 +33,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: processing.hpp 5022 2012-03-11 23:12:23Z aichim $
+ * $Id$
  *
  */
 

@@ -16,7 +16,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -45,11 +45,15 @@ namespace pcl
   /**
     * \brief Base class for 3D clipper objects
     * \author Suat Gedikli <gedikli@willowgarage.com>
+    * \ingroup filters
     */
   template<typename PointT>
   class Clipper3D
   {
     public:
+      typedef boost::shared_ptr< Clipper3D<PointT> > Ptr;
+      typedef boost::shared_ptr< const Clipper3D<PointT> > ConstPtr;
+ 
       /**
         * \brief virtual destructor. Never throws an exception.
         */
@@ -107,5 +111,8 @@ namespace pcl
   };
 }
 
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/filters/impl/clipper3D.hpp>
+#endif
 
 #endif // PCL_CLIPPER3D_H_

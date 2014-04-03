@@ -3,6 +3,7 @@
  *
  *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010-2011, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
  *
  *  All rights reserved.
  *
@@ -16,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,6 +34,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
+ * $Id$
  *
  */
 
@@ -46,23 +48,51 @@ namespace pcl
 {
   namespace registration
   {
-    /** \brief @b CorrespondenceEstimationNormalShooting computes correspondences as points in the target cloud which
-      *  have minimum distance to normals computed on the input cloud
-      * \author Aravindhan K Krishnan
+    /** \brief @b CorrespondenceEstimationNormalShooting computes
+      * correspondences as points in the target cloud which have minimum
+      * distance to normals computed on the input cloud
+      *
+      * Code example:
+      *
+      * \code
+      * pcl::PointCloud<pcl::PointNormal>::Ptr source, target;
+      * // ... read or fill in source and target
+      * pcl::CorrespondenceEstimationNormalShooting<pcl::PointNormal, pcl::PointNormal, pcl::PointNormal> est;
+      * est.setInputSource (source);
+      * est.setSourceNormals (source);
+      *
+      * est.setInputTarget (target);
+      *
+      * // Test the first 10 correspondences for each point in source, and return the best
+      * est.setKSearch (10);
+      *
+      * pcl::Correspondences all_correspondences;
+      * // Determine all correspondences
+      * est.determineCorrespondences (all_correspondences);
+      * \endcode
+      * 
+      * \author Aravindhan K. Krishnan, Radu B. Rusu
       * \ingroup registration
       */
-    template <typename PointSource, typename PointTarget, typename NormalT>
-    class CorrespondenceEstimationNormalShooting : public CorrespondenceEstimation <PointSource, PointTarget>
+    template <typename PointSource, typename PointTarget, typename NormalT, typename Scalar = float>
+    class CorrespondenceEstimationNormalShooting : public CorrespondenceEstimationBase<PointSource, PointTarget, Scalar>
     {
       public:
-        using PCLBase<PointSource>::initCompute;
+        typedef boost::shared_ptr<CorrespondenceEstimationNormalShooting<PointSource, PointTarget, NormalT, Scalar> > Ptr;
+        typedef boost::shared_ptr<const CorrespondenceEstimationNormalShooting<PointSource, PointTarget, NormalT, Scalar> > ConstPtr;
+
+        using CorrespondenceEstimationBase<PointSource, PointTarget, Scalar>::initCompute;
+        using CorrespondenceEstimationBase<PointSource, PointTarget, Scalar>::initComputeReciprocal;
+        using CorrespondenceEstimationBase<PointSource, PointTarget, Scalar>::input_transformed_;
         using PCLBase<PointSource>::deinitCompute;
         using PCLBase<PointSource>::input_;
         using PCLBase<PointSource>::indices_;
-        using CorrespondenceEstimation<PointSource, PointTarget>::getClassName;
+        using CorrespondenceEstimationBase<PointSource, PointTarget, Scalar>::getClassName;
+        using CorrespondenceEstimationBase<PointSource, PointTarget, Scalar>::point_representation_;
+        using CorrespondenceEstimationBase<PointSource, PointTarget, Scalar>::target_indices_;
 
-        typedef typename pcl::KdTree<PointTarget> KdTree;
-        typedef typename pcl::KdTree<PointTarget>::Ptr KdTreePtr;
+        typedef typename pcl::search::KdTree<PointTarget> KdTree;
+        typedef typename pcl::search::KdTree<PointTarget>::Ptr KdTreePtr;
 
         typedef pcl::PointCloud<PointSource> PointCloudSource;
         typedef typename PointCloudSource::Ptr PointCloudSourcePtr;
@@ -72,24 +102,35 @@ namespace pcl
         typedef typename PointCloudTarget::Ptr PointCloudTargetPtr;
         typedef typename PointCloudTarget::ConstPtr PointCloudTargetConstPtr;
 
-        typedef typename KdTree::PointRepresentationConstPtr PointRepresentationConstPtr;
-        typedef typename pcl::PointCloud<NormalT>::Ptr NormalsPtr;
+        typedef pcl::PointCloud<NormalT> PointCloudNormals;
+        typedef typename PointCloudNormals::Ptr NormalsPtr;
+        typedef typename PointCloudNormals::ConstPtr NormalsConstPtr;
 
-        /** \brief Empty constructor. */
+        /** \brief Empty constructor. 
+          *
+          * \note
+          * Sets the number of neighbors to be considered in the target point cloud (k_) to 10.
+          */
         CorrespondenceEstimationNormalShooting ()
+          : source_normals_ ()
+          , source_normals_transformed_ ()
+          , k_ (10)
         {
-          corr_name_ = "NormalShooting";
+          corr_name_ = "CorrespondenceEstimationNormalShooting";
         }
 
-        /** \brief Set the normals computed on the input point cloud
-          * \param[in] normals the normals computed for the input cloud
+        /** \brief Empty destructor */
+        virtual ~CorrespondenceEstimationNormalShooting () {}
+
+        /** \brief Set the normals computed on the source point cloud
+          * \param[in] normals the normals computed for the source cloud
           */
         inline void
-        setSourceNormals (const NormalsPtr &normals) { source_normals_ = normals; }
+        setSourceNormals (const NormalsConstPtr &normals) { source_normals_ = normals; }
 
-        /** \brief Get the normals of the input point cloud
+        /** \brief Get the normals of the source point cloud
           */
-        inline NormalsPtr
+        inline NormalsConstPtr
         getSourceNormals () const { return (source_normals_); }
 
         /** \brief Determine the correspondences between input and target cloud.
@@ -99,29 +140,52 @@ namespace pcl
           */
         void 
         determineCorrespondences (pcl::Correspondences &correspondences,
-                                  float max_distance = std::numeric_limits<float>::max ());
+                                  double max_distance = std::numeric_limits<double>::max ());
 
-        /** \brief Set the number of nearest neighbours to be considered in the target point cloud
+        /** \brief Determine the reciprocal correspondences between input and target cloud.
+          * A correspondence is considered reciprocal if both Src_i has Tgt_i as a 
+          * correspondence, and Tgt_i has Src_i as one.
+          *
+          * \param[out] correspondences the found correspondences (index of query and target point, distance)
+          * \param[in] max_distance maximum allowed distance between correspondences
+          */
+        virtual void 
+        determineReciprocalCorrespondences (pcl::Correspondences &correspondences,
+                                            double max_distance = std::numeric_limits<double>::max ());
+
+        /** \brief Set the number of nearest neighbours to be considered in the target 
+          * point cloud. By default, we use k = 10 nearest neighbors.
+          *
           * \param[in] k the number of nearest neighbours to be considered
           */
         inline void
         setKSearch (unsigned int k) { k_ = k; }
 
-        /** \brief Get the number of nearest neighbours considered in the target point cloud for computing correspondence
+        /** \brief Get the number of nearest neighbours considered in the target point 
+          * cloud for computing correspondences. By default we use k = 10 nearest 
+          * neighbors.
           */
         inline void
         getKSearch () const { return (k_); }
 
       protected:
 
-        using CorrespondenceEstimation<PointSource, PointTarget>::corr_name_;
-        using CorrespondenceEstimation<PointSource, PointTarget>::tree_;
-        using CorrespondenceEstimation<PointSource, PointTarget>::target_;
+        using CorrespondenceEstimationBase<PointSource, PointTarget, Scalar>::corr_name_;
+        using CorrespondenceEstimationBase<PointSource, PointTarget, Scalar>::tree_;
+        using CorrespondenceEstimationBase<PointSource, PointTarget, Scalar>::tree_reciprocal_;
+        using CorrespondenceEstimationBase<PointSource, PointTarget, Scalar>::target_;
 
-      private:
+        /** \brief Internal computation initalization. */
+        bool
+        initCompute ();
 
-        /** \brief The normals computed at each point in the input cloud */
-        NormalsPtr source_normals_; 
+       private:
+
+        /** \brief The normals computed at each point in the source cloud */
+        NormalsConstPtr source_normals_;
+
+        /** \brief The normals computed at each point in the source cloud */
+        NormalsPtr source_normals_transformed_;
 
         /** \brief The number of neighbours to be considered in the target point cloud */
         unsigned int k_;
@@ -130,4 +194,5 @@ namespace pcl
 }
 
 #include <pcl/registration/impl/correspondence_estimation_normal_shooting.hpp>
+
 #endif /* PCL_REGISTRATION_CORRESPONDENCE_ESTIMATION_NORMAL_SHOOTING_H_ */

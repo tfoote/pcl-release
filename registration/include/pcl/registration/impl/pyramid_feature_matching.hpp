@@ -1,8 +1,11 @@
 /*
  * Software License Agreement (BSD License)
  *
+ *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2011, Alexandru-Eugen Ichim
  *                      Willow Garage, Inc
+ *  Copyright (c) 2012-, Open Perception, Inc.
+ *
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -15,7 +18,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -32,24 +35,25 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: pyramid_feature_matching.hpp 5026 2012-03-12 02:51:44Z rusu $
+ * $Id$
+ *
  */
 
 #ifndef PCL_REGISTRATION_IMPL_PYRAMID_FEATURE_MATCHING_H_
 #define PCL_REGISTRATION_IMPL_PYRAMID_FEATURE_MATCHING_H_
 
 #include <pcl/pcl_macros.h>
+#include <pcl/console/print.h>
 
-#include <pcl/registration/pyramid_feature_matching.h>
 
 /** \brief Helper function to calculate the binary logarithm
  * \param n_arg: some value
  * \return binary logarithm (log2) of argument n_arg
  */
-__inline double
-Log2 (double n_arg)
+__inline float
+Log2 (float n_arg)
 {
-  return log (n_arg) / M_LN2;
+  return std::log (n_arg) / float (M_LN2);
 }
 
 
@@ -184,7 +188,7 @@ pcl::PyramidFeatureHistogram<PointFeature>::initializeHistogram ()
     D += aux * aux;
   }
   D = sqrtf (D);
-  nr_levels = static_cast<size_t> (ceilf (log2f (D)));
+  nr_levels = static_cast<size_t> (ceilf (Log2 (D)));
   PCL_DEBUG ("[pcl::PyramidFeatureHistogram::initializeHistogram] Pyramid will have %u levels with a hyper-parallelepiped diagonal size of %f\n", nr_levels, D);
 
 

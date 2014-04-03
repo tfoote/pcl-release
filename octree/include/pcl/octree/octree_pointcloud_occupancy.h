@@ -33,16 +33,13 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: octree_pointcloud_occupancy.h 6119 2012-07-03 18:50:04Z aichim $
+ * $Id$
  */
 
-#ifndef OCTREE_OCCUPANCY_H
-#define OCTREE_OCCUPANCY_H
+#ifndef PCL_OCTREE_OCCUPANCY_H
+#define PCL_OCTREE_OCCUPANCY_H
 
 #include "octree_pointcloud.h"
-
-#include "octree_base.h"
-#include "octree2buf_base.h"
 
 namespace pcl
 {
@@ -59,29 +56,30 @@ namespace pcl
      *  \author Julius Kammerl (julius@kammerl.de)
      */
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    template<typename PointT, typename LeafT = OctreeContainerEmpty<int>,
-        typename BranchT = OctreeContainerEmpty<int> >
-    class OctreePointCloudOccupancy : public OctreePointCloud<PointT, LeafT,
-        BranchT, OctreeBase<int, LeafT, BranchT> >
+    template<typename PointT,
+             typename LeafContainerT = OctreeContainerEmpty,
+             typename BranchContainerT = OctreeContainerEmpty >
+    class OctreePointCloudOccupancy : public OctreePointCloud<PointT, LeafContainerT,
+        BranchContainerT, OctreeBase<LeafContainerT, BranchContainerT> >
 
     {
 
       public:
         // public typedefs for single/double buffering
-        typedef OctreePointCloudOccupancy<PointT, LeafT, BranchT> SingleBuffer;
-        typedef OctreePointCloudOccupancy<PointT, LeafT, BranchT> DoubleBuffer;
+        typedef OctreePointCloudOccupancy<PointT, LeafContainerT, BranchContainerT> SingleBuffer;
+        typedef OctreePointCloudOccupancy<PointT, LeafContainerT, BranchContainerT> DoubleBuffer;
 
         // public point cloud typedefs
-        typedef typename OctreePointCloud<PointT, LeafT, BranchT>::PointCloud PointCloud;
-        typedef typename OctreePointCloud<PointT, LeafT, BranchT>::PointCloudPtr PointCloudPtr;
-        typedef typename OctreePointCloud<PointT, LeafT, BranchT>::PointCloudConstPtr PointCloudConstPtr;
+        typedef typename OctreePointCloud<PointT, LeafContainerT, BranchContainerT>::PointCloud PointCloud;
+        typedef typename OctreePointCloud<PointT, LeafContainerT, BranchContainerT>::PointCloudPtr PointCloudPtr;
+        typedef typename OctreePointCloud<PointT, LeafContainerT, BranchContainerT>::PointCloudConstPtr PointCloudConstPtr;
 
         /** \brief Constructor.
          *  \param resolution_arg:  octree resolution at lowest octree level
          * */
         OctreePointCloudOccupancy (const double resolution_arg) :
-            OctreePointCloud<PointT, LeafT, BranchT,
-                OctreeBase<int, LeafT, BranchT> > (resolution_arg)
+            OctreePointCloud<PointT, LeafContainerT, BranchContainerT,
+                OctreeBase<LeafContainerT, BranchContainerT> > (resolution_arg)
         {
         }
 
@@ -104,7 +102,7 @@ namespace pcl
             genOctreeKeyforPoint (point_arg, key);
 
             // add point to octree at key
-            this->add (key, 0);
+            this->addData (key, 0);
         }
 
         /** \brief Set occupied voxels at all points from point cloud.

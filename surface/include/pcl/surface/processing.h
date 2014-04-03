@@ -33,7 +33,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: processing.h 5022 2012-03-11 23:12:23Z aichim $
+ * $Id$
  *
  */
 
@@ -46,8 +46,8 @@
 
 namespace pcl
 {
-  /** \brief @b CloudSurfaceProcessing represents the base class for algorithms that take a point cloud as an input and
-    * produce a new output cloud that has been modified towards a better surface representation. These types of
+  /** \brief @b CloudSurfaceProcessing represents the base class for algorithms that takes a point cloud as input and
+    * produces a new output cloud that has been modified towards a better surface representation. These types of
     * algorithms include surface smoothing, hole filling, cloud upsampling etc.
     *
     * \author Alexandru E. Ichim
@@ -57,6 +57,9 @@ namespace pcl
   class CloudSurfaceProcessing : public PCLBase<PointInT>
   {
     public:
+      typedef boost::shared_ptr<CloudSurfaceProcessing<PointInT, PointOutT> > Ptr;
+      typedef boost::shared_ptr<const CloudSurfaceProcessing<PointInT, PointOutT> > ConstPtr;
+
       using PCLBase<PointInT>::input_;
       using PCLBase<PointInT>::indices_;
       using PCLBase<PointInT>::initCompute;
@@ -66,6 +69,9 @@ namespace pcl
       /** \brief Constructor. */
       CloudSurfaceProcessing () : PCLBase<PointInT> ()
       {};
+      
+      /** \brief Empty destructor */
+      virtual ~CloudSurfaceProcessing () {}
 
       /** \brief Process the input cloud and store the results
         * \param[out] output the cloud where the results will be stored
@@ -88,10 +94,13 @@ namespace pcl
   class PCL_EXPORTS MeshProcessing
   {
     public:
+      typedef boost::shared_ptr<MeshProcessing> Ptr;
+      typedef boost::shared_ptr<const MeshProcessing> ConstPtr;
+
       typedef PolygonMesh::ConstPtr PolygonMeshConstPtr;
 
       /** \brief Constructor. */
-      MeshProcessing () : input_mesh_ () {};
+      MeshProcessing () : input_mesh_ () {}
 
       /** \brief Destructor. */
       virtual ~MeshProcessing () {}
@@ -99,11 +108,16 @@ namespace pcl
       /** \brief Set the input mesh that we want to process
         * \param[in] input the input polygonal mesh
         */
-      void 
+      inline void
       setInputMesh (const pcl::PolygonMeshConstPtr &input) 
-      { 
-        input_mesh_ = input; 
-      }
+      { input_mesh_ = input; }
+
+      /** \brief Get the input mesh to be processed
+        * \returns the mesh
+        */
+      inline pcl::PolygonMeshConstPtr
+      getInputMesh () const
+      { return input_mesh_; }
 
       /** \brief Process the input surface mesh and store the results
         * \param[out] output the resultant processed surface model
@@ -126,7 +140,8 @@ namespace pcl
 
       /** \brief Abstract class get name method. */
       virtual std::string 
-      getClassName () const { return (""); }
+      getClassName () const
+      { return (""); }
 
       /** \brief Input polygonal mesh. */
       pcl::PolygonMeshConstPtr input_mesh_;

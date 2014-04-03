@@ -16,7 +16,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -40,6 +40,20 @@
 #include <stdexcept>
 #include <sstream>
 #include <pcl/pcl_macros.h>
+#include <boost/current_function.hpp>
+
+/** PCL_THROW_EXCEPTION a helper macro to be used for throwing exceptions.
+  * This is an example on how to use:
+  * PCL_THROW_EXCEPTION(IOException,
+  *                     "encountered an error while opening " << filename << " PCD file");
+  */
+#define PCL_THROW_EXCEPTION(ExceptionName, message)                         \
+{                                                                           \
+  std::ostringstream s;                                                     \
+  s << message;                                                             \
+  s.flush ();                                                               \
+  throw ExceptionName(s.str(), __FILE__, BOOST_CURRENT_FUNCTION, __LINE__); \
+}
 
 namespace pcl
 {
@@ -56,11 +70,14 @@ namespace pcl
                     const std::string& file_name = "",
                     const std::string& function_name = "" ,
                     unsigned line_number = 0) throw ()
-      : std::runtime_error (error_description)
-      , file_name_ (file_name)
-      , function_name_ (function_name)
-      , line_number_ (line_number)
-      {}
+        : std::runtime_error (error_description)
+        , file_name_ (file_name)
+        , function_name_ (function_name)
+        , message_ (error_description)
+        , line_number_ (line_number) 
+      {
+        message_ = detailedMessage ();
+      }
       
       virtual ~PCLException () throw ()
       {}
@@ -68,19 +85,19 @@ namespace pcl
       const std::string&
       getFileName () const throw ()
       {
-        return file_name_;
+        return (file_name_);
       }
 
       const std::string&
       getFunctionName () const throw ()
       {
-        return function_name_;
+        return (function_name_);
       }
 
       unsigned
       getLineNumber () const throw ()
       {
-        return line_number_;
+        return (line_number_);
       }
 
       std::string 
@@ -96,19 +113,26 @@ namespace pcl
           if (line_number_ != 0)
             sstream << "@ " << line_number_ << " ";
         }
-        sstream << ":" << what ();
+        sstream << ": " << what ();
         
-        return sstream.str ();
+        return (sstream.str ());
+      }
+
+      char const* 
+      what () const throw () 
+      {
+        return (message_.c_str ());
       }
 
     protected:
       std::string file_name_;
       std::string function_name_;
+      std::string message_;
       unsigned line_number_;
   } ;
 
   /** \class InvalidConversionException
-    * \brief An exception that is thrown when a PointCloud2 message cannot be converted into a PCL type
+    * \brief An exception that is thrown when a PCLPointCloud2 message cannot be converted into a PCL type
     */
   class InvalidConversionException : public PCLException
   {
@@ -229,16 +253,6 @@ namespace pcl
 
 }
 
-/** PCL_THROW_EXCEPTION a helper macro to be used for throwing exceptions.
-  * This is an example on how to use:
-  * PCL_THROW_EXCEPTION(IOException,
-  *                     "encountred an error while opening " << filename << " PCD file");
-  */
-#define PCL_THROW_EXCEPTION(ExceptionName, message)         \
-{                                                           \
-  std::ostringstream s;                                     \
-  s << message;                                             \
-  throw ExceptionName(s.str(), __FILE__, "", __LINE__);     \
-}
+
 
 #endif

@@ -1,7 +1,10 @@
 /*
  * Software License Agreement (BSD License)
  *
+ *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
+ *
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -14,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -31,17 +34,15 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: instantiate.hpp 4354 2012-02-10 00:25:18Z mdixon $
- *
  */
 #ifndef PCL_IMPL_INSTANTIATE_H_
 #define PCL_IMPL_INSTANTIATE_H_
 
-#include <boost/preprocessor/seq/for_each.hpp>
-#include <boost/preprocessor/seq/for_each_product.hpp>
-#include <boost/preprocessor/seq/to_tuple.hpp>
-#include <boost/preprocessor/cat.hpp>
-#include <boost/preprocessor/expand.hpp>
+#ifdef __GNUC__
+#pragma GCC system_header 
+#endif
+
+#include <pcl/pcl_config.h>
 
 //#define PCL_POINT_TYPES (bool)(int)(float)(double)
 //#define PCL_TEMPLATES (Type)(Othertype)
@@ -50,6 +51,23 @@
 // PCL_INSTANTIATE: call to instantiate template TEMPLATE for all
 // POINT_TYPES
 //
+
+#ifdef PCL_NO_PRECOMPILE
+
+#define PCL_INSTANTIATE_PRODUCT_IMPL(r, product)
+#define PCL_INSTANTIATE_IMPL(r, TEMPLATE, POINT_TYPE) 
+#define PCL_INSTANTIATE(TEMPLATE, POINT_TYPES)
+#define PCL_INSTANTIATE_PRODUCT_IMPL(r, product)
+#define PCL_INSTANTIATE_PRODUCT(TEMPLATE, PRODUCT)
+
+#else
+
+#include <boost/preprocessor/seq/for_each.hpp>
+#include <boost/preprocessor/seq/for_each_product.hpp>
+#include <boost/preprocessor/seq/to_tuple.hpp>
+#include <boost/preprocessor/cat.hpp>
+#include <boost/preprocessor/expand.hpp>
+
 #define PCL_INSTANTIATE_IMPL(r, TEMPLATE, POINT_TYPE) \
   BOOST_PP_CAT(PCL_INSTANTIATE_, TEMPLATE)(POINT_TYPE)
 
@@ -92,5 +110,6 @@
 #define PCL_INSTANTIATE_PRODUCT(TEMPLATE, PRODUCT) \
   BOOST_PP_SEQ_FOR_EACH_PRODUCT(PCL_INSTANTIATE_PRODUCT_IMPL, ((TEMPLATE))PRODUCT)
 
+#endif
 
 #endif

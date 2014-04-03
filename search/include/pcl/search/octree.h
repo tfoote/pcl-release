@@ -16,7 +16,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,7 +33,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: octree.h 6031 2012-06-26 10:54:13Z jkammerl $
+ * $Id$
  */
 
 #ifndef PCL_SEARCH_OCTREE_H
@@ -62,12 +62,17 @@ namespace pcl
       * \author Julius Kammerl
       * \ingroup search
       */
-    template<typename PointT, typename LeafTWrap = pcl::octree::OctreeContainerDataTVector<int>, typename BranchTWrap = pcl::octree::OctreeContainerEmpty<int>,
-             typename OctreeT = pcl::octree::OctreeBase<int, LeafTWrap, BranchTWrap > >
+    template<typename PointT,
+             typename LeafTWrap = pcl::octree::OctreeContainerPointIndices,
+             typename BranchTWrap = pcl::octree::OctreeContainerEmpty,
+             typename OctreeT = pcl::octree::OctreeBase<LeafTWrap, BranchTWrap > >
     class Octree: public Search<PointT>
     {
       public:
         // public typedefs
+        typedef boost::shared_ptr<pcl::search::Octree<PointT,LeafTWrap,BranchTWrap,OctreeT> > Ptr;
+        typedef boost::shared_ptr<const pcl::search::Octree<PointT,LeafTWrap,BranchTWrap,OctreeT> > ConstPtr;
+
         typedef boost::shared_ptr<std::vector<int> > IndicesPtr;
         typedef boost::shared_ptr<const std::vector<int> > IndicesConstPtr;
 
@@ -76,9 +81,9 @@ namespace pcl
         typedef boost::shared_ptr<const PointCloud> PointCloudConstPtr;
 
         // Boost shared pointers
-        typedef boost::shared_ptr<pcl::octree::OctreePointCloudSearch<PointT, LeafTWrap, BranchTWrap> > Ptr;
-        typedef boost::shared_ptr<const pcl::octree::OctreePointCloudSearch<PointT, LeafTWrap, BranchTWrap> > ConstPtr;
-        Ptr tree_;
+        typedef boost::shared_ptr<pcl::octree::OctreePointCloudSearch<PointT, LeafTWrap, BranchTWrap> > OctreePointCloudSearchPtr;
+        typedef boost::shared_ptr<const pcl::octree::OctreePointCloudSearch<PointT, LeafTWrap, BranchTWrap> > OctreePointCloudSearchConstPtr;
+        OctreePointCloudSearchPtr tree_;
 
         using pcl::search::Search<PointT>::input_;
         using pcl::search::Search<PointT>::indices_;
@@ -279,6 +284,10 @@ namespace pcl
   }
 }
 
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/octree/impl/octree_search.hpp>
+#else
 #define PCL_INSTANTIATE_Octree(T) template class PCL_EXPORTS pcl::search::Octree<T>;
+#endif
 
 #endif    // PCL_SEARCH_OCTREE_H

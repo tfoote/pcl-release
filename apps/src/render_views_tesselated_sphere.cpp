@@ -13,7 +13,12 @@
 #include <vtkLoopSubdivisionFilter.h>
 #include <vtkTriangle.h>
 #include <vtkTransform.h>
+#if VTK_MAJOR_VERSION==6 || (VTK_MAJOR_VERSION==5 && VTK_MINOR_VERSION>4)
+#include <vtkHardwareSelector.h>
+#include <vtkSelectionNode.h>
+#else 
 #include <vtkVisibleCellSelector.h>
+#endif
 #include <vtkSelection.h>
 #include <vtkCellArray.h>
 #include <vtkTransformFilter.h>
@@ -22,12 +27,10 @@
 #include <vtkRenderWindow.h>
 #include <vtkRenderer.h>
 #include <vtkPolyDataMapper.h>
-// Only available in older versions of VTK
-//#include <vtkHardwareSelector.h>
-//#include <vtkSelectionNode.h>
 #include <vtkPointPicker.h>
 
-void pcl::apps::RenderViewsTesselatedSphere::generateViews() {
+void
+pcl::apps::RenderViewsTesselatedSphere::generateViews() {
   //center object
   double CoM[3];
   vtkIdType npts_com = 0, *ptIds_com = NULL;
@@ -143,6 +146,18 @@ void pcl::apps::RenderViewsTesselatedSphere::generateViews() {
       cam_positions[i] = Eigen::Vector3f (float (cam_pos[0]), float (cam_pos[1]), float (cam_pos[2]));
     }
   }
+
+  /*int valid = 0;
+  for (size_t i = 0; i < cam_positions.size (); i++)
+  {
+    if (campos_constraints_func_ (cam_positions[i]))
+    {
+      cam_positions[valid] = cam_positions[i];
+      valid++;
+    }
+  }
+
+  cam_positions.resize (valid);*/
 
   double camera_radius = radius_sphere_;
   double cam_pos[3];
@@ -266,39 +281,77 @@ void pcl::apps::RenderViewsTesselatedSphere::generateViews() {
         backToRealScale_eigen (x, y) = float (backToRealScale->GetMatrix ()->GetElement (x, y));
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
-
     cloud->points.resize (resolution_ * resolution_);
-    cloud->width = resolution_ * resolution_;
-    cloud->height = 1;
 
-    double coords[3];
-    float * depth = new float[resolution_ * resolution_];
-    render_win->GetZbufferData (0, 0, resolution_ - 1, resolution_ - 1, &(depth[0]));
-
-    int count_valid_depth_pixels = 0;
-    for (int x = 0; x < resolution_; x++)
+    if (gen_organized_)
     {
-      for (int y = 0; y < resolution_; y++)
+      cloud->width = resolution_;
+      cloud->height = resolution_;
+      cloud->is_dense = false;
+
+      double coords[3];
+      float * depth = new float[resolution_ * resolution_];
+      render_win->GetZbufferData (0, 0, resolution_ - 1, resolution_ - 1, &(depth[0]));
+
+      for (int x = 0; x < resolution_; x++)
       {
-        float value = depth[y * resolution_ + x];
-        if (value == 1.0)
-          continue;
-
-        worldPicker->Pick (x, y, value, renderer);
-        worldPicker->GetPickPosition (coords);
-        /*cloud->points[count_valid_depth_pixels].x = static_cast<pcl::traits::datatype<pcl::PointXYZ, pcl::fields::x>::type> (coords[0]);
-        cloud->points[count_valid_depth_pixels].y = static_cast<pcl::traits::datatype<pcl::PointXYZ, pcl::fields::x>::type> (coords[1]);
-        cloud->points[count_valid_depth_pixels].z = static_cast<pcl::traits::datatype<pcl::PointXYZ, pcl::fields::x>::type> (coords[2]);*/
-        cloud->points[count_valid_depth_pixels].x = static_cast<float> (coords[0]);
-        cloud->points[count_valid_depth_pixels].y = static_cast<float> (coords[1]);
-        cloud->points[count_valid_depth_pixels].z = static_cast<float> (coords[2]);
-        cloud->points[count_valid_depth_pixels].getVector4fMap () = backToRealScale_eigen
-            * cloud->points[count_valid_depth_pixels].getVector4fMap ();
-        count_valid_depth_pixels++;
+        for (int y = 0; y < resolution_; y++)
+        {
+          float value = depth[y * resolution_ + x];
+          if (value == 1.0)
+          {
+            cloud->at (y, x).x = cloud->at (y, x).y = cloud->at (y, x).z = std::numeric_limits<float>::quiet_NaN ();
+          }
+          else
+          {
+            worldPicker->Pick (x, y, value, renderer);
+            worldPicker->GetPickPosition (coords);
+            cloud->at (y, x).x = static_cast<float> (coords[0]);
+            cloud->at (y, x).y = static_cast<float> (coords[1]);
+            cloud->at (y, x).z = static_cast<float> (coords[2]);
+            cloud->at (y, x).getVector4fMap () = backToRealScale_eigen
+                                  * cloud->at (y, x).getVector4fMap ();
+          }
+        }
       }
-    }
 
-    delete[] depth;
+      delete[] depth;
+
+    }
+    else
+    {
+      cloud->width = resolution_ * resolution_;
+      cloud->height = 1;
+
+      double coords[3];
+      float * depth = new float[resolution_ * resolution_];
+      render_win->GetZbufferData (0, 0, resolution_ - 1, resolution_ - 1, &(depth[0]));
+
+      int count_valid_depth_pixels = 0;
+      for (int x = 0; x < resolution_; x++)
+      {
+        for (int y = 0; y < resolution_; y++)
+        {
+          float value = depth[y * resolution_ + x];
+          if (value == 1.0)
+            continue;
+
+          worldPicker->Pick (x, y, value, renderer);
+          worldPicker->GetPickPosition (coords);
+          cloud->points[count_valid_depth_pixels].x = static_cast<float> (coords[0]);
+          cloud->points[count_valid_depth_pixels].y = static_cast<float> (coords[1]);
+          cloud->points[count_valid_depth_pixels].z = static_cast<float> (coords[2]);
+          cloud->points[count_valid_depth_pixels].getVector4fMap () = backToRealScale_eigen
+                      * cloud->points[count_valid_depth_pixels].getVector4fMap ();
+          count_valid_depth_pixels++;
+        }
+      }
+
+      delete[] depth;
+
+      cloud->points.resize (count_valid_depth_pixels);
+      cloud->width = count_valid_depth_pixels;
+    }
 
     if(compute_entropy_) {
       //////////////////////////////
@@ -324,6 +377,7 @@ void pcl::apps::RenderViewsTesselatedSphere::generateViews() {
       /////////////////////////////////////
       // * Select visible cells (triangles)
       /////////////////////////////////////
+#if (VTK_MAJOR_VERSION==5 && VTK_MINOR_VERSION<6)
       vtkSmartPointer<vtkVisibleCellSelector> selector = vtkSmartPointer<vtkVisibleCellSelector>::New ();
       vtkSmartPointer<vtkIdTypeArray> selection = vtkSmartPointer<vtkIdTypeArray>::New ();
 
@@ -352,37 +406,38 @@ void pcl::apps::RenderViewsTesselatedSphere::generateViews() {
         visible_area += vtkTriangle::TriangleArea (p0, p1, p2);
       }
 
-      //THIS CAN BE USED WHEN VTK >= 5.4 IS REQUIRED... vtkVisibleCellSelector is deprecated from VTK5.4
-      /*vtkSmartPointer<vtkHardwareSelector> hardware_selector = vtkSmartPointer<vtkHardwareSelector>::New ();
-       hardware_selector->ClearBuffers();
-       vtkSmartPointer<vtkSelection> hdw_selection = vtkSmartPointer<vtkSelection>::New ();
-       hardware_selector->SetRenderer (renderer);
-       hardware_selector->SetArea (0, 0, xres - 1, yres - 1);
-       hardware_selector->SetFieldAssociation(vtkDataObject::FIELD_ASSOCIATION_CELLS);
-       hdw_selection = hardware_selector->Select ();
-       vtkSmartPointer<vtkIdTypeArray> ids = vtkSmartPointer<vtkIdTypeArray>::New ();
-       ids = vtkIdTypeArray::SafeDownCast(hdw_selection->GetNode(0)->GetSelectionList());
-       double visible_area = 0;
-       for (int sel_id = 0; sel_id < (ids->GetNumberOfTuples ()); sel_id++)
-       {
-       int id_mesh = selection->GetValue (sel_id);
-       vtkCell * cell = polydata->GetCell (id_mesh);
-       vtkTriangle* triangle = dynamic_cast<vtkTriangle*> (cell);
-       double p0[3];
-       double p1[3];
-       double p2[3];
-       triangle->GetPoints ()->GetPoint (0, p0);
-       triangle->GetPoints ()->GetPoint (1, p1);
-       triangle->GetPoints ()->GetPoint (2, p2);
-       area = vtkTriangle::TriangleArea (p0, p1, p2);
-       visible_area += area;
-       }*/
+#else 
+      vtkSmartPointer<vtkHardwareSelector> hardware_selector = vtkSmartPointer<vtkHardwareSelector>::New ();
+      hardware_selector->ClearBuffers();
+      vtkSmartPointer<vtkSelection> hdw_selection = vtkSmartPointer<vtkSelection>::New ();
+      hardware_selector->SetRenderer (renderer);
+      hardware_selector->SetArea (0, 0, resolution_ - 1, resolution_ - 1);
+      hardware_selector->SetFieldAssociation(vtkDataObject::FIELD_ASSOCIATION_CELLS);
+      hdw_selection = hardware_selector->Select ();
+      vtkSmartPointer<vtkIdTypeArray> ids = vtkSmartPointer<vtkIdTypeArray>::New ();
+      ids = vtkIdTypeArray::SafeDownCast(hdw_selection->GetNode(0)->GetSelectionList());
+      double visible_area = 0;
+      for (int sel_id = 0; sel_id < (ids->GetNumberOfTuples ()); sel_id++)
+      {
+        int id_mesh = int (ids->GetValue (sel_id));
+        if(id_mesh >= polydata->GetNumberOfPolys())
+          continue;
+
+        vtkCell * cell = polydata->GetCell (id_mesh);
+        vtkTriangle* triangle = dynamic_cast<vtkTriangle*> (cell);
+        double p0[3];
+        double p1[3];
+        double p2[3];
+        triangle->GetPoints ()->GetPoint (0, p0);
+        triangle->GetPoints ()->GetPoint (1, p1);
+        triangle->GetPoints ()->GetPoint (2, p2);
+        area = vtkTriangle::TriangleArea (p0, p1, p2);
+        visible_area += area;
+      }
+#endif
 
       entropies_.push_back (float (visible_area / totalArea));
     }
-
-    cloud->points.resize (count_valid_depth_pixels);
-    cloud->width = count_valid_depth_pixels;
 
     //transform cloud to give camera coordinates instead of world coordinates!
     vtkSmartPointer<vtkMatrix4x4> view_transform = cam_tmp->GetViewTransformMatrix ();

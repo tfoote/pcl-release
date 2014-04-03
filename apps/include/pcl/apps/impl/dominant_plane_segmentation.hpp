@@ -33,6 +33,7 @@
  *
  */
 
+#pragma once
 #include <boost/thread/thread.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
@@ -79,7 +80,7 @@ pcl::apps::DominantPlaneSegmentation<PointType>::compute_table_plane ()
   bb_cluster_proj_.setModelType (pcl::SACMODEL_NORMAL_PLANE);
 
   // ---[ PassThroughFilter
-  pass_.setFilterLimits (min_z_bounds_, max_z_bounds_);
+  pass_.setFilterLimits (float (min_z_bounds_), float (max_z_bounds_));
   pass_.setFilterFieldName ("z");
   pass_.setInputCloud (input_);
   pass_.filter (*cloud_filtered_);
@@ -209,7 +210,7 @@ pcl::apps::DominantPlaneSegmentation<PointType>::compute_fast (std::vector<Cloud
   cluster_.setSearchMethod (clusters_tree_);
 
   // ---[ PassThroughFilter
-  pass_.setFilterLimits (min_z_bounds_, max_z_bounds_);
+  pass_.setFilterLimits (float (min_z_bounds_), float (max_z_bounds_));
   pass_.setFilterFieldName ("z");
   pass_.setInputCloud (input_);
   pass_.filter (*cloud_filtered_);
@@ -580,7 +581,7 @@ pcl::apps::DominantPlaneSegmentation<PointType>::compute (std::vector<CloudPtr> 
   cluster_.setSearchMethod (clusters_tree_);
 
   // ---[ PassThroughFilter
-  pass_.setFilterLimits (min_z_bounds_, max_z_bounds_);
+  pass_.setFilterLimits (float (min_z_bounds_), float (max_z_bounds_));
   pass_.setFilterFieldName ("z");
   pass_.setInputCloud (input_);
   pass_.filter (*cloud_filtered_);
@@ -743,7 +744,7 @@ pcl::apps::DominantPlaneSegmentation<PointType>::compute_full (std::vector<Cloud
   cluster_.setSearchMethod (clusters_tree_);
 
   // ---[ PassThroughFilter
-  pass_.setFilterLimits (min_z_bounds_, max_z_bounds_);
+  pass_.setFilterLimits (float (min_z_bounds_), float (max_z_bounds_));
   pass_.setFilterFieldName ("z");
   pass_.setInputCloud (input_);
   pass_.filter (*cloud_filtered_);

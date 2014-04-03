@@ -33,17 +33,20 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: shapes.h 5501 2012-04-04 07:08:51Z rusu $
+ * $Id$
  *
  */
 #ifndef PCL_PCL_VISUALIZER_SHAPES_H_
 #define PCL_PCL_VISUALIZER_SHAPES_H_
 
-#include <Eigen/Geometry>
 #include <pcl/ModelCoefficients.h>
 #include <pcl/point_cloud.h>
-#include <pcl/visualization/vtk.h>
+#include <pcl/visualization/eigen.h>
 #include <pcl/geometry/planar_polygon.h>
+
+template <typename T> class vtkSmartPointer;
+class vtkDataSet;
+class vtkUnstructuredGrid;
 
 /**
   * \file pcl/visualization/common/shapes.h
@@ -188,6 +191,14 @@ namespace pcl
     PCL_EXPORTS vtkSmartPointer<vtkDataSet> 
     createPlane (const pcl::ModelCoefficients &coefficients);
 
+    /** \brief Create a planar shape from a set of model coefficients.
+      * \param[in] coefficients the model coefficients (a, b, c, d with ax+by+cz+d=0)
+      * \param[in] x,y,z projection of this point on the plane is used to get the center of the plane.
+      * \ingroup visualization
+      */
+    PCL_EXPORTS vtkSmartPointer<vtkDataSet> 
+    createPlane (const pcl::ModelCoefficients &coefficients, double x, double y, double z);
+    
     /** \brief Create a 2d circle shape from a set of model coefficients.
       * \param[in] coefficients the model coefficients (x, y, radius)
       * \param[in] z (optional) specify a z value (default: 0)

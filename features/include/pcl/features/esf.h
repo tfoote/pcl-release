@@ -43,7 +43,6 @@
 #include <pcl/features/feature.h>
 #define GRIDSIZE 64
 #define GRIDSIZE_H GRIDSIZE/2
-//#include <boost/multi_array.hpp>
 #include <vector>
 
 namespace pcl
@@ -60,6 +59,9 @@ namespace pcl
   class ESFEstimation: public Feature<PointInT, PointOutT>
   {
     public:
+      typedef boost::shared_ptr<ESFEstimation<PointInT, PointOutT> > Ptr;
+      typedef boost::shared_ptr<const ESFEstimation<PointInT, PointOutT> > ConstPtr;
+
       using Feature<PointInT, PointOutT>::feature_name_;
       using Feature<PointInT, PointOutT>::getClassName;
       using Feature<PointInT, PointOutT>::indices_;
@@ -127,18 +129,15 @@ namespace pcl
     private:
 
       /** \brief ... */
-      //boost::multi_array<int, 3> lut_;
       std::vector<std::vector<std::vector<int> > > lut_;
       
       /** \brief ... */
       PointCloudIn local_cloud_;
-
-      /** \brief Make the computeFeature (&Eigen::MatrixXf); inaccessible from outside the class
-        * \param[out] output the output point cloud
-        */
-      void
-      computeFeatureEigen (pcl::PointCloud<Eigen::MatrixXf> &) {}
   };
 }
+
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/features/impl/esf.hpp>
+#endif
 
 #endif // #

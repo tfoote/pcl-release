@@ -129,7 +129,7 @@ pcl::approximatePolygon2D (const typename pcl::PointCloud<PointT>::VectorType &p
     float line_y = polygon [currentInterval.second].x - polygon [currentInterval.first].x;
     float line_d = polygon [currentInterval.first].x * polygon [currentInterval.second].y - polygon [currentInterval.first].y * polygon [currentInterval.second].x;
     
-    float linelen = 1.0f / sqrt (line_x * line_x + line_y * line_y);
+    float linelen = 1.0f / sqrtf (line_x * line_x + line_y * line_y);
     
     line_x *= linelen;
     line_y *= linelen;
@@ -245,7 +245,7 @@ pcl::approximatePolygon2D (const typename pcl::PointCloud<PointT>::VectorType &p
       if (direction [0] * normal [1] < direction [1] * normal [0])
         normal *= -1.0;
       
-      lines [rIdx].head<2> () = normal;
+      lines [rIdx].head<2> ().matrix () = normal;
       lines [rIdx] [2] = -normal.dot (centroid);
     }
     

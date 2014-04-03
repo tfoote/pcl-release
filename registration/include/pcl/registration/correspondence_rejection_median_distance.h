@@ -3,6 +3,7 @@
  *
  *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010-2011, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
  *
  *  All rights reserved.
  *
@@ -16,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,6 +34,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
+ * $Id$
  *
  */
 #ifndef PCL_REGISTRATION_CORRESPONDENCE_REJECTION_MEDIAN_DISTANCE_H_
@@ -45,8 +47,7 @@ namespace pcl
 {
   namespace registration
   {
-    /**
-      * @b CorrespondenceRejectorMedianDistance implements a simple correspondence
+    /** \brief CorrespondenceRejectorMedianDistance implements a simple correspondence
       * rejection method based on thresholding based on the median distance between the
       * correspondences.
       *
@@ -57,18 +58,21 @@ namespace pcl
       * \author Aravindhan K Krishnan. This code is ported from libpointmatcher (https://github.com/ethz-asl/libpointmatcher)
       * \ingroup registration
       */
-    class CorrespondenceRejectorMedianDistance: public CorrespondenceRejector
+    class PCL_EXPORTS CorrespondenceRejectorMedianDistance: public CorrespondenceRejector
     {
       using CorrespondenceRejector::input_correspondences_;
       using CorrespondenceRejector::rejection_name_;
       using CorrespondenceRejector::getClassName;
 
       public:
+        typedef boost::shared_ptr<CorrespondenceRejectorMedianDistance> Ptr;
+        typedef boost::shared_ptr<const CorrespondenceRejectorMedianDistance> ConstPtr;
 
         /** \brief Empty constructor. */
-        CorrespondenceRejectorMedianDistance () : median_distance_(0), 
-                                            factor_(1.0),
-                                            data_container_ ()
+        CorrespondenceRejectorMedianDistance () 
+          : median_distance_ (0)
+          , factor_ (1.0)
+          , data_container_ ()
         {
           rejection_name_ = "CorrespondenceRejectorMedianDistance";
         }
@@ -77,13 +81,25 @@ namespace pcl
           * \param[in] original_correspondences the set of initial correspondences given
           * \param[out] remaining_correspondences the resultant filtered set of remaining correspondences
           */
-        inline void 
+        void 
         getRemainingCorrespondences (const pcl::Correspondences& original_correspondences, 
                                      pcl::Correspondences& remaining_correspondences);
 
         /** \brief Get the median distance used for thresholding in correspondence rejection. */
         inline double
-        getMedianDistance () const { return median_distance_; };
+        getMedianDistance () const { return (median_distance_); };
+
+        /** \brief Provide a source point cloud dataset (must contain XYZ
+          * data!), used to compute the correspondence distance.  
+          * \param[in] cloud a cloud containing XYZ data
+          */
+        template <typename PointT> inline void 
+        setInputSource (const typename pcl::PointCloud<PointT>::ConstPtr &cloud)
+        {
+          if (!data_container_)
+            data_container_.reset (new DataContainer<PointT>);
+          boost::static_pointer_cast<DataContainer<PointT> > (data_container_)->setInputSource (cloud);
+        }
 
         /** \brief Provide a source point cloud dataset (must contain XYZ
           * data!), used to compute the correspondence distance.  
@@ -92,9 +108,10 @@ namespace pcl
         template <typename PointT> inline void 
         setInputCloud (const typename pcl::PointCloud<PointT>::ConstPtr &cloud)
         {
+          PCL_WARN ("[pcl::registration::%s::setInputCloud] setInputCloud is deprecated. Please use setInputSource instead.\n", getClassName ().c_str ());
           if (!data_container_)
             data_container_.reset (new DataContainer<PointT>);
-          boost::static_pointer_cast<DataContainer<PointT> > (data_container_)->setInputCloud (cloud);
+          boost::static_pointer_cast<DataContainer<PointT> > (data_container_)->setInputSource (cloud);
         }
 
         /** \brief Provide a target point cloud dataset (must contain XYZ
@@ -107,6 +124,21 @@ namespace pcl
           if (!data_container_)
             data_container_.reset (new DataContainer<PointT>);
           boost::static_pointer_cast<DataContainer<PointT> > (data_container_)->setInputTarget (target);
+        }
+
+        /** \brief Provide a pointer to the search object used to find correspondences in
+          * the target cloud.
+          * \param[in] tree a pointer to the spatial search object.
+          * \param[in] force_no_recompute If set to true, this tree will NEVER be 
+          * recomputed, regardless of calls to setInputTarget. Only use if you are 
+          * confident that the tree will be set correctly.
+          */
+        template <typename PointT> inline void
+        setSearchMethodTarget (const boost::shared_ptr<pcl::search::KdTree<PointT> > &tree, 
+                               bool force_no_recompute = false) 
+        { 
+          boost::static_pointer_cast< DataContainer<PointT> > 
+            (data_container_)->setSearchMethodTarget (tree, force_no_recompute );
         }
 
         /** \brief Set the factor for correspondence rejection. Points with distance greater than median times factor
@@ -150,4 +182,4 @@ namespace pcl
 
 #include <pcl/registration/impl/correspondence_rejection_median_distance.hpp>
 
-#endif
+#endif    // PCL_REGISTRATION_CORRESPONDENCE_REJECTION_MEDIAN_DISTANCE_H_

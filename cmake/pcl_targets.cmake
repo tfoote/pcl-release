@@ -90,7 +90,7 @@ endmacro(PCL_SUBSYS_DEPEND)
 # ARGN The include files.
 macro(PCL_ADD_INCLUDES _component _subdir)
     install(FILES ${ARGN} DESTINATION ${INCLUDE_INSTALL_DIR}/${_subdir}
-        COMPONENT ${_component})
+        COMPONENT pcl_${_component})
 endmacro(PCL_ADD_INCLUDES)
 
 
@@ -103,6 +103,13 @@ macro(PCL_ADD_LIBRARY _name _component)
     add_library(${_name} ${PCL_LIB_TYPE} ${ARGN})
     # must link explicitly against boost.
     target_link_libraries(${_name} ${Boost_LIBRARIES})
+    if((UNIX AND NOT ANDROID) OR MINGW)
+      target_link_libraries(${_name} m)
+    endif()
+
+    if (MINGW)
+      target_link_libraries(${_name} gomp)
+    endif()
 	
 	if(MSVC90 OR MSVC10)
 	  target_link_libraries(${_name} delayimp.lib)  # because delay load is enabled for openmp.dll
@@ -112,9 +119,13 @@ macro(PCL_ADD_LIBRARY _name _component)
     if(WIN32 AND MSVC)
       set_target_properties(${_name} PROPERTIES LINK_FLAGS_RELEASE /OPT:REF)
     elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-      set_target_properties(${_name} PROPERTIES LINK_FLAGS -Wl)
+      if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        set_target_properties(${_name} PROPERTIES LINK_FLAGS -Wl)
+      endif()
     elseif(__COMPILER_PATHSCALE)
       set_target_properties(${_name} PROPERTIES LINK_FLAGS -mp)
+    elseif(CMAKE_COMPILER_IS_GNUCXX AND MINGW)
+      set_target_properties(${_name} PROPERTIES LINK_FLAGS "-Wl,--allow-multiple-definition -Wl,--as-needed")
     else()
       set_target_properties(${_name} PROPERTIES LINK_FLAGS -Wl,--as-needed)
     endif()
@@ -128,51 +139,11 @@ macro(PCL_ADD_LIBRARY _name _component)
     endif(USE_PROJECT_FOLDERS)
 
     install(TARGETS ${_name}
-        RUNTIME DESTINATION ${BIN_INSTALL_DIR} COMPONENT ${_component}
-        LIBRARY DESTINATION ${LIB_INSTALL_DIR} COMPONENT ${_component}
-        ARCHIVE DESTINATION ${LIB_INSTALL_DIR} COMPONENT ${_component})
+        RUNTIME DESTINATION ${BIN_INSTALL_DIR} COMPONENT pcl_${_component}
+        LIBRARY DESTINATION ${LIB_INSTALL_DIR} COMPONENT pcl_${_component}
+        ARCHIVE DESTINATION ${LIB_INSTALL_DIR} COMPONENT pcl_${_component})
 
 endmacro(PCL_ADD_LIBRARY)
-
-
-###############################################################################
-# Add a cuda library target.
-# _name The library name.
-# _component The part of PCL that this library belongs to.
-# ARGN The source files for the library.
-macro(PCL_CUDA_ADD_LIBRARY _name _component)
-    if(PCL_SHARED_LIBS)
-        # to overcome a limitation in cuda_add_library, we add manually PCLAPI_EXPORTS macro
-        cuda_add_library(${_name} ${PCL_LIB_TYPE} ${ARGN} OPTIONS -DPCLAPI_EXPORTS)
-    else(PCL_SHARED_LIBS)
-        cuda_add_library(${_name} ${PCL_LIB_TYPE} ${ARGN})
-    endif(PCL_SHARED_LIBS)
-    
-    # must link explicitly against boost.
-    target_link_libraries(${_name} ${Boost_LIBRARIES})
-    #
-    # Only link if needed
-    if(WIN32 AND MSVC)
-      set_target_properties(${_name} PROPERTIES LINK_FLAGS_RELEASE /OPT:REF)
-    elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-      set_target_properties(${_name} PROPERTIES LINK_FLAGS -Wl)
-    else()
-      set_target_properties(${_name} PROPERTIES LINK_FLAGS -Wl,--as-needed)
-    endif()
-    #
-    set_target_properties(${_name} PROPERTIES
-        VERSION ${PCL_VERSION}
-        SOVERSION ${PCL_MAJOR_VERSION}
-        DEFINE_SYMBOL "PCLAPI_EXPORTS")
-    if(USE_PROJECT_FOLDERS)
-      set_target_properties(${_name} PROPERTIES FOLDER "Libraries")
-    endif(USE_PROJECT_FOLDERS)
-
-    install(TARGETS ${_name}
-        RUNTIME DESTINATION ${BIN_INSTALL_DIR} COMPONENT ${_component}
-        LIBRARY DESTINATION ${LIB_INSTALL_DIR} COMPONENT ${_component}
-        ARCHIVE DESTINATION ${LIB_INSTALL_DIR} COMPONENT ${_component})
-endmacro(PCL_CUDA_ADD_LIBRARY)
 
 
 ###############################################################################
@@ -183,8 +154,8 @@ endmacro(PCL_CUDA_ADD_LIBRARY)
 macro(PCL_ADD_EXECUTABLE _name _component)
     add_executable(${_name} ${ARGN})
     # must link explicitly against boost.
-    if(UNIX AND NOT ANDROID_NDK)
-      target_link_libraries(${_name} ${Boost_LIBRARIES} pthread)
+    if(UNIX AND NOT ANDROID)
+      target_link_libraries(${_name} ${Boost_LIBRARIES} pthread m ${CLANG_LIBRARIES})
     else()
       target_link_libraries(${_name} ${Boost_LIBRARIES})
     endif()
@@ -195,9 +166,13 @@ macro(PCL_ADD_EXECUTABLE _name _component)
                                                 DEBUG_OUTPUT_NAME ${_name}${CMAKE_DEBUG_POSTFIX}
                                                 RELEASE_OUTPUT_NAME ${_name}${CMAKE_RELEASE_POSTFIX})
     elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-      set_target_properties(${_name} PROPERTIES LINK_FLAGS -Wl)
+      if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        set_target_properties(${_name} PROPERTIES LINK_FLAGS -Wl)
+      endif()
     elseif(__COMPILER_PATHSCALE)
       set_target_properties(${_name} PROPERTIES LINK_FLAGS -mp)
+    elseif(CMAKE_COMPILER_IS_GNUCXX AND MINGW)
+      set_target_properties(${_name} PROPERTIES LINK_FLAGS "-Wl,--allow-multiple-definition -Wl,--as-needed")
     else()
       set_target_properties(${_name} PROPERTIES LINK_FLAGS -Wl,--as-needed)
     endif()
@@ -208,7 +183,7 @@ macro(PCL_ADD_EXECUTABLE _name _component)
 
     set(PCL_EXECUTABLES ${PCL_EXECUTABLES} ${_name})
     install(TARGETS ${_name} RUNTIME DESTINATION ${BIN_INSTALL_DIR}
-        COMPONENT ${_component})
+        COMPONENT pcl_${_component})
 endmacro(PCL_ADD_EXECUTABLE)
 
 ###############################################################################
@@ -225,7 +200,7 @@ else(APPLE AND VTK_USE_COCOA)
 endif(APPLE AND VTK_USE_COCOA)
 
     # must link explicitly against boost.
-    if(UNIX AND NOT ANDROID_NDK)
+    if(UNIX AND NOT ANDROID)
       target_link_libraries(${_name} ${Boost_LIBRARIES} pthread)
     else()
       target_link_libraries(${_name} ${Boost_LIBRARIES})
@@ -237,9 +212,13 @@ endif(APPLE AND VTK_USE_COCOA)
                                                 DEBUG_OUTPUT_NAME ${_name}${CMAKE_DEBUG_POSTFIX}
                                                 RELEASE_OUTPUT_NAME ${_name}${CMAKE_RELEASE_POSTFIX})
     elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-      set_target_properties(${_name} PROPERTIES LINK_FLAGS -Wl)
+      if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        set_target_properties(${_name} PROPERTIES LINK_FLAGS -Wl)
+      endif()
     elseif(__COMPILER_PATHSCALE)
       set_target_properties(${_name} PROPERTIES LINK_FLAGS -mp)
+    elseif(CMAKE_COMPILER_IS_GNUCXX AND MINGW)
+      set_target_properties(${_name} PROPERTIES LINK_FLAGS "-Wl,--allow-multiple-definition -Wl,--as-needed")
     else()
       set_target_properties(${_name} PROPERTIES LINK_FLAGS -Wl,--as-needed)
     endif()
@@ -256,42 +235,12 @@ if(APPLE AND VTK_USE_COCOA)
 #                         COMMAND ${CMAKE_COMMAND} -E create_symlink ${PCL_OUTPUT_BIN_DIR}/${_name}.app/Contents/MacOS/${_name} ${PCL_OUTPUT_BIN_DIR}/${_name}
 # #			WORKING_DIRECTORY 
 #                         COMMENT "Creating an alias for ${_name}.app to ${_name}")
-    install(TARGETS ${_name} BUNDLE DESTINATION ${BIN_INSTALL_DIR} COMPONENT ${_component})
+    install(TARGETS ${_name} BUNDLE DESTINATION ${BIN_INSTALL_DIR} COMPONENT pcl_${_component})
 else(APPLE AND VTK_USE_COCOA)
-    install(TARGETS ${_name} RUNTIME DESTINATION ${BIN_INSTALL_DIR} COMPONENT ${_component})
+    install(TARGETS ${_name} RUNTIME DESTINATION ${BIN_INSTALL_DIR} COMPONENT pcl_${_component})
 endif(APPLE AND VTK_USE_COCOA)
 endmacro(PCL_ADD_EXECUTABLE_OPT_BUNDLE)
 
-
-###############################################################################
-# Add an executable target.
-# _name The executable name.
-# _component The part of PCL that this library belongs to.
-# ARGN the source files for the library.
-macro(PCL_CUDA_ADD_EXECUTABLE _name _component)
-    cuda_add_executable(${_name} ${ARGN})
-    # must link explicitly against boost.
-    target_link_libraries(${_name} ${Boost_LIBRARIES})
-    #
-    # Only link if needed
-    if(WIN32 AND MSVC)
-      set_target_properties(${_name} PROPERTIES LINK_FLAGS_RELEASE /OPT:REF
-                                                DEBUG_OUTPUT_NAME ${_name}${CMAKE_DEBUG_POSTFIX}
-                                                RELEASE_OUTPUT_NAME ${_name}${CMAKE_RELEASE_POSTFIX})
-    elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-      set_target_properties(${_name} PROPERTIES LINK_FLAGS -Wl)
-    else()
-      set_target_properties(${_name} PROPERTIES LINK_FLAGS -Wl,--as-needed)
-    endif()
-    #
-    if(USE_PROJECT_FOLDERS)
-      set_target_properties(${_name} PROPERTIES FOLDER "Tools and demos")
-    endif(USE_PROJECT_FOLDERS)
-  
-    set(PCL_EXECUTABLES ${PCL_EXECUTABLES} ${_name})
-    install(TARGETS ${_name} RUNTIME DESTINATION ${BIN_INSTALL_DIR}
-        COMPONENT ${_component})
-endmacro(PCL_CUDA_ADD_EXECUTABLE)
 
 ###############################################################################
 # Add a test target.
@@ -310,16 +259,21 @@ macro(PCL_ADD_TEST _name _exename)
     if(NOT WIN32)
       set_target_properties(${_exename} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
     endif(NOT WIN32)
-    target_link_libraries(${_exename} ${GTEST_BOTH_LIBRARIES} ${PCL_ADD_TEST_LINK_WITH})
+    #target_link_libraries(${_exename} ${GTEST_BOTH_LIBRARIES} ${PCL_ADD_TEST_LINK_WITH})
+    target_link_libraries(${_exename} ${PCL_ADD_TEST_LINK_WITH} ${CLANG_LIBRARIES})
     #
     # Only link if needed
     if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-      set_target_properties(${_exename} PROPERTIES LINK_FLAGS -Wl)
+      if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        set_target_properties(${_exename} PROPERTIES LINK_FLAGS -Wl)
+      endif()
       target_link_libraries(${_exename} pthread)
-    elseif(UNIX AND NOT ANDROID_NDK)
+    elseif(UNIX AND NOT ANDROID)
       set_target_properties(${_exename} PROPERTIES LINK_FLAGS -Wl,--as-needed)
       # GTest >= 1.5 requires pthread and CMake's 2.8.4 FindGTest is broken
       target_link_libraries(${_exename} pthread)
+    elseif(CMAKE_COMPILER_IS_GNUCXX AND MINGW)
+      set_target_properties(${_exename} PROPERTIES LINK_FLAGS "-Wl,--allow-multiple-definition -Wl,--as-needed")
     elseif(WIN32)
       set_target_properties(${_exename} PROPERTIES LINK_FLAGS_RELEASE /OPT:REF)
     endif()
@@ -350,7 +304,7 @@ macro(PCL_ADD_EXAMPLE _name)
     set(multiValueArgs FILES LINK_WITH)
     cmake_parse_arguments(PCL_ADD_EXAMPLE "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
     add_executable(${_name} ${PCL_ADD_EXAMPLE_FILES})
-    target_link_libraries(${_name} ${PCL_ADD_EXAMPLE_LINK_WITH})
+    target_link_libraries(${_name} ${PCL_ADD_EXAMPLE_LINK_WITH} ${CLANG_LIBRARIES})
     if(WIN32 AND MSVC)
       set_target_properties(${_name} PROPERTIES DEBUG_OUTPUT_NAME ${_name}${CMAKE_DEBUG_POSTFIX}
                                                 RELEASE_OUTPUT_NAME ${_name}${CMAKE_RELEASE_POSTFIX})
@@ -423,8 +377,41 @@ macro(PCL_MAKE_PKGCONFIG _name _component _desc _pcl_deps _ext_deps _int_deps _c
     configure_file(${PROJECT_SOURCE_DIR}/cmake/pkgconfig.cmake.in ${_pc_file}
         @ONLY)
     install(FILES ${_pc_file} DESTINATION ${PKGCFG_INSTALL_DIR}
-        COMPONENT ${_component})
+        COMPONENT pcl_${_component})
 endmacro(PCL_MAKE_PKGCONFIG)
+
+###############################################################################
+# Make a pkg-config file for a header-only library. 
+# Essentially a duplicate of PCL_MAKE_PKGCONFIG, but 
+# ensures that no -L or l flags will be created
+# Do not include general PCL stuff in the
+# arguments; they will be added automaticaly.
+# _name The library name. "pcl_" will be preprended to this.
+# _component The part of PCL that this pkg-config file belongs to.
+# _desc Description of the library.
+# _pcl_deps External dependencies to pcl libs, as a list. (will get mangled to external pkg-config name)
+# _ext_deps External dependencies, as a list.
+# _int_deps Internal dependencies, as a list.
+# _cflags Compiler flags necessary to build with the library.
+macro(PCL_MAKE_PKGCONFIG_HEADER_ONLY _name _component _desc _pcl_deps _ext_deps _int_deps _cflags)
+set(PKG_NAME ${_name})
+set(PKG_DESC ${_desc})
+set(PKG_CFLAGS ${_cflags})
+#set(PKG_LIBFLAGS ${_lib_flags})
+LIST_TO_STRING(_ext_deps_str "${_ext_deps}")
+set(PKG_EXTERNAL_DEPS ${_ext_deps_str})
+foreach(_dep ${_pcl_deps})
+set(PKG_EXTERNAL_DEPS "${PKG_EXTERNAL_DEPS} pcl_${_dep}-${PCL_MAJOR_VERSION}.${PCL_MINOR_VERSION}")
+endforeach(_dep)
+set(PKG_INTERNAL_DEPS "")
+foreach(_dep ${_int_deps})
+set(PKG_INTERNAL_DEPS "${PKG_INTERNAL_DEPS} -l${_dep}")
+endforeach(_dep)
+set(_pc_file ${CMAKE_CURRENT_BINARY_DIR}/${_name}-${PCL_MAJOR_VERSION}.${PCL_MINOR_VERSION}.pc)
+configure_file(${PROJECT_SOURCE_DIR}/cmake/pkgconfig-headeronly.cmake.in ${_pc_file} @ONLY)
+install(FILES ${_pc_file} DESTINATION ${PKGCFG_INSTALL_DIR}
+COMPONENT pcl_${_component})
+endmacro(PCL_MAKE_PKGCONFIG_HEADER_ONLY)
 
 
 ###############################################################################
@@ -558,7 +545,7 @@ macro(PCL_WRITE_STATUS_REPORT)
     message(STATUS "The following subsystems will not be built:")
     foreach(_ss ${PCL_SUBSYSTEMS})
         PCL_GET_SUBSYS_STATUS(_status ${_ss})
-        PCL_GET_SUBSYS_STATUS(_hyper_status ${_ss})
+        PCL_GET_SUBSYS_HYPERSTATUS(_hyper_status ${_ss})
         if(NOT _status OR ("${_hyper_status}" STREQUAL "AUTO_OFF"))
             GET_IN_MAP(_reason PCL_SUBSYS_REASONS ${_ss})
             message(STATUS "  ${_ss}: ${_reason}")

@@ -32,7 +32,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: vtk_mesh_smoothing_laplacian.h 5245 2012-03-22 17:14:26Z rusu $
+ * $Id$
  *
  */
 

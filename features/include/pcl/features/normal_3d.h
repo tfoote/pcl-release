@@ -3,6 +3,7 @@
  *
  *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010-2011, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
  *
  *  All rights reserved.
  *
@@ -16,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,7 +34,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: normal_3d.h 6144 2012-07-04 22:06:28Z rusu $
+ * $Id$
  *
  */
 
@@ -41,6 +42,7 @@
 #define PCL_NORMAL_3D_H_
 
 #include <pcl/features/feature.h>
+#include <pcl/common/centroid.h>
 
 namespace pcl
 {
@@ -63,7 +65,8 @@ namespace pcl
     // 16-bytes aligned placeholder for the XYZ centroid of a surface patch
     Eigen::Vector4f xyz_centroid;
 
-    if (computeMeanAndCovarianceMatrix (cloud, covariance_matrix, xyz_centroid) == 0)
+    if (cloud.size () < 3 ||
+        computeMeanAndCovarianceMatrix (cloud, covariance_matrix, xyz_centroid) == 0)
     {
       plane_parameters.setConstant (std::numeric_limits<float>::quiet_NaN ());
       curvature = std::numeric_limits<float>::quiet_NaN ();
@@ -93,7 +96,8 @@ namespace pcl
     EIGEN_ALIGN16 Eigen::Matrix3f covariance_matrix;
     // 16-bytes aligned placeholder for the XYZ centroid of a surface patch
     Eigen::Vector4f xyz_centroid;
-    if (computeMeanAndCovarianceMatrix (cloud, indices, covariance_matrix, xyz_centroid) == 0)
+    if (indices.size () < 3 ||
+        computeMeanAndCovarianceMatrix (cloud, indices, covariance_matrix, xyz_centroid) == 0)
     {
       plane_parameters.setConstant (std::numeric_limits<float>::quiet_NaN ());
       curvature = std::numeric_limits<float>::quiet_NaN ();
@@ -115,7 +119,7 @@ namespace pcl
   flipNormalTowardsViewpoint (const PointT &point, float vp_x, float vp_y, float vp_z,
                               Eigen::Matrix<Scalar, 4, 1>& normal)
   {
-    Eigen::Matrix <Scalar, 4, 1> vp (vp_x - point.x, vp_y - point.x, vp_z - point.z, 0);
+    Eigen::Matrix <Scalar, 4, 1> vp (vp_x - point.x, vp_y - point.y, vp_z - point.z, 0);
 
     // Dot product between the (viewpoint - point) and the plane normal
     float cos_theta = vp.dot (normal);
@@ -142,7 +146,7 @@ namespace pcl
   flipNormalTowardsViewpoint (const PointT &point, float vp_x, float vp_y, float vp_z,
                               Eigen::Matrix<Scalar, 3, 1>& normal)
   {
-    Eigen::Matrix <Scalar, 3, 1> vp (vp_x - point.x, vp_y - point.x, vp_z - point.z);
+    Eigen::Matrix <Scalar, 3, 1> vp (vp_x - point.x, vp_y - point.y, vp_z - point.z);
 
     // Flip the plane normal
     if (vp.dot (normal) < 0)
@@ -193,6 +197,8 @@ namespace pcl
   class NormalEstimation: public Feature<PointInT, PointOutT>
   {
     public:
+      typedef boost::shared_ptr<NormalEstimation<PointInT, PointOutT> > Ptr;
+      typedef boost::shared_ptr<const NormalEstimation<PointInT, PointOutT> > ConstPtr;
       using Feature<PointInT, PointOutT>::feature_name_;
       using Feature<PointInT, PointOutT>::getClassName;
       using Feature<PointInT, PointOutT>::indices_;
@@ -216,6 +222,9 @@ namespace pcl
       {
         feature_name_ = "NormalEstimation";
       };
+      
+      /** \brief Empty destructor */
+      virtual ~NormalEstimation () {}
 
       /** \brief Compute the Least-Squares plane fit for a given set of points, using their indices,
         * and return the estimated plane parameters together with the surface curvature.
@@ -228,9 +237,11 @@ namespace pcl
         * \f]
         */
       inline void
-      computePointNormal (const pcl::PointCloud<PointInT> &cloud, const std::vector<int> &indices, Eigen::Vector4f &plane_parameters, float &curvature)
+      computePointNormal (const pcl::PointCloud<PointInT> &cloud, const std::vector<int> &indices,
+                          Eigen::Vector4f &plane_parameters, float &curvature)
       {
-        if (computeMeanAndCovarianceMatrix (cloud, indices, covariance_matrix_, xyz_centroid_) == 0)
+        if (indices.size () < 3 ||
+            computeMeanAndCovarianceMatrix (cloud, indices, covariance_matrix_, xyz_centroid_) == 0)
         {
           plane_parameters.setConstant (std::numeric_limits<float>::quiet_NaN ());
           curvature = std::numeric_limits<float>::quiet_NaN ();
@@ -254,9 +265,11 @@ namespace pcl
         * \f]
         */
       inline void
-      computePointNormal (const pcl::PointCloud<PointInT> &cloud, const std::vector<int> &indices, float &nx, float &ny, float &nz, float &curvature)
+      computePointNormal (const pcl::PointCloud<PointInT> &cloud, const std::vector<int> &indices,
+                          float &nx, float &ny, float &nz, float &curvature)
       {
-        if (computeMeanAndCovarianceMatrix (cloud, indices, covariance_matrix_, xyz_centroid_) == 0)
+        if (indices.size () < 3 ||
+            computeMeanAndCovarianceMatrix (cloud, indices, covariance_matrix_, xyz_centroid_) == 0)
         {
           nx = ny = nz = curvature = std::numeric_limits<float>::quiet_NaN ();
           return;
@@ -355,54 +368,14 @@ namespace pcl
       /** whether the sensor origin of the input cloud or a user given viewpoint should be used.*/
       bool use_sensor_origin_;
 
-    private:
-      /** \brief Make the computeFeature (&Eigen::MatrixXf); inaccessible from outside the class
-        * \param[out] output the output point cloud
-        */
-      void
-      computeFeatureEigen (pcl::PointCloud<Eigen::MatrixXf> &) {}
-   };
-
-  /** \brief NormalEstimation estimates local surface properties at each 3D point, such as surface normals and
-    * curvatures.
-    *
-    * \note The code is stateful as we do not expect this class to be multicore parallelized. Please look at
-    * \ref NormalEstimationOMP for a parallel implementation.
-    * \author Radu B. Rusu
-    * \ingroup features
-    */
-  template <typename PointInT>
-  class NormalEstimation<PointInT, Eigen::MatrixXf>: public NormalEstimation<PointInT, pcl::Normal>
-  {
     public:
-      using NormalEstimation<PointInT, pcl::Normal>::indices_;
-      using NormalEstimation<PointInT, pcl::Normal>::input_;
-      using NormalEstimation<PointInT, pcl::Normal>::surface_;
-      using NormalEstimation<PointInT, pcl::Normal>::k_;
-      using NormalEstimation<PointInT, pcl::Normal>::search_parameter_;
-      using NormalEstimation<PointInT, pcl::Normal>::vpx_;
-      using NormalEstimation<PointInT, pcl::Normal>::vpy_;
-      using NormalEstimation<PointInT, pcl::Normal>::vpz_;
-      using NormalEstimation<PointInT, pcl::Normal>::computePointNormal;
-      using NormalEstimation<PointInT, pcl::Normal>::compute;
-
-    private:
-      /** \brief Estimate normals for all points given in <setInputCloud (), setIndices ()> using the surface in
-        * setSearchSurface () and the spatial locator in setSearchMethod ()
-        * \note In situations where not enough neighbors are found, the normal and curvature values are set to NaN
-        * \param[out] output the resultant point cloud model dataset that contains surface normals and curvatures
-        */
-      void
-      computeFeatureEigen (pcl::PointCloud<Eigen::MatrixXf> &output);
-
-      /** \brief Make the compute (&PointCloudOut); inaccessible from outside the class
-        * \param[out] output the output point cloud
-        */
-      void
-      compute (pcl::PointCloud<pcl::Normal> &) {}
+      EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   };
 }
 
-#endif  //#ifndef PCL_NORMAL_3D_H_
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/features/impl/normal_3d.hpp>
+#endif
 
+#endif  //#ifndef PCL_NORMAL_3D_H_
 

@@ -3,6 +3,7 @@
  *
  *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010-2011, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
  *
  *  All rights reserved.
  *
@@ -16,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,13 +34,14 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: transformation_validation_euclidean.h 4220 2012-02-03 06:26:08Z rusu $
+ * $Id$
  *
  */
 #ifndef PCL_REGISTRATION_TRANSFORMATION_VALIDATION_EUCLIDEAN_H_
 #define PCL_REGISTRATION_TRANSFORMATION_VALIDATION_EUCLIDEAN_H_
 
 #include <pcl/point_representation.h>
+#include <pcl/search/kdtree.h>
 #include <pcl/kdtree/kdtree.h>
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/registration/transformation_validation.h>
@@ -64,18 +66,21 @@ namespace pcl
       * double score = tve.validateTransformation (source, target, transformation);
       * \endcode
       *
+      * \note The class is templated on the source and target point types as well as on the output scalar of the transformation matrix (i.e., float or double). Default: float.
       * \author Radu B. Rusu
       * \ingroup registration
       */
-    template <typename PointSource, typename PointTarget>
+    template <typename PointSource, typename PointTarget, typename Scalar = float>
     class TransformationValidationEuclidean
     {
       public:
-        typedef boost::shared_ptr<TransformationValidation<PointSource, PointTarget> > Ptr;
-        typedef boost::shared_ptr<const TransformationValidation<PointSource, PointTarget> > ConstPtr;
+        typedef typename TransformationValidation<PointSource, PointTarget, Scalar>::Matrix4 Matrix4;
+        
+        typedef boost::shared_ptr<TransformationValidation<PointSource, PointTarget, Scalar> > Ptr;
+        typedef boost::shared_ptr<const TransformationValidation<PointSource, PointTarget, Scalar> > ConstPtr;
 
-        typedef typename pcl::KdTree<PointTarget> KdTree;
-        typedef typename pcl::KdTree<PointTarget>::Ptr KdTreePtr;
+        typedef typename pcl::search::KdTree<PointTarget> KdTree;
+        typedef typename pcl::search::KdTree<PointTarget>::Ptr KdTreePtr;
 
         typedef typename KdTree::PointRepresentationConstPtr PointRepresentationConstPtr;
 
@@ -83,12 +88,14 @@ namespace pcl
         typedef typename TransformationValidation<PointSource, PointTarget>::PointCloudTargetConstPtr PointCloudTargetConstPtr;
 
         /** \brief Constructor.
-          * Sets the \a max_range parameter to double::max, and initializes the internal search \a tree
-          * to a FLANN kd-tree.
+          * Sets the \a max_range parameter to double::max, \a threshold_ to NaN
+          * and initializes the internal search \a tree to a FLANN kd-tree.
           */
         TransformationValidationEuclidean () : 
           max_range_ (std::numeric_limits<double>::max ()),
-          tree_ (new pcl::KdTreeFLANN<PointTarget>)
+          threshold_ (std::numeric_limits<double>::quiet_NaN ()),
+          tree_ (new pcl::search::KdTree<PointTarget>),
+          force_no_recompute_ (false)
         {
         }
 
@@ -104,6 +111,55 @@ namespace pcl
           max_range_ = max_range;
         }
 
+        /** \brief Get the maximum allowable distance between a point and its 
+          * correspondence, as set by the user.
+          */
+        inline double
+        getMaxRange ()
+        {
+          return (max_range_);
+        }
+
+
+        /** \brief Provide a pointer to the search object used to find correspondences in
+          * the target cloud.
+          * \param[in] tree a pointer to the spatial search object.
+          * \param[in] force_no_recompute If set to true, this tree will NEVER be 
+          * recomputed, regardless of calls to setInputTarget. Only use if you are 
+          * confident that the tree will be set correctly.
+          */
+        inline void
+        setSearchMethodTarget (const KdTreePtr &tree, 
+                               bool force_no_recompute = false) 
+        { 
+          tree_ = tree; 
+          if (force_no_recompute)
+          {
+            force_no_recompute_ = true;
+          }
+        }
+
+        /** \brief Set a threshold for which a specific transformation is considered valid.
+          *
+          * \note Since we're using MSE (Mean Squared Error) as a metric, the threshold
+          * represents the mean Euclidean distance threshold over all nearest neighbors
+          * up to max_range.
+          *
+          * \param[in] threshold the threshold for which a transformation is vali
+          */
+        inline void
+        setThreshold (double threshold)
+        {
+          threshold_ = threshold;
+        }
+
+        /** \brief Get the threshold for which a specific transformation is valid. */
+        inline double
+        getThreshold ()
+        {
+          return (threshold_);
+        }
+
         /** \brief Validate the given transformation with respect to the input cloud data, and return a score.
           *
           * \param[in] cloud_src the source point cloud dataset
@@ -117,7 +173,44 @@ namespace pcl
         validateTransformation (
             const PointCloudSourceConstPtr &cloud_src,
             const PointCloudTargetConstPtr &cloud_tgt,
-            const Eigen::Matrix4f &transformation_matrix);
+            const Matrix4 &transformation_matrix) const;
+
+        /** \brief Comparator function for deciding which score is better after running the 
+          * validation on multiple transforms.
+          *
+          * \param[in] score1 the first value
+          * \param[in] score2 the second value
+          *
+          * \return true if score1 is better than score2
+          */
+        virtual bool
+        operator() (const double &score1, const double &score2) const
+        {
+          return (score1 < score2);
+        }
+
+        /** \brief Check if the score is valid for a specific transformation.
+          *
+          * \param[in] cloud_src the source point cloud dataset
+          * \param[in] cloud_tgt the target point cloud dataset
+          * \param[out] transformation_matrix the transformation matrix
+          *
+          * \return true if the transformation is valid, false otherwise.
+          */
+        virtual bool
+        isValid (
+            const PointCloudSourceConstPtr &cloud_src,
+            const PointCloudTargetConstPtr &cloud_tgt,
+            const Matrix4 &transformation_matrix) const
+        {
+          if (pcl_isnan (threshold_))
+          {
+            PCL_ERROR ("[pcl::TransformationValidationEuclidean::isValid] Threshold not set! Please use setThreshold () before continuing.");
+            return (false);
+          }
+
+          return (validateTransformation (cloud_src, cloud_tgt, transformation_matrix) < threshold_);
+        }
 
       protected:
         /** \brief The maximum allowable distance between a point and its correspondence in the target 
@@ -125,8 +218,45 @@ namespace pcl
           */
         double max_range_;
 
+        /** \brief The threshold for which a specific transformation is valid. 
+          * Set to NaN by default, as we must require the user to set it.
+          */
+        double threshold_;
+
         /** \brief A pointer to the spatial search object. */
         KdTreePtr tree_;
+
+        /** \brief A flag which, if set, means the tree operating on the target cloud 
+         * will never be recomputed*/
+        bool force_no_recompute_;
+
+
+        /** \brief Internal point representation uses only 3D coordinates for L2 */
+        class MyPointRepresentation: public pcl::PointRepresentation<PointTarget>
+        {
+          using pcl::PointRepresentation<PointTarget>::nr_dimensions_;
+          using pcl::PointRepresentation<PointTarget>::trivial_;
+          public:
+            typedef boost::shared_ptr<MyPointRepresentation> Ptr;
+            typedef boost::shared_ptr<const MyPointRepresentation> ConstPtr;
+            
+            MyPointRepresentation ()
+            {
+              nr_dimensions_ = 3;
+              trivial_ = true;
+            }
+      
+            /** \brief Empty destructor */
+            virtual ~MyPointRepresentation () {}
+
+            virtual void
+            copyToFloatArray (const PointTarget &p, float * out) const
+            {
+              out[0] = p.x;
+              out[1] = p.y;
+              out[2] = p.z;
+            }
+        };
 
       public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -136,4 +266,5 @@ namespace pcl
 
 #include <pcl/registration/impl/transformation_validation_euclidean.hpp>
 
-#endif /* PCL_REGISTRATION_TRANSFORMATION_VALIDATION_EUCLIDEAN_H_ */
+#endif    // PCL_REGISTRATION_TRANSFORMATION_VALIDATION_EUCLIDEAN_H_
+

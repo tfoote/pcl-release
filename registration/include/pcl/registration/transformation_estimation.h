@@ -3,6 +3,7 @@
  *
  *  Point Cloud Library (PCL) - www.pointclouds.org
  *  Copyright (c) 2010-2011, Willow Garage, Inc.
+ *  Copyright (c) 2012-, Open Perception, Inc.
  *
  *  All rights reserved.
  *
@@ -16,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,14 +34,13 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: transformation_estimation.h 4367 2012-02-10 01:31:51Z rusu $
+ * $Id$
  *
  */
 #ifndef PCL_REGISTRATION_TRANSFORMATION_ESTIMATION_H_
 #define PCL_REGISTRATION_TRANSFORMATION_ESTIMATION_H_
 
 #include <pcl/correspondence.h>
-#include <pcl/features/feature.h>
 #include <pcl/common/transforms.h>
 #include <pcl/registration/correspondence_types.h>
 
@@ -54,13 +54,16 @@ namespace pcl
       *   - a point cloud with a set of indices (source), and another point cloud (target)
       *   - two point clouds with two sets of indices (source and target) of the same size
       *
+      * \note The class is templated on the source and target point types as well as on the output scalar of the transformation matrix (i.e., float or double). Default: float.
       * \author Dirk Holz, Radu B. Rusu
       * \ingroup registration
       */
-    template <typename PointSource, typename PointTarget>
+    template <typename PointSource, typename PointTarget, typename Scalar = float>
     class TransformationEstimation
     {
       public:
+        typedef Eigen::Matrix<Scalar, 4, 4> Matrix4;
+
         TransformationEstimation () {};
         virtual ~TransformationEstimation () {};
 
@@ -73,7 +76,7 @@ namespace pcl
         estimateRigidTransformation (
             const pcl::PointCloud<PointSource> &cloud_src,
             const pcl::PointCloud<PointTarget> &cloud_tgt,
-            Eigen::Matrix4f &transformation_matrix) = 0;
+            Matrix4 &transformation_matrix) const = 0;
 
         /** \brief Estimate a rigid rotation transformation between a source and a target point cloud.
           * \param[in] cloud_src the source point cloud dataset
@@ -86,7 +89,7 @@ namespace pcl
             const pcl::PointCloud<PointSource> &cloud_src,
             const std::vector<int> &indices_src,
             const pcl::PointCloud<PointTarget> &cloud_tgt,
-            Eigen::Matrix4f &transformation_matrix) = 0;
+            Matrix4 &transformation_matrix) const = 0;
 
         /** \brief Estimate a rigid rotation transformation between a source and a target point cloud.
           * \param[in] cloud_src the source point cloud dataset
@@ -101,7 +104,7 @@ namespace pcl
             const std::vector<int> &indices_src,
             const pcl::PointCloud<PointTarget> &cloud_tgt,
             const std::vector<int> &indices_tgt,
-            Eigen::Matrix4f &transformation_matrix) = 0;
+            Matrix4 &transformation_matrix) const = 0;
 
         /** \brief Estimate a rigid rotation transformation between a source and a target point cloud.
           * \param[in] cloud_src the source point cloud dataset
@@ -114,11 +117,11 @@ namespace pcl
             const pcl::PointCloud<PointSource> &cloud_src,
             const pcl::PointCloud<PointTarget> &cloud_tgt,
             const pcl::Correspondences &correspondences,
-            Eigen::Matrix4f &transformation_matrix) = 0;
+            Matrix4 &transformation_matrix) const = 0;
 
 
-        typedef boost::shared_ptr<TransformationEstimation<PointSource, PointTarget> > Ptr;
-        typedef boost::shared_ptr<const TransformationEstimation<PointSource, PointTarget> > ConstPtr;
+        typedef boost::shared_ptr<TransformationEstimation<PointSource, PointTarget, Scalar> > Ptr;
+        typedef boost::shared_ptr<const TransformationEstimation<PointSource, PointTarget, Scalar> > ConstPtr;
     };
   }
 }

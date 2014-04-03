@@ -16,7 +16,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of the copyright holder(s) nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -32,6 +32,8 @@
  *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
+ *
+ * $Id$
  *
  */
 
@@ -60,6 +62,11 @@ namespace pcl
     typedef typename pcl::search::Search<PointT>::Ptr KdTreePtr;
 
     public:
+
+      typedef boost::shared_ptr< BilateralFilter<PointT> > Ptr;
+      typedef boost::shared_ptr< const BilateralFilter<PointT> > ConstPtr;
+ 
+
       /** \brief Constructor. 
         * Sets sigma_s_ to 0 and sigma_r_ to MAXDBL
         */
@@ -90,41 +97,31 @@ namespace pcl
         */
       inline void 
       setHalfSize (const double sigma_s)
-      {
-        sigma_s_ = sigma_s;
-      }
+      { sigma_s_ = sigma_s; }
 
       /** \brief Get the half size of the Gaussian bilateral filter window as set by the user. */
-      double 
-      getHalfSize ()
-      {
-        return (sigma_s_);
-      }
+      inline double
+      getHalfSize () const
+      { return (sigma_s_); }
 
       /** \brief Set the standard deviation parameter
         * \param[in] sigma_r the new standard deviation parameter
         */
-      void
+      inline void
       setStdDev (const double sigma_r)
-      {
-        sigma_r_ = sigma_r;
-      }
+      { sigma_r_ = sigma_r;}
 
       /** \brief Get the value of the current standard deviation parameter of the bilateral filter. */
-      double 
-      getStdDev ()
-      {
-        return (sigma_r_);
-      }
+      inline double
+      getStdDev () const
+      { return (sigma_r_); }
 
       /** \brief Provide a pointer to the search object.
         * \param[in] tree a pointer to the spatial search object.
         */
-      void
+      inline void
       setSearchMethod (const KdTreePtr &tree)
-      {
-        tree_ = tree;
-      }
+      { tree_ = tree; }
 
     private:
 
@@ -134,9 +131,7 @@ namespace pcl
         */
       inline double
       kernel (double x, double sigma)
-      {
-        return (exp (- (x*x)/(2*sigma*sigma)));
-      }
+      { return (exp (- (x*x)/(2*sigma*sigma))); }
 
       /** \brief The half size of the Gaussian bilateral filter window (e.g., spatial extents in Euclidean). */
       double sigma_s_;
@@ -147,5 +142,9 @@ namespace pcl
       KdTreePtr tree_;
   };
 }
+
+#ifdef PCL_NO_PRECOMPILE
+#include <pcl/filters/impl/bilateral.hpp>
+#endif
 
 #endif // PCL_FILTERS_BILATERAL_H_
