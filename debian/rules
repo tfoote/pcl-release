@@ -27,14 +27,16 @@ override_dh_auto_configure:
 	-DBUILD_kdtree=ON -DBUILD_keypoints=ON -DBUILD_octree=ON	\
 	-DBUILD_registration=ON -DBUILD_sample_consensus=ON		\
 	-DBUILD_search=ON -DBUILD_segmentation=ON -DBUILD_surface=ON	\
-	-DBUILD_tools=ON -DBUILD_tracking=ON -DBUILD_visualization=ON
+	-DBUILD_tools=ON -DBUILD_tracking=ON -DBUILD_visualization=ON   \
+	-DBUILD_app_cloud_composer=ON -DBUILD_app_modeler=ON            \
+	-DBUILD_app_point_cloud_editor=ON 
 
 override_dh_auto_build:
 	dh_auto_build -- # Compile the software.
 	dh_auto_build -- doc # Generate Doxygen HTML documentation.
 
 override_dh_strip:
-	dh_strip -a --dbg-package=libpcl1.6-dbg
+	dh_strip -a --dbg-package=libpcl1.7-dbg
 
 %:
 	dh  $@ --parallel --with pkgkde-symbolshelper
