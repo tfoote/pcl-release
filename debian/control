@@ -8,14 +8,22 @@ Build-Depends: debhelper (>= 9),
                cmake,
                doxygen,
                doxygen-latex,
-	       libboost-all-dev,
+	       python-sphinx,
+	       libboost-system-dev,
+	       libboost-filesystem-dev,
+	       libboost-thread-dev, 
+	       libboost-date-time-dev,
+	       libboost-iostreams-dev,
 	       libeigen3-dev,
 	       libflann-dev,
 	       libvtk5-dev,
 	       libqhull-dev,
 	       libgtest-dev,
-	       libopenni-dev
-Standards-Version: 3.9.4
+	       libopenni-dev,
+	       libopenni-sensor-pointclouds-dev,
+	       python-vtk,
+	       libvtk5-qt4-dev
+Standards-Version: 3.9.5
 Vcs-Browser: http://git.debian.org/?p=debian-science/packages/pcl.git
 Vcs-Git: git://git.debian.org/debian-science/packages/pcl.git
 Homepage: http://www.pointclouds.org/
@@ -44,26 +52,26 @@ Description: point cloud library - development files
  This package contains development files (headers and shared library
  symbolic link).
 
-Package: libpcl1.6
+Package: libpcl1.7
 Architecture: any
 Multi-Arch: foreign
 Depends: ${misc:Depends},
-	 libpcl-common1.6,
-	 libpcl-features1.6,
-	 libpcl-filters1.6,
-	 libpcl-geometry1.6,
-	 libpcl-io1.6,
-	 libpcl-io-ply1.6,
-	 libpcl-kdtree1.6,
-	 libpcl-keypoints1.6,
-	 libpcl-octree1.6,
-	 libpcl-registration1.6,
-	 libpcl-sample-consensus1.6,
-	 libpcl-search1.6,
-	 libpcl-segmentation1.6,
-	 libpcl-surface1.6,
-	 libpcl-tracking1.6,
-	 libpcl-visualization1.6 (= ${binary:Version})
+	 libpcl-common1.7,
+	 libpcl-features1.7,
+	 libpcl-filters1.7,
+	 libpcl-geometry1.7,
+	 libpcl-io1.7,
+	 libpcl-io-ply1.7,
+	 libpcl-kdtree1.7,
+	 libpcl-keypoints1.7,
+	 libpcl-octree1.7,
+	 libpcl-registration1.7,
+	 libpcl-sample-consensus1.7,
+	 libpcl-search1.7,
+	 libpcl-segmentation1.7,
+	 libpcl-surface1.7,
+	 libpcl-tracking1.7,
+	 libpcl-visualization1.7 (= ${binary:Version})
 Description: point cloud library -- metapackage
  The Point Cloud Library (PCL) is a standalone, large scale, open
  project for 2D/3D image and point cloud processing.
@@ -72,7 +80,7 @@ Description: point cloud library -- metapackage
  including filtering, feature estimation, surface reconstruction,
  registration, model fitting and segmentation.
 
-Package: libpcl-common1.6
+Package: libpcl-common1.7
 Architecture: any
 Multi-Arch: same
 Depends: ${shlibs:Depends},
@@ -88,7 +96,7 @@ Description: point cloud library - common library
  .
  This package contains the PCL common library.
 
-Package: libpcl-features1.6
+Package: libpcl-features1.7
 Architecture: any
 Multi-Arch: same
 Depends: ${shlibs:Depends},
@@ -104,7 +112,7 @@ Description: point cloud library - features library
  .
  This package contains the PCL features library.
 
-Package: libpcl-filters1.6
+Package: libpcl-filters1.7
 Architecture: any
 Multi-Arch: same
 Depends: ${shlibs:Depends},
@@ -120,7 +128,7 @@ Description: point cloud library - filters library
  .
  This package contains the PCL filters library.
 
-Package: libpcl-geometry1.6
+Package: libpcl-geometry1.7
 Architecture: any
 Multi-Arch: same
 Depends: ${shlibs:Depends},
@@ -136,7 +144,7 @@ Description: point cloud library - geometry library
  .
  This package contains the PCL geometry library.
 
-Package: libpcl-io1.6
+Package: libpcl-io1.7
 Architecture: any
 Multi-Arch: same
 Depends: ${shlibs:Depends},
@@ -152,7 +160,7 @@ Description: point cloud library - I/O library
  .
  This package contains the PCL I/O library.
 
-Package: libpcl-io-ply1.6
+Package: libpcl-io-ply1.7
 Architecture: any
 Multi-Arch: same
 Depends: ${shlibs:Depends},
@@ -168,7 +176,7 @@ Description: point cloud library - I/O ply library
  .
  This package contains the PCL I/O ply library.
 
-Package: libpcl-kdtree1.6
+Package: libpcl-kdtree1.7
 Architecture: any
 Multi-Arch: same
 Depends: ${shlibs:Depends},
@@ -184,7 +192,7 @@ Description: point cloud library - kdtree library
  .
  This package contains the PCL kdtree library.
 
-Package: libpcl-keypoints1.6
+Package: libpcl-keypoints1.7
 Architecture: any
 Multi-Arch: same
 Depends: ${shlibs:Depends},
@@ -200,7 +208,7 @@ Description: point cloud library - keypoints library
  .
  This package contains the PCL keypoints library.
 
-Package: libpcl-octree1.6
+Package: libpcl-octree1.7
 Architecture: any
 Multi-Arch: same
 Depends: ${shlibs:Depends},
@@ -216,7 +224,7 @@ Description: point cloud library - octree library
  .
  This package contains the PCL octree library.
 
-Package: libpcl-registration1.6
+Package: libpcl-registration1.7
 Architecture: any
 Multi-Arch: same
 Depends: ${shlibs:Depends},
@@ -232,7 +240,7 @@ Description: point cloud library - registration library
  .
  This package contains the PCL registration library.
 
-Package: libpcl-sample-consensus1.6
+Package: libpcl-sample-consensus1.7
 Architecture: any
 Multi-Arch: same
 Depends: ${shlibs:Depends},
@@ -248,7 +256,7 @@ Description: point cloud library - sample consensus library
  .
  This package contains the PCL sample consensus library.
 
-Package: libpcl-search1.6
+Package: libpcl-search1.7
 Architecture: any
 Multi-Arch: same
 Depends: ${shlibs:Depends},
@@ -264,7 +272,7 @@ Description: point cloud library - search library
  .
  This package contains the PCL search library.
 
-Package: libpcl-segmentation1.6
+Package: libpcl-segmentation1.7
 Architecture: any
 Multi-Arch: same
 Depends: ${shlibs:Depends},
@@ -280,7 +288,7 @@ Description: point cloud library - segmentation library
  .
  This package contains the PCL segmentation library.
 
-Package: libpcl-surface1.6
+Package: libpcl-surface1.7
 Architecture: any
 Multi-Arch: same
 Depends: ${shlibs:Depends},
@@ -296,7 +304,7 @@ Description: point cloud library - surface library
  .
  This package contains the PCL surface library.
 
-Package: libpcl-tracking1.6
+Package: libpcl-tracking1.7
 Architecture: any
 Multi-Arch: same
 Depends: ${shlibs:Depends},
@@ -312,7 +320,7 @@ Description: point cloud library - tracking library
  .
  This package contains the PCL tracking library.
 
-Package: libpcl-visualization1.6
+Package: libpcl-visualization1.7
 Architecture: any
 Multi-Arch: same
 Depends: ${shlibs:Depends},
@@ -328,10 +336,10 @@ Description: point cloud library - visualization library
  .
  This package contains the PCL visualization library.
 
-Package: libpcl1.6-dbg
+Package: libpcl1.7-dbg
 Architecture: any
 Section: debug
-Depends: libpcl1.6 (= ${binary:Version}),
+Depends: libpcl1.7 (= ${binary:Version}),
          ${misc:Depends}
 Pre-Depends: ${misc:Pre-Depends}
 Multi-Arch: same
@@ -349,7 +357,7 @@ Package: libpcl-tools
 Architecture: any
 Depends: ${shlibs:Depends},
          ${misc:Depends},
-	 libpcl1.6 (= ${binary:Version})
+	 libpcl1.7 (= ${binary:Version})
 Multi-Arch: foreign
 Description: point cloud library - point cloud processsing tools
  The Point Cloud Library (PCL) is a standalone, large scale, open
