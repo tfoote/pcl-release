@@ -1,3 +1,21 @@
+pcl (1.7.1-1) UNRELEASED; urgency=low
+
+  * Non-maintainer upload.
+  * New upstream version.
+  * Standards version 3.9.5.
+  * Added libvtk5-qt4-dev, 
+	  libopenni-sensor-pointclouds-dev,
+	  python-vtk, libvtk5-qt4-dev,
+ 	  python-sphinx
+    dependencies.
+  * Relaxed boost dependencies.
+  * Added -DBUILD_app_cloud_composer=ON 
+	  -DBUILD_app_modeler=ON
+          -DBUILD_app_point_cloud_editor=ON 
+    in rules.
+
+ -- Leopold Palomo-Avellaneda <leo@alaxarxa.net>  Thu, 03 Apr 2014 16:29:40 +0200
+
 pcl (1.6.0-1) unstable; urgency=low
 
   * Initial release. (Closes: #703579)
