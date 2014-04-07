@@ -4,7 +4,6 @@ Uploaders: Thomas Moulard <thomas.moulard@gmail.com>
 Section: libs
 Priority: extra
 Build-Depends: debhelper (>= 9),
-	       pkg-kde-tools (>= 0.6),
                cmake,
                doxygen,
                doxygen-latex,
@@ -38,7 +37,7 @@ Depends: libboost-all-dev,
 	 libvtk5-dev,
 	 libqhull-dev,
 	 libopenni-dev,
-         libpcl1.6 (= ${binary:Version}),
+         libpcl1.7 (= ${binary:Version}),
          ${misc:Depends}
 Suggests: libpcl-doc
 Multi-Arch: same

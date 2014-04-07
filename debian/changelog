@@ -9,6 +9,7 @@ pcl (1.7.1-1) UNRELEASED; urgency=low
 	  libqt4-opengl-dev,
  	  python-sphinx
     dependencies.
+  * Deleted pkg-kde-tools dependency.
   * Relaxed boost dependencies.
   * Added -DBUILD_app_cloud_composer=ON 
 	  -DBUILD_app_modeler=ON
