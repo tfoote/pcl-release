@@ -158,23 +158,7 @@ Description: point cloud library - I/O library
  including filtering, feature estimation, surface reconstruction,
  registration, model fitting and segmentation.
  .
- This package contains the PCL I/O library.
-
-Package: libpcl-io-ply1.7
-Architecture: any
-Multi-Arch: same
-Depends: ${shlibs:Depends},
-         ${misc:Depends}
-Pre-Depends: ${misc:Pre-Depends}
-Description: point cloud library - I/O ply library
- The Point Cloud Library (PCL) is a standalone, large scale, open
- project for 2D/3D image and point cloud processing.
- .
- The PCL framework contains numerous state-of-the art algorithms
- including filtering, feature estimation, surface reconstruction,
- registration, model fitting and segmentation.
- .
- This package contains the PCL I/O ply library.
+ This package contains the libraries needed to run applications depending on PCL io.
 
 Package: libpcl-kdtree1.7
 Architecture: any
