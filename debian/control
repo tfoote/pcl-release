@@ -1,6 +1,8 @@
 Source: pcl
 Maintainer: Debian Science Maintainers <debian-science-maintainers@lists.alioth.debian.org>
-Uploaders: Thomas Moulard <thomas.moulard@gmail.com>
+Uploaders: Thomas Moulard <thomas.moulard@gmail.com>,
+	   Jochen Sprickerhof <jochen@sprickerhof.de>,
+	   Leopold Palomo-Avellaneda <leo@alaxarxa.net>
 Section: libs
 Priority: extra
 Build-Depends: debhelper (>= 9),
@@ -22,10 +24,11 @@ Build-Depends: debhelper (>= 9),
 	       libopenni-sensor-pointclouds-dev,
 	       python-vtk,
 	       libqt4-opengl-dev,
+	       libusb-1.0-0-dev,
 	       libvtk5-qt4-dev
 Standards-Version: 3.9.5
-Vcs-Browser: http://git.debian.org/?p=debian-science/packages/pcl.git
-Vcs-Git: git://git.debian.org/debian-science/packages/pcl.git
+Vcs-Browser: http://anonscm.debian.org/gitweb/?p=debian-science/packages/pcl.git
+Vcs-Git: git://anonscm.debian.org/debian-science/packages/pcl.git
 Homepage: http://www.pointclouds.org/
 
 Package: libpcl-dev
@@ -41,7 +44,7 @@ Depends: libboost-all-dev,
          ${misc:Depends}
 Suggests: libpcl-doc
 Multi-Arch: same
-Description: point cloud library - development files
+Description: Point Cloud Library - development files
  The Point Cloud Library (PCL) is a standalone, large scale, open
  project for 2D/3D image and point cloud processing.
  .
@@ -56,23 +59,25 @@ Package: libpcl1.7
 Architecture: any
 Multi-Arch: foreign
 Depends: ${misc:Depends},
+	 libpcl-apps1.7,
 	 libpcl-common1.7,
 	 libpcl-features1.7,
 	 libpcl-filters1.7,
-	 libpcl-geometry1.7,
 	 libpcl-io1.7,
-	 libpcl-io-ply1.7,
 	 libpcl-kdtree1.7,
 	 libpcl-keypoints1.7,
 	 libpcl-octree1.7,
+	 libpcl-outofcore1.7,
+	 libpcl-people1.7,
+	 libpcl-recognition1.7,
 	 libpcl-registration1.7,
 	 libpcl-sample-consensus1.7,
 	 libpcl-search1.7,
 	 libpcl-segmentation1.7,
 	 libpcl-surface1.7,
 	 libpcl-tracking1.7,
-	 libpcl-visualization1.7 (= ${binary:Version})
-Description: point cloud library -- metapackage
+	 libpcl-visualization1.7 
+Description: Point Cloud Library -- metapackage
  The Point Cloud Library (PCL) is a standalone, large scale, open
  project for 2D/3D image and point cloud processing.
  .
@@ -80,13 +85,29 @@ Description: point cloud library -- metapackage
  including filtering, feature estimation, surface reconstruction,
  registration, model fitting and segmentation.
 
+Package: libpcl1.7-dbg
+Architecture: any
+Section: debug
+Depends: libpcl1.7 (= ${binary:Version}),
+         ${misc:Depends}
+Multi-Arch: same
+Description: Point Cloud Library - debugging symbols
+ The Point Cloud Library (PCL) is a standalone, large scale, open
+ project for 2D/3D image and point cloud processing.
+ .
+ The PCL framework contains numerous state-of-the art algorithms
+ including filtering, feature estimation, surface reconstruction,
+ registration, model fitting and segmentation.
+ .
+ This package contains the debugging symbols for the shared libraries.
+
 Package: libpcl-common1.7
 Architecture: any
 Multi-Arch: same
 Depends: ${shlibs:Depends},
          ${misc:Depends}
 Pre-Depends: ${misc:Pre-Depends}
-Description: point cloud library - common library
+Description: Point Cloud Library - common library
  The Point Cloud Library (PCL) is a standalone, large scale, open
  project for 2D/3D image and point cloud processing.
  .
@@ -97,11 +118,9 @@ Description: point cloud library - common library
  This package contains the PCL common library.
 
 Package: libpcl-apps1.7
-Section: libs
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: The Point Cloud Library (or PCL) for point cloud processing -
-runtime
+Description: Point Cloud Library - apps library
  The PCL framework contains numerous state-of-the art algorithms including
  filtering, feature estimation, surface reconstruction, registration, model
  fitting and segmentation.
@@ -114,7 +133,7 @@ Multi-Arch: same
 Depends: ${shlibs:Depends},
          ${misc:Depends}
 Pre-Depends: ${misc:Pre-Depends}
-Description: point cloud library - features library
+Description: Point Cloud Library - features library
  The Point Cloud Library (PCL) is a standalone, large scale, open
  project for 2D/3D image and point cloud processing.
  .
@@ -130,7 +149,7 @@ Multi-Arch: same
 Depends: ${shlibs:Depends},
          ${misc:Depends}
 Pre-Depends: ${misc:Pre-Depends}
-Description: point cloud library - filters library
+Description: Point Cloud Library - filters library
  The Point Cloud Library (PCL) is a standalone, large scale, open
  project for 2D/3D image and point cloud processing.
  .
@@ -140,29 +159,13 @@ Description: point cloud library - filters library
  .
  This package contains the PCL filters library.
 
-Package: libpcl-geometry1.7
-Architecture: any
-Multi-Arch: same
-Depends: ${shlibs:Depends},
-         ${misc:Depends}
-Pre-Depends: ${misc:Pre-Depends}
-Description: point cloud library - geometry library
- The Point Cloud Library (PCL) is a standalone, large scale, open
- project for 2D/3D image and point cloud processing.
- .
- The PCL framework contains numerous state-of-the art algorithms
- including filtering, feature estimation, surface reconstruction,
- registration, model fitting and segmentation.
- .
- This package contains the PCL geometry library.
-
 Package: libpcl-io1.7
 Architecture: any
 Multi-Arch: same
 Depends: ${shlibs:Depends},
          ${misc:Depends}
 Pre-Depends: ${misc:Pre-Depends}
-Description: point cloud library - I/O library
+Description: Point Cloud Library - I/O library
  The Point Cloud Library (PCL) is a standalone, large scale, open
  project for 2D/3D image and point cloud processing.
  .
@@ -178,7 +181,7 @@ Multi-Arch: same
 Depends: ${shlibs:Depends},
          ${misc:Depends}
 Pre-Depends: ${misc:Pre-Depends}
-Description: point cloud library - kdtree library
+Description: Point Cloud Library - kdtree library
  The Point Cloud Library (PCL) is a standalone, large scale, open
  project for 2D/3D image and point cloud processing.
  .
@@ -194,7 +197,7 @@ Multi-Arch: same
 Depends: ${shlibs:Depends},
          ${misc:Depends}
 Pre-Depends: ${misc:Pre-Depends}
-Description: point cloud library - keypoints library
+Description: Point Cloud Library - keypoints library
  The Point Cloud Library (PCL) is a standalone, large scale, open
  project for 2D/3D image and point cloud processing.
  .
@@ -210,7 +213,7 @@ Multi-Arch: same
 Depends: ${shlibs:Depends},
          ${misc:Depends}
 Pre-Depends: ${misc:Pre-Depends}
-Description: point cloud library - octree library
+Description: Point Cloud Library - octree library
  The Point Cloud Library (PCL) is a standalone, large scale, open
  project for 2D/3D image and point cloud processing.
  .
@@ -226,7 +229,7 @@ Multi-Arch: same
 Depends: ${shlibs:Depends},
          ${misc:Depends}
 Pre-Depends: ${misc:Pre-Depends}
-Description: point cloud library - registration library
+Description: Point Cloud Library - registration library
  The Point Cloud Library (PCL) is a standalone, large scale, open
  project for 2D/3D image and point cloud processing.
  .
@@ -242,7 +245,7 @@ Multi-Arch: same
 Depends: ${shlibs:Depends},
          ${misc:Depends}
 Pre-Depends: ${misc:Pre-Depends}
-Description: point cloud library - sample consensus library
+Description: Point Cloud Library - sample consensus library
  The Point Cloud Library (PCL) is a standalone, large scale, open
  project for 2D/3D image and point cloud processing.
  .
@@ -258,7 +261,7 @@ Multi-Arch: same
 Depends: ${shlibs:Depends},
          ${misc:Depends}
 Pre-Depends: ${misc:Pre-Depends}
-Description: point cloud library - search library
+Description: Point Cloud Library - search library
  The Point Cloud Library (PCL) is a standalone, large scale, open
  project for 2D/3D image and point cloud processing.
  .
@@ -274,7 +277,7 @@ Multi-Arch: same
 Depends: ${shlibs:Depends},
          ${misc:Depends}
 Pre-Depends: ${misc:Pre-Depends}
-Description: point cloud library - segmentation library
+Description: Point Cloud Library - segmentation library
  The Point Cloud Library (PCL) is a standalone, large scale, open
  project for 2D/3D image and point cloud processing.
  .
@@ -290,7 +293,7 @@ Multi-Arch: same
 Depends: ${shlibs:Depends},
          ${misc:Depends}
 Pre-Depends: ${misc:Pre-Depends}
-Description: point cloud library - surface library
+Description: Point Cloud Library - surface library
  The Point Cloud Library (PCL) is a standalone, large scale, open
  project for 2D/3D image and point cloud processing.
  .
@@ -306,7 +309,7 @@ Multi-Arch: same
 Depends: ${shlibs:Depends},
          ${misc:Depends}
 Pre-Depends: ${misc:Pre-Depends}
-Description: point cloud library - tracking library
+Description: Point Cloud Library - tracking library
  The Point Cloud Library (PCL) is a standalone, large scale, open
  project for 2D/3D image and point cloud processing.
  .
@@ -322,7 +325,7 @@ Multi-Arch: same
 Depends: ${shlibs:Depends},
          ${misc:Depends}
 Pre-Depends: ${misc:Pre-Depends}
-Description: point cloud library - visualization library
+Description: Point Cloud Library - visualization library
  The Point Cloud Library (PCL) is a standalone, large scale, open
  project for 2D/3D image and point cloud processing.
  .
@@ -332,22 +335,37 @@ Description: point cloud library - visualization library
  .
  This package contains the PCL visualization library.
 
-Package: libpcl1.7-dbg
+
+
+Package: libpcl-outofcore1.7
 Architecture: any
-Section: debug
-Depends: libpcl1.7 (= ${binary:Version}),
-         ${misc:Depends}
-Pre-Depends: ${misc:Pre-Depends}
-Multi-Arch: same
-Description: point cloud library - debugging symbols
- The Point Cloud Library (PCL) is a standalone, large scale, open
- project for 2D/3D image and point cloud processing.
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Point Cloud Library - outofcore library
+ The PCL framework contains numerous state-of-the art algorithms including
+ filtering, feature estimation, surface reconstruction, registration, model
+ fitting and segmentation.
  .
- The PCL framework contains numerous state-of-the art algorithms
- including filtering, feature estimation, surface reconstruction,
- registration, model fitting and segmentation.
+ This package contains the libraries needed to run applications depending on PCL outofcore.
+
+Package: libpcl-people1.7
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Point Cloud Library - people library
+ The PCL framework contains numerous state-of-the art algorithms including
+ filtering, feature estimation, surface reconstruction, registration, model
+ fitting and segmentation.
  .
- This package contains the debugging symbols for the shared libraries.
+ This package contains the libraries needed to run applications depending on PCL people.
+
+Package: libpcl-recognition1.7
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Point Cloud Library - recognition library
+ The PCL framework contains numerous state-of-the art algorithms including
+ filtering, feature estimation, surface reconstruction, registration, model
+ fitting and segmentation.
+ .
+ This package contains the libraries needed to run applications depending on PCL recognition.
 
 Package: libpcl-tools
 Architecture: any
@@ -355,7 +373,7 @@ Depends: ${shlibs:Depends},
          ${misc:Depends},
 	 libpcl1.7 (= ${binary:Version})
 Multi-Arch: foreign
-Description: point cloud library - point cloud processsing tools
+Description: Point Cloud Library - point cloud processsing tools
  The Point Cloud Library (PCL) is a standalone, large scale, open
  project for 2D/3D image and point cloud processing.
  .
@@ -371,7 +389,7 @@ Architecture: all
 Section: doc
 Depends: ${misc:Depends}
 Multi-Arch: foreign
-Description: point cloud library - documentation
+Description: Point Cloud Library - documentation
  The Point Cloud Library (PCL) is a standalone, large scale, open
  project for 2D/3D image and point cloud processing.
  .

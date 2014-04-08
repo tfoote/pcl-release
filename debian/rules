@@ -39,4 +39,5 @@ override_dh_strip:
 	dh_strip -a --dbg-package=libpcl1.7-dbg
 
 %:
-	dh  $@ --parallel --with pkgkde-symbolshelper
+	dh  $@ --parallel --builddirectory=build
+

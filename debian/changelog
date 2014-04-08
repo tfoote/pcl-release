@@ -1,25 +1,23 @@
 pcl (1.7.1-1) UNRELEASED; urgency=low
 
-  * Non-maintainer upload.
-  * New upstream version.
-  * Standards version 3.9.5.
+  [Leopold Palomo-Avellaneda]
+  * Initial release. (Closes: #703579)
+  * Worked from the initial debianization from Thomas Moulard.
+    Jochen Sprickerhof <jochen@sprickerhof.de> and myself
+    added as uploaders.
   * Added libvtk5-qt4-dev, 
 	  libopenni-sensor-pointclouds-dev,
 	  python-vtk, libvtk5-qt4-dev,
 	  libqt4-opengl-dev,
- 	  python-sphinx
-    dependencies.
+ 	  python-sphinx,
+ 	  libusb-1.0-0-dev
+    build dependencies.
   * Deleted pkg-kde-tools dependency.
   * Relaxed boost dependencies.
   * Added -DBUILD_app_cloud_composer=ON 
 	  -DBUILD_app_modeler=ON
           -DBUILD_app_point_cloud_editor=ON 
     in rules.
-
+  * 
  -- Leopold Palomo-Avellaneda <leo@alaxarxa.net>  Thu, 03 Apr 2014 16:29:40 +0200
 
-pcl (1.6.0-1) unstable; urgency=low
-
-  * Initial release. (Closes: #703579)
-
- -- Thomas Moulard <thomas.moulard@gmail.com>  Fri, 12 Apr 2013 11:43:15 +0900
