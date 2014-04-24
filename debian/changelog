@@ -6,7 +6,7 @@ pcl (1.7.1-1) UNRELEASED; urgency=low
     Jochen Sprickerhof <jochen@sprickerhof.de> and myself
     added as uploaders.
   * Added libvtk5-qt4-dev, 
-	  libopenni-sensor-pointclouds-dev,
+	  libopenni-sensor-primesense-dev,
 	  python-vtk, libvtk5-qt4-dev,
 	  libqt4-opengl-dev,
  	  python-sphinx,
