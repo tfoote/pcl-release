@@ -173,7 +173,8 @@ Description: Point Cloud Library - I/O library
  including filtering, feature estimation, surface reconstruction,
  registration, model fitting and segmentation.
  .
- This package contains the libraries needed to run applications depending on PCL io.
+ This package contains the libraries needed to run applications 
+ depending on PCL io.
 
 Package: libpcl-kdtree1.7
 Architecture: any
@@ -345,7 +346,8 @@ Description: Point Cloud Library - outofcore library
  filtering, feature estimation, surface reconstruction, registration, model
  fitting and segmentation.
  .
- This package contains the libraries needed to run applications depending on PCL outofcore.
+ This package contains the libraries needed to run applications 
+ depending on PCL outofcore.
 
 Package: libpcl-people1.7
 Architecture: any
@@ -355,7 +357,8 @@ Description: Point Cloud Library - people library
  filtering, feature estimation, surface reconstruction, registration, model
  fitting and segmentation.
  .
- This package contains the libraries needed to run applications depending on PCL people.
+ This package contains the libraries needed to run applications 
+ depending on PCL people.
 
 Package: libpcl-recognition1.7
 Architecture: any
@@ -365,7 +368,8 @@ Description: Point Cloud Library - recognition library
  filtering, feature estimation, surface reconstruction, registration, model
  fitting and segmentation.
  .
- This package contains the libraries needed to run applications depending on PCL recognition.
+ This package contains the libraries needed to run applications 
+ depending on PCL recognition.
 
 Package: libpcl-tools
 Architecture: any

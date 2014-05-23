@@ -35,6 +35,30 @@ override_dh_auto_build:
 	dh_auto_build -- # Compile the software.
 	dh_auto_build -- doc # Generate Doxygen HTML documentation.
 
+override_dh_install:
+	mkdir -p debian/tmp/usr/share/doc/libpcl1.7-dbg && cp debian/README.Debug debian/tmp/usr/share/doc/libpcl1.7-dbg/
+	dh_install --list-missing
+	
+	@for i in pcl_cloud_composer pcl_concatenate_points_pcd pcl_dinast_grabber \
+		pcl_icp pcl_icp2d pcl_lum pcl_manual_registration pcl_match_linemod_template \
+		pcl_multiscale_feature_persistence_example pcl_ndt2d pcl_ndt3d pcl_ni_agast \
+		pcl_ni_linemod pcl_ni_susan pcl_nn_classification_example \
+		pcl_obj_rec_ransac_hash_table pcl_openni_grabber_depth_example \
+		pcl_openni_grabber_example pcl_openni_mobile_server \
+		pcl_openni_organized_multi_plane_segmentation \
+		pcl_openni_passthrough pcl_openni_shift_to_depth_conversion \
+		pcl_openni_voxel_grid pcl_organized_segmentation_demo pcl_outofcore_print \
+		pcl_outofcore_process pcl_pcd_grabber_viewer pcl_pcd_image_viewer \
+		pcl_pcd_organized_multi_plane_segmentation pcl_pcd_video_player \
+		pcl_point_cloud_editor pcl_pyramid_surface_matching pcl_radius_filter \
+		pcl_statistical_multiscale_interest_region_extraction_example \
+		pcl_registration_visualizer pcl_surfel_smoothing_test \
+		pcl_timed_trigger_test pcl_viewer pcl_virtual_scanner \
+		pcl_voxel_grid_occlusion_estimation; do \
+	cmd="dh_link -p libpcl_tools usr/share/man/man1/pcl_pointclouds.1 usr/share/man/man1/$$i.1"; \
+	echo $$cmd; $$cmd; \
+	done
+
 override_dh_strip:
 	dh_strip -a --dbg-package=libpcl1.7-dbg
 
