@@ -5,7 +5,7 @@ Uploaders: Thomas Moulard <thomas.moulard@gmail.com>,
 	   Leopold Palomo-Avellaneda <leo@alaxarxa.net>
 Section: libs
 Priority: extra
-Build-Depends: debhelper (>= 9),
+Build-Depends: debhelper (>= 9), dh-exec (>=0.3),
                cmake,
                doxygen,
                doxygen-latex,
@@ -21,7 +21,7 @@ Build-Depends: debhelper (>= 9),
 	       libqhull-dev,
 	       libgtest-dev,
 	       libopenni-dev,
- 	       libopenni-sensor-primesense-dev,
+ 	       libopenni-sensor-pointclouds-dev,
 	       python-vtk,
 	       libqt4-opengl-dev,
 	       libusb-1.0-0-dev,
@@ -125,7 +125,8 @@ Description: Point Cloud Library - apps library
  filtering, feature estimation, surface reconstruction, registration, model
  fitting and segmentation.
  .
- This package contains the libraries needed to run applications depending on PCL apps.
+ This package contains the libraries needed to run applications depending 
+ on PCL apps.
 
 Package: libpcl-features1.7
 Architecture: any

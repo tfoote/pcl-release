@@ -14,8 +14,7 @@ CXXFLAGS+=$(CPPFLAGS)
 # Multiarch.
 DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
 
-.PHONY: override_dh_auto_configure override_dh_auto_build override_dh_strip
-
+.PHONY: override_dh_auto_configure override_dh_auto_build override_dh_strip override_dh_install
 
 override_dh_auto_configure:
 	dh_auto_configure -- 						\
@@ -37,9 +36,9 @@ override_dh_auto_build:
 
 override_dh_install:
 	mkdir -p debian/tmp/usr/share/doc/libpcl1.7-dbg && cp debian/README.Debug debian/tmp/usr/share/doc/libpcl1.7-dbg/
-	dh_install --list-missing
 	
-	@for i in pcl_cloud_composer pcl_concatenate_points_pcd pcl_dinast_grabber \
+	for i in pcl_cloud_composer pcl_concatenate_points_pcd \
+		pcl_elch pcl_dinast_grabber pcl_hdl_grabber \
 		pcl_icp pcl_icp2d pcl_lum pcl_manual_registration pcl_match_linemod_template \
 		pcl_multiscale_feature_persistence_example pcl_ndt2d pcl_ndt3d pcl_ni_agast \
 		pcl_ni_linemod pcl_ni_susan pcl_nn_classification_example \
@@ -55,9 +54,10 @@ override_dh_install:
 		pcl_registration_visualizer pcl_surfel_smoothing_test \
 		pcl_timed_trigger_test pcl_viewer pcl_virtual_scanner \
 		pcl_voxel_grid_occlusion_estimation; do \
-	cmd="dh_link -p libpcl_tools usr/share/man/man1/pcl_pointclouds.1 usr/share/man/man1/$$i.1"; \
+	cmd="dh_link -p libpcl-tools usr/share/man/man1/pcl_pointclouds.1 usr/share/man/man1/$$i.1"; \
 	echo $$cmd; $$cmd; \
 	done
+	dh_install --list-missing
 
 override_dh_strip:
 	dh_strip -a --dbg-package=libpcl1.7-dbg
