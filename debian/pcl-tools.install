@@ -1,0 +1,3 @@
+#! /usr/bin/dh-exec
+usr/lib/${DEB_HOST_MULTIARCH}/libpcl_cc_* usr/lib/${DEB_HOST_MULTIARCH}/cloud_composer_plugins
+usr/bin/pcl_*

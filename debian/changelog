@@ -18,6 +18,8 @@ pcl (1.7.1-1) UNRELEASED; urgency=low
 	  -DBUILD_app_modeler=ON
           -DBUILD_app_point_cloud_editor=ON 
     in rules.
-  * 
+  * Renamed libpcl-tools to pcl-tools.
+  * Added the manpages ...
+
  -- Leopold Palomo-Avellaneda <leo@alaxarxa.net>  Thu, 03 Apr 2014 16:29:40 +0200
 
