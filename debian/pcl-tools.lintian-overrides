@@ -1,0 +1,3 @@
+# this package has a program with plugins, not a shared library. 
+pcl-tools: postinst-has-useless-call-to-ldconfig
+pcl-tools: postrm-has-useless-call-to-ldconfig
