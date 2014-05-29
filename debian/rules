@@ -47,7 +47,7 @@ override_dh_install:
 		pcl_openni_organized_multi_plane_segmentation \
 		pcl_openni_passthrough pcl_openni_shift_to_depth_conversion \
 		pcl_openni_voxel_grid pcl_organized_segmentation_demo pcl_outofcore_print \
-		pcl_outofcore_process pcl_pcd_grabber_viewer pcl_pcd_image_viewer \
+		pcl_outofcore_process pcl_pcd_image_viewer \
 		pcl_pcd_organized_multi_plane_segmentation pcl_pcd_video_player \
 		pcl_point_cloud_editor pcl_pyramid_surface_matching pcl_radius_filter \
 		pcl_statistical_multiscale_interest_region_extraction_example \

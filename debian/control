@@ -373,8 +373,7 @@ Description: Point Cloud Library - recognition library
 
 Package: pcl-tools
 Architecture: any
-Depends: ${shlibs:Depends},
-         ${misc:Depends},
+Depends: ${misc:Depends},
 	 libpcl1.7 (= ${binary:Version})
 Multi-Arch: foreign
 Description: Point Cloud Library - point cloud processsing tools
