@@ -1,4 +1,4 @@
-pcl (1.7.1-1) unstable; urgency=low
+pcl (1.7.2-1) UNRELEASED; urgency=medium
 
   [Leopold Palomo-Avellaneda]
   * Initial release. (Closes: #703579)
@@ -21,4 +21,6 @@ pcl (1.7.1-1) unstable; urgency=low
   * Renamed libpcl-tools to pcl-tools.
   * Added the manpages ...
 
- -- Leopold Palomo-Avellaneda <leo@alaxarxa.net>  Mon, 02 Jun 2014 08:46:51 +0200
+
+ -- Leopold Palomo-Avellaneda <leo@alaxarxa.net>  Mon, 06 Oct 2014 09:30:55 +0200
+
