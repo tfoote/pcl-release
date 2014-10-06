@@ -68,3 +68,6 @@ override_dh_shlibdeps:
 %:
 	dh  $@ --parallel --builddirectory=build
 
+get-orig-source:
+	uscan --verbose --force-download --repack --compress xz
+
