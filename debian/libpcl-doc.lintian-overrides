@@ -34,5 +34,5 @@ privacy-breach-generic usr/share/doc/libpcl-doc/html/a02296.html www.pointclouds
 
 # this file is licenced under Creative Commons Attribution 3.0. http://creativecommons.org/licenses/by/3.0/
 # and it's DFSG compilant.
-privacy-breach-logo usr/share/doc/libpcl-doc/html/index.html
+privacy-breach-logo usr/share/doc/libpcl-doc/html/index.html (http://www.pointclouds.org/assets/images/contents/logos/pointcloudlibrary_logo.png)
 

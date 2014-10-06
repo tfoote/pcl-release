@@ -28,7 +28,8 @@ override_dh_auto_configure:
 	-DBUILD_search=ON -DBUILD_segmentation=ON -DBUILD_surface=ON	\
 	-DBUILD_tools=ON -DBUILD_tracking=ON -DBUILD_visualization=ON   \
 	-DBUILD_apps_cloud_composer=ON -DBUILD_apps_modeler=ON            \
-	-DBUILD_apps_point_cloud_editor=ON -DBUILD_apps_in_hand_scanner=ON  
+	-DBUILD_apps_point_cloud_editor=ON -DBUILD_apps_in_hand_scanner=ON \
+	-DWITH_DOCS=ON 
 
 override_dh_auto_build:
 	dh_auto_build -- # Compile the software.
@@ -53,7 +54,11 @@ override_dh_install:
 		pcl_statistical_multiscale_interest_region_extraction_example \
 		pcl_registration_visualizer pcl_surfel_smoothing_test \
 		pcl_timed_trigger_test pcl_viewer pcl_virtual_scanner \
-		pcl_voxel_grid_occlusion_estimation; do \
+		pcl_voxel_grid_occlusion_estimation pcl_compute_hausdorff \
+		pcl_generate pcl_grid_min pcl_in_hand_scanner pcl_local_max \
+		pcl_morph pcl_ni_trajkovic pcl_obj2pcd pcl_offline_integration 	\
+		pcl_openni_klt pcl_progressive_morphological_filter \
+		pcl_openni_organized_multi_plane_segmentation; do \
 	cmd="dh_link -p pcl-tools usr/share/man/man1/pcl_pointclouds.1 usr/share/man/man1/$$i.1"; \
 	echo $$cmd; $$cmd; \
 	done
