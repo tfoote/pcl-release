@@ -3,10 +3,10 @@ Upstream-Name: PCL
 Upstream-Contact: http://pointclouds.org/contact.html
 Source: http://pointclouds.org/downloads/
 
-Files: *
+iles: *
 Copyright: 2009-2012, Willow Garage, Inc.
 	   2012-2014, Open Perception, Inc.
-License: BSD-3-clause License
+License: BSD-3-clause
  .
  Redistribution and use in source and binary forms, with or without
  modification, are permitted provided that the following conditions
