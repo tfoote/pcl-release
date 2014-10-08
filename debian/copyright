@@ -3,9 +3,331 @@ Upstream-Name: PCL
 Upstream-Contact: http://pointclouds.org/contact.html
 Source: http://pointclouds.org/downloads/
 
-iles: *
+Files: *
 Copyright: 2009-2012, Willow Garage, Inc.
 	   2012-2014, Open Perception, Inc.
+License: BSD-3-clause
+
+Files: debian/*
+Copyright: 2013, Thomas Moulard <thomas.moulard@gmail.com>
+	   2014, Leopold Palomo-Avellaneda <leo@alaxarxa.net>
+License: GPL-2
+ See `/usr/share/common-licenses/GPL-2'.
+
+Files: apps/cloud_composer/*
+Copyright: 2012, Jeremie Papon
+	   2012-, Open Perception, Inc 
+License: BSD-3-clause
+
+Files: apps/point_cloud_editor/*
+Copyright: 2012, Texas A&M University
+License: BSD-3-clause
+
+Files: doc/*
+Copyright: 2009-2012, Willow Garage, Inc.
+           2012-2014, Open Perception, Inc.
+License: CC-BY-SA3.0
+
+Files: common/include/pcl/common/eigen.h
+Copyright: 2009 Hauke Heibel <hauke.heibel@gmail.com>
+	   2010 Gael Guennebaud <gael.guennebaud@inria.fr> 
+ 	   2010-2012, Willow Garage, Inc 
+License: BSD-3-clause
+
+Files: common/src/fft/kiss_fft.c 
+       common/src/fft/kiss_fftr.c
+Copyright: 2003-2010, Mark Borgerding
+License: BSD-3-clause
+
+Files: tools/tiff2pcd.cpp
+Copyright: 2012 KU Leuven 
+ 	   2010-2012, Willow Garage, Inc
+License: BSD-3-clause
+
+Files: surface/include/pcl/surface/3rdparty/opennurbs/*
+ 	surface/src/3rdparty/opennurbs/*
+Copyright: 1993-2012 Robert McNeel & Associates
+License: OpenNURBS
+ .
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to
+ deal in the Software without restriction, including without limitation the
+ rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ sell copies of the Software.
+ .
+ THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY. ALL
+ IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
+ MERCHANTABILITY ARE HEREBY DISCLAIMED.
+ .
+ openNURBS and Rhinoceros are a registered trademarks of Robert McNeel &
+ Associates.
+
+Files: surface/src/3rdparty/opennurbs/compress.c
+	surface/src/3rdparty/opennurbs/uncompr.c
+	surface/include/pcl/surface/3rdparty/opennurbs/inffast.h
+	surface/include/pcl/surface/3rdparty/opennurbs/deflate.h
+	surface/include/pcl/surface/3rdparty/opennurbs/inflate.h
+	surface/src/3rdparty/opennurbs/adler32.c
+	surface/src/3rdparty/opennurbs/inffast.c
+	surface/include/pcl/surface/3rdparty/opennurbs/zconf.h
+	surface/include/pcl/surface/3rdparty/opennurbs/zutil.h
+	surface/src/3rdparty/opennurbs/trees.c
+	surface/src/3rdparty/opennurbs/zutil.c
+	surface/src/3rdparty/opennurbs/deflate.c
+	surface/include/pcl/surface/3rdparty/opennurbs/zlib.h
+	surface/include/pcl/surface/3rdparty/opennurbs/inftrees.h
+	surface/src/3rdparty/opennurbs/crc32.c
+	surface/src/3rdparty/opennurbs/infback.c
+	surface/src/3rdparty/opennurbs/inflate.c
+	surface/src/3rdparty/opennurbs/inftrees.c
+Copyright: 1995-2005 Jean-loup Gailly
+	   1995-2005 Mark Adler
+License: Zlib
+
+Files: surface/src/3rdparty/opennurbs/opennurbs_rand.cpp
+Copyright: 1997 - 2002, Makoto Matsumoto and Takuji Nishimura 
+	   1993-2012 Robert McNeel & Associates
+License: BSD-2-clause
+
+Files: io/include/pcl/io/lzf.h
+Copyright: 2000-2008 Marc Alexander Lehmann <schmorp@schmorp.de>
+	   2010-2011, Willow Garage, Inc
+License: BSD-2-clause
+
+Files: common/src/fft/kiss_fftr.c common/include/pcl/common/fft/_kiss_fft_guts.h
+	common/src/fft/kiss_fft.c
+Copyright: 2003-2004, Mark Borgerding
+License: BSD-3-clause
+
+Files: recognition/include/pcl/recognition/3rdparty/metslib/*
+Copyright: 2006-2012, Mirko Maischberger <mirko.maischberger@gmail.com>
+License: BSD-2-clause
+
+Files: surface/include/pcl/surface/3rdparty/poisson4/*
+	surface/src/3rdparty/poisson4/*
+Copyright: 2006, Michael Kazhdan and Matthew Bolitho
+	   2007, Michael Kazhdan
+License: Open-Source
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
+ .
+ Redistributions of source code must retain the above copyright notice, this
+ list of conditions and the following disclaimer. Redistributions in binary form must
+ reproduce the above copyright notice, this list of conditions and the following
+ disclaimer in the documentation and/or other materials provided with the distribution. 
+ .
+ Neither the name of the Johns Hopkins University nor the names of its
+ contributors may be used to endorse or promote products derived from this software
+ without specific prior written permission. 
+ .
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO THE IMPLIED
+ WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN
+ NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE  GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
+ OF SUCH DAMAGE.
+
+Files: io/include/pcl/io/ply/ply_parser.h 
+	io/include/pcl/io/ply/ply.h 
+	io/include/pcl/io/ply/byte_order.h
+	io/include/pcl/io/ply/io_operators.h 
+	io/src/ply/ply_parser.cpp 
+	io/tools/ply/ply2obj.cpp
+	io/tools/ply/ply2ply.cpp 
+	io/tools/ply/ply2raw.cpp 
+	io/tools/ply/plyheader.cpp
+Copyright: 2007-2012, Ares Lagae
+	   2010-2012, Willow Garage, Inc
+License: BSD-3-clause
+
+Files: outofcore/include/pcl/outofcore/cJSON.h outofcore/src/cJSON.cpp
+Copyright: 2009 Dave Gamble
+License: Expat
+
+Files: common/include/pcl/common/eigen.h
+Copyright: 2009 Hauke Heibel <hauke.heibel@gmail.com>
+	   2010 Gael Guennebaud <gael.guennebaud@inria.fr> 
+	   2010-2012, Willow Garage, Inc
+License: BSD-3-clause
+
+Files: test/outofcore/test_outofcore.cpp
+	outofcore/include/pcl/outofcore/impl/octree*
+	outofcore/include/pcl/outofcore/octree*
+	outofcore/include/pcl/outofcore/outofcore_impl.h
+	outofcore/include/pcl/outofcore/outofcore.h
+Copyright: 2009-2012, Urban Robotics, Inc
+	   2010-2012, Willow Garage, Inc
+License: BSD-3-clause
+
+Files: io/src/lzf.cpp
+Copyright: 2010-2011, Willow Garage, Inc
+	   2000-2010 Marc Alexander Lehmann <schmorp@schmorp.de>
+License: BSD-2-clause
+
+Files: features/src/multiscale_feature_persistence.cpp
+	features/include/pcl/features/multiscale_feature_persistence.h
+	features/include/pcl/features/impl/ppf.hpp
+	features/include/pcl/features/impl/pfhrgb.hpp
+	features/include/pcl/features/impl/normal_based_signature.hpp
+	features/include/pcl/features/impl/statistical_multiscale_interest_region_extraction.hpp
+	features/include/pcl/features/impl/multiscale_feature_persistence.hpp
+	features/include/pcl/features/statistical_multiscale_interest_region_extraction.h
+	features/include/pcl/features/normal_based_signature.h
+	features/include/pcl/features/ppf.h
+	registration/include/pcl/registration/correspondence_rejection_organized_boundary.h
+	registration/include/pcl/registration/impl/correspondence_rejection_organized_boundary.hpp
+	registration/include/pcl/registration/impl/transformation_estimation_point_to_plane_weighted.hpp
+	registration/include/pcl/registration/transformation_estimation_point_to_plane_weighted.h
+	registration/src/correspondence_rejection_organized_boundary.cpp
+	registration/src/transformation_estimation_point_to_plane_weighted.cpp
+Copyright: 2011, Alexandru-Eugen Ichim 
+	   2012-, Open Perception, Inc
+	   2009-2012, Willow Garage, Inc
+License: BSD-3-clause
+
+Files: features/src/cppf.cpp
+	features/include/pcl/features/impl/cppf.hpp
+	features/include/pcl/features/cppf.h
+Copyright: 2011, Alexandru-Eugen Ichim 
+	   2013, Martin Szarski 
+	   2012-, Open Perception, Inc
+License: BSD-3-clause
+
+Files: keypoints/include/pcl/keypoints/*/smoothed_surfa*
+	keypoints/include/pcl/keypoints/smoothed_surfa*
+	keypoints/src/smoothed_surfaces_keypoint.cpp
+	registration/src/ppf_registration.cpp
+	registration/src/pyramid_feature_matching.cpp
+	registration/src/transformation_estimation_dq.cpp
+	registration/src/transformation_estimation_dual_quaternion.cpp
+	registration/src/transformation_estimation_lm.cpp
+	registration/src/transformation_estimation_point_to_plane_lls.cpp
+	registration/src/transformation_estimation_svd_scale.cpp
+	registration/src/transformation_estimation_svd.cpp
+	registration/src/transformation_validation_euclidean.cpp
+	surface/include/pcl/surface/impl/surfel_smoothing.hpp
+	surface/include/pcl/surface/surfel_smoothing.h
+	surface/src/surfel_smoothing.cpp
+Copyright: 2011, Alexandru-Eugen Ichim
+License: BSD-3-clause
+
+Files: surface/include/pcl/surface/impl/organized_fast_mesh.hpp
+	io/src/vtk_lib_io.cpp
+	surface/include/pcl/surface/simplification_remove_unused_vertices.h
+	surface/src/organized_fast_mesh.cpp
+	surface/src/simplification_remove_unused_vertices.cpp
+	surface/include/pcl/surface/organized_fast_mesh.h
+	io/include/pcl/io/vtk_lib_io.h
+Copyright: 2011, Dirk Holz, University of Bonn
+	   2010-2011, Willow Garage, Inc
+	   2012-, Open Perception, Inc
+License: BSD-3-clause
+
+Files: tools/pcl_video.cpp
+Copyright: 2011, Geoffrey Biggs
+License: BSD-3-clause
+
+Files: visualization/tools/hdl_viewer_simple.cpp
+	recognition/include/pcl/recognition/impl/hv/hv_go.hpp
+	io/src/hdl_grabber.cpp
+Copyright: 2011, The MITRE Corporation
+License: BSD-3-clause
+
+Files: recognition/include/pcl/recognition/impl/hv/hv_go.hpp
+Copyright: 2012 Aitor Aldoma, Federico Tombari
+License: BSD-3-clause
+
+Files: filters/include/pcl/filters/fast_bilateral_omp.h
+	filters/include/pcl/filters/fast_bilateral.h
+	filters/include/pcl/filters/impl/fast_bilateral_omp.hpp
+	filters/include/pcl/filters/impl/fast_bilateral.hpp
+	filters/src/fast_bilateral_omp.cpp
+	filters/src/fast_bilateral.cpp
+Copyright: 2012-, Open Perception, Inc 
+	   2004, Sylvain Paris and Francois Sillion
+License: BSD-3-clause
+
+Files: features/src/don.cpp features/include/pcl/features/don.h
+	features/include/pcl/features/impl/don.hpp
+Copyright: 2012-, Open Perception, Inc 
+	   2012, Yani Ioannou <yani.ioannou@gmail.com> 
+	   2010-2011, Willow Garage, Inc
+License: BSD-3-clause
+
+Files: octree/include/pcl/octree/impl/octree_pointcloud_adjacency.hpp
+	octree/include/pcl/octree/octree_pointcloud_adjacency_container.h
+	octree/include/pcl/octree/octree_pointcloud_adjacency.h
+Copyright: 2012, Jeremie Papon
+License: BSD-3-clause
+
+Files: tools/lum.cpp
+Copyright: 2012, Jochen Sprickerhof
+License: BSD-3-clause
+
+Files: common/include/pcl/sse.h
+	people/include/pcl/people/hog.h
+	people/src/hog.cpp
+Copyright: 2012, Piotr Dollar & Ron Appel.pdollar-at-caltech.edu 
+	   2013-, Open Perception, Inc
+License: BSD-2-clause
+
+Files: io/tools/openni_pcd_recorder.cpp
+Copyright: 2012, Sudarshan Srinivasan <sudarshan85@gmail.com> 
+	   2012-, Open Perception, Inc
+License: BSD-2-clause
+
+Files: common/src/bearing_angle_image.cpp
+       	common/include/pcl/range_image/bearing_angle_image.h
+	test/test_bearing_angle_image.cpp
+Copyright: 2013, Intelligent Robotics Lab, DLUT.
+License: BSD-3-clause
+
+Files: common/include/pcl/common/eigen.h
+Copyright: 2009 Hauke Heibel <hauke.heibel@gmail.com> 
+	   2010 Gael Guennebaud <gael.guennebaud@inria.fr> 
+	   2010-2012, Willow Garage, Inc 
+           2012-, Open Perception, Inc
+License: BSD-3-clause
+
+Files: features/include/pcl/features/impl/don.hpp
+Copyright: 2012, Yani Ioannou <yani.ioannou@gmail.com>
+License: BSD-3-clause
+
+Files: filters/src/local_maximum.cpp
+	filters/src/morphological_filter.cpp
+	filters/include/pcl/filters/grid_minimum.h
+	filters/include/pcl/filters/impl/grid_minimum.hpp
+	filters/include/pcl/filters/impl/local_maximum.hpp
+	filters/include/pcl/filters/impl/morphological_filter.hpp
+	filters/include/pcl/filters/local_maximum.h
+	filters/include/pcl/filters/morphological_filter.h
+	filters/src/grid_minimum.cpp
+	segmentation/include/pcl/segmentation/*_morphological_*
+	segmentation/include/pcl/segmentation/impl/*_morphological_*
+	segmentation/src/*_morphological*
+	test/filters/test_grid_minimum.cpp
+	test/filters/test_local_maximum.cpp
+	test/filters/test_morphological.cpp
+	tools/compute_hausdorff.cpp
+	tools/generate.cpp
+	tools/grid_min.cpp
+	tools/local_max.cpp
+	tools/morph.cpp
+	tools/progressive_morphological_filter.cpp
+Copyright: 2014, RadiantBlue Technologies, Inc 
+	   2012-, Open Perception, Inc
+	   2009-2012, Willow Garage, Inc
+License: BSD-3-clause
+
+Files: visualization/include/pcl/visualization/vtk/vtkVertexBuffer*
+	visualization/src/vtk/vtkVertexBufferObject*
+Copyright: 1993-2008 Ken Martin, Will Schroeder, Bill Lorensen
+License: BSD-2-Clause
+
 License: BSD-3-clause
  .
  Redistribution and use in source and binary forms, with or without
@@ -35,15 +357,6 @@ License: BSD-3-clause
  POSSIBILITY OF SUCH DAMAGE.
 
 
-Files: debian/*
-Copyright: 2013, Thomas Moulard <thomas.moulard@gmail.com>
-	   2014, Leopold Palomo-Avellaneda <leo@alaxarxa.net>
-License: GPL-2
- See `/usr/share/common-licenses/GPL-2'.
-
-Files: doc/*
-Copyright: 2009-2012, Willow Garage, Inc.
-           2012-2014, Open Perception, Inc.
 License: CC-BY-SA3.0
  .
  THE WORK (AS DEFINED BELOW) IS PROVIDED UNDER THE TERMS OF THIS CREATIVE
@@ -370,3 +683,5 @@ License: CC-BY-SA3.0
  .
  Creative Commons may be contacted at http://creativecommons.org/.
  http://creativecommons.org/licenses/by-sa/3.0/
+
+ 
