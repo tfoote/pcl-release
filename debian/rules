@@ -74,14 +74,14 @@ override_dh_shlibdeps:
 override_dh_installchangelogs:
 	dh_installchangelogs -plibpcl-common1.7 CHANGES.md
 	# Creating dh_links to share the same file
-	@for i in libpcl-dev libpcl1.7 libpcl1.7-dbg libpcl-common1.7 libpcl-apps1.7 \
+	@for i in libpcl-dev libpcl1.7 libpcl1.7-dbg libpcl-apps1.7 \
 		libpcl-features1.7 libpcl-filters1.7 libpcl-io1.7 libpcl-kdtree1.7 \
 		libpcl-keypoints1.7 libpcl-octree1.7 libpcl-registration1.7 \
 		libpcl-sample-consensus1.7 libpcl-search1.7 libpcl-segmentation1.7 \
 		libpcl-surface1.7 libpcl-tracking1.7 libpcl-visualization1.7 \
 		libpcl-outofcore1.7 libpcl-people1.7 libpcl-recognition1.7 \
 		pcl-tools libpcl-doc; do \
-	cmd="dh_link -p$$i usr/share/doc/libpcl-common1.7/changelog.gz /usr/share/doc/$$i/"; \
+	cmd="dh_link -p$$i usr/share/doc/libpcl-common1.7/changelog.gz usr/share/doc/$$i/changelog.gz"; \
 	echo $$cmd; $$cmd; \
 	done
 	dh_installchangelogs
