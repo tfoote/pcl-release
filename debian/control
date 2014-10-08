@@ -400,7 +400,7 @@ Description: Point Cloud Library - point cloud processing tools
 Package: libpcl-doc
 Architecture: all
 Section: doc
-Depends: ${misc:Depends}
+Depends: ${misc:Depends}, libjs-jquery
 Multi-Arch: foreign
 Description: Point Cloud Library - documentation
  The Point Cloud Library (PCL) is a standalone, large scale, open

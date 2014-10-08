@@ -62,7 +62,9 @@ override_dh_install:
 	cmd="dh_link -p pcl-tools usr/share/man/man1/pcl_pointclouds.1 usr/share/man/man1/$$i.1"; \
 	echo $$cmd; $$cmd; \
 	done
-
+	
+	rm -rf debian/tmp/usr/share/doc/libpcl-doc/html/jquery.js
+	dh_link -p libpcl-doc usr/share/javascript/jquery/jquery.js usr/share/doc/libpcl-doc/html/jquery.js
 	dh_install --list-missing
 
 override_dh_strip:
