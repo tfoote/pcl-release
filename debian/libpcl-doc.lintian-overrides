@@ -36,3 +36,6 @@ privacy-breach-generic usr/share/doc/libpcl-doc/html/group__visualization.html (
 # and it's DFSG compilant.
 privacy-breach-logo usr/share/doc/libpcl-doc/html/index.html (http://www.pointclouds.org/assets/images/contents/logos/pointcloudlibrary_logo.png)
 
+
+## Files exists in a non direct dependency
+package-contains-broken-symlink usr/share/doc/libpcl-doc/changelog.gz ../libpcl-common1.7/changelog.gz

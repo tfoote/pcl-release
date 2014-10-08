@@ -1,0 +1,3 @@
+##
+# Lintian false-positive, link destination not in this package or direct dependency but indirect yes.
+package-contains-broken-symlink usr/share/doc/libpcl1.7-dbg/changelog.gz ../libpcl-common1.7/changelog.gz

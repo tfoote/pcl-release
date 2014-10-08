@@ -1,4 +1,4 @@
-pcl (1.7.2-1) UNRELEASED; urgency=medium
+pcl (1.7.2-1) unstable; urgency=medium
 
   [Leopold Palomo-Avellaneda]
   * Initial release. (Closes: #703579)
@@ -20,6 +20,7 @@ pcl (1.7.2-1) UNRELEASED; urgency=medium
     in rules.
   * Renamed libpcl-tools to pcl-tools.
   * Added the manpages ...
+  * Added libjs-jquery dependency to calm lintian.
 
 
  -- Leopold Palomo-Avellaneda <leo@alaxarxa.net>  Mon, 06 Oct 2014 09:30:55 +0200
