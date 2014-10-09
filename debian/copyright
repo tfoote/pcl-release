@@ -388,7 +388,7 @@ License: BSD-3-clause
 Files: visualization/include/pcl/visualization/vtk/vtkVertexBuffer*
 	visualization/src/vtk/vtkVertexBufferObject*
 Copyright: 1993-2008 Ken Martin, Will Schroeder, Bill Lorensen
-License: BSD-2-Clause
+License: BSD-2-clause
 
 Files: doc/*
 Copyright: 2009-2012, Willow Garage, Inc.
