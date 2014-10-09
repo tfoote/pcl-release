@@ -55,7 +55,6 @@ Description: Point Cloud Library - development files
 Package: libpcl1.7
 Architecture: any
 Multi-Arch: foreign
-Pre-Depends: ${misc:Pre-Depends}
 Depends: ${misc:Depends},
 	 libpcl-apps1.7,
 	 libpcl-common1.7,

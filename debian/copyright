@@ -49,18 +49,6 @@ Files: apps/point_cloud_editor/*
 Copyright: 2012, Texas A&M University
 License: BSD-3-clause
 
-
-Files: common/include/pcl/common/eigen.h
-Copyright: 2009 Hauke Heibel <hauke.heibel@gmail.com>
-	   2010 Gael Guennebaud <gael.guennebaud@inria.fr> 
- 	   2010-2012, Willow Garage, Inc 
-License: BSD-3-clause
-
-Files: common/src/fft/kiss_fft.c 
-       common/src/fft/kiss_fftr.c
-Copyright: 2003-2010, Mark Borgerding
-License: BSD-3-clause
-
 Files: tools/tiff2pcd.cpp
 Copyright: 2012 KU Leuven 
  	   2010-2012, Willow Garage, Inc
@@ -227,12 +215,6 @@ License: Expat
  CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-Files: common/include/pcl/common/eigen.h
-Copyright: 2009 Hauke Heibel <hauke.heibel@gmail.com>
-	   2010 Gael Guennebaud <gael.guennebaud@inria.fr> 
-	   2010-2012, Willow Garage, Inc
-License: BSD-3-clause
 
 Files: test/outofcore/test_outofcore.cpp
 	outofcore/include/pcl/outofcore/impl/octree*
@@ -407,7 +389,6 @@ Files: visualization/include/pcl/visualization/vtk/vtkVertexBuffer*
 	visualization/src/vtk/vtkVertexBufferObject*
 Copyright: 1993-2008 Ken Martin, Will Schroeder, Bill Lorensen
 License: BSD-2-Clause
-
 
 Files: doc/*
 Copyright: 2009-2012, Willow Garage, Inc.
