@@ -32,7 +32,7 @@ override_dh_auto_configure:
 	-DBUILD_registration=ON -DBUILD_sample_consensus=ON		\
 	-DBUILD_search=ON -DBUILD_segmentation=ON -DBUILD_surface=ON	\
 	-DBUILD_tools=ON -DBUILD_tracking=ON -DBUILD_visualization=ON   \
-	-DBUILD_apps_cloud_composer=ON -DBUILD_apps_modeler=ON            \
+	-DBUILD_apps_cloud_composer=OFF -DBUILD_apps_modeler=ON            \
 	-DBUILD_apps_point_cloud_editor=ON -DBUILD_apps_in_hand_scanner=ON \
 	-DWITH_DOCS=ON 
 
@@ -43,7 +43,7 @@ override_dh_auto_build:
 override_dh_install:
 	mkdir -p debian/tmp/usr/share/doc/libpcl1.7-dbg && cp debian/README.Debug debian/tmp/usr/share/doc/libpcl1.7-dbg/
 	
-	@for i in pcl_cloud_composer pcl_concatenate_points_pcd \
+	@for i in pcl_concatenate_points_pcd \
 		pcl_elch pcl_dinast_grabber pcl_hdl_grabber \
 		pcl_icp pcl_icp2d pcl_lum pcl_manual_registration pcl_match_linemod_template \
 		pcl_multiscale_feature_persistence_example pcl_ndt2d pcl_ndt3d pcl_ni_agast \
@@ -73,8 +73,8 @@ override_dh_install:
 override_dh_strip:
 	dh_strip -a --dbg-package=libpcl1.7-dbg
 
-override_dh_shlibdeps:
-	dh_shlibdeps -Lpcl-tools -l/usr/lib/${DEB_HOST_MULTIARCH}/cloud_composer_plugins -- -xpcl-tools
+#override_dh_shlibdeps:
+#	dh_shlibdeps -v -Xusr/bin/pcl_* -Lpcl-tools -l:$(CURDIR)/debian/usr/lib/${DEB_HOST_MULTIARCH}/cloud_composer_plugins: -ppcl --- -xpcl-tools -v
 
 override_dh_installchangelogs:
 	dh_installchangelogs -plibpcl-common1.7 CHANGES.md

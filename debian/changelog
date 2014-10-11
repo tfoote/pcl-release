@@ -14,9 +14,8 @@ pcl (1.7.2-1) unstable; urgency=medium
     build dependencies.
   * Deleted pkg-kde-tools dependency.
   * Relaxed boost dependencies.
-  * Added -DBUILD_app_cloud_composer=ON 
-	  -DBUILD_app_modeler=ON
-          -DBUILD_app_point_cloud_editor=ON 
+  * Added some applications to be build:
+       app_modeler, app_point_cloud_editor, in_hand_scanner
     in rules.
   * Renamed libpcl-tools to pcl-tools.
   * Added the manpages ...
