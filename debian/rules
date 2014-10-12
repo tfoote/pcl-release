@@ -15,11 +15,9 @@ CXXFLAGS+=$(CPPFLAGS)
 DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
 
 .PHONY: override_dh_auto_configure \
-	override_dh_auto_build \
 	override_dh_install \
 	override_dh_installchangelogs \
-	override_dh_strip \
-	override_dh_shlibdeps
+	override_dh_strip
 
 override_dh_auto_configure:
 	dh_auto_configure -- 						\
@@ -35,10 +33,6 @@ override_dh_auto_configure:
 	-DBUILD_apps_cloud_composer=OFF -DBUILD_apps_modeler=ON            \
 	-DBUILD_apps_point_cloud_editor=ON -DBUILD_apps_in_hand_scanner=ON \
 	-DWITH_DOCS=ON 
-
-override_dh_auto_build:
-	dh_auto_build -- # Compile the software.
-	dh_auto_build -- doc # Generate Doxygen HTML documentation.
 
 override_dh_install:
 	mkdir -p debian/tmp/usr/share/doc/libpcl1.7-dbg && cp debian/README.Debug debian/tmp/usr/share/doc/libpcl1.7-dbg/
