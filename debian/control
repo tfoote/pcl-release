@@ -23,7 +23,7 @@ Build-Depends: debhelper (>= 9),
 	       libqt4-opengl-dev,
 	       libusb-1.0-0-dev,
 	       libvtk5-qt4-dev
-Standards-Version: 3.9.5
+Standards-Version: 3.9.6
 Vcs-Browser: http://anonscm.debian.org/gitweb/?p=debian-science/packages/pcl.git
 Vcs-Git: git://anonscm.debian.org/debian-science/packages/pcl.git
 Homepage: http://www.pointclouds.org/
