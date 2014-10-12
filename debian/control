@@ -23,6 +23,8 @@ Build-Depends: debhelper (>= 9),
 	       libqt4-opengl-dev,
 	       libusb-1.0-0-dev,
 	       freeglut3-dev, 
+	       libxmu-dev,
+	       libxi-dev,
 	       libvtk5-qt4-dev
 Standards-Version: 3.9.6
 Vcs-Browser: http://anonscm.debian.org/gitweb/?p=debian-science/packages/pcl.git
