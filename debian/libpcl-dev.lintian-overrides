@@ -1,0 +1,21 @@
+##
+# Lintian false-positive, link destination not in this package or direct dependency but indirect yes.
+package-contains-broken-symlink usr/lib/x86_64-linux-gnu/libpcl_common.so libpcl_common.so.1.7
+package-contains-broken-symlink usr/lib/x86_64-linux-gnu/libpcl_features.so libpcl_features.so.1.7
+package-contains-broken-symlink usr/lib/x86_64-linux-gnu/libpcl_filters.so libpcl_filters.so.1.7
+package-contains-broken-symlink usr/lib/x86_64-linux-gnu/libpcl_io.so libpcl_io.so.1.7
+package-contains-broken-symlink usr/lib/x86_64-linux-gnu/libpcl_io_ply.so libpcl_io_ply.so.1.7
+package-contains-broken-symlink usr/lib/x86_64-linux-gnu/libpcl_kdtree.so libpcl_kdtree.so.1.7
+package-contains-broken-symlink usr/lib/x86_64-linux-gnu/libpcl_keypoints.so libpcl_keypoints.so.1.7
+package-contains-broken-symlink usr/lib/x86_64-linux-gnu/libpcl_octree.so libpcl_octree.so.1.7
+package-contains-broken-symlink usr/lib/x86_64-linux-gnu/libpcl_outofcore.so libpcl_outofcore.so.1.7
+package-contains-broken-symlink usr/lib/x86_64-linux-gnu/libpcl_people.so libpcl_people.so.1.7
+package-contains-broken-symlink usr/lib/x86_64-linux-gnu/libpcl_recognition.so libpcl_recognition.so.1.7
+package-contains-broken-symlink usr/lib/x86_64-linux-gnu/libpcl_registration.so libpcl_registration.so.1.7
+package-contains-broken-symlink usr/lib/x86_64-linux-gnu/libpcl_sample_consensus.so libpcl_sample_consensus.so.1.7
+package-contains-broken-symlink usr/lib/x86_64-linux-gnu/libpcl_search.so libpcl_search.so.1.7
+package-contains-broken-symlink usr/lib/x86_64-linux-gnu/libpcl_segmentation.so libpcl_segmentation.so.1.7
+package-contains-broken-symlink usr/lib/x86_64-linux-gnu/libpcl_surface.so libpcl_surface.so.1.7
+package-contains-broken-symlink usr/lib/x86_64-linux-gnu/libpcl_tracking.so libpcl_tracking.so.1.7
+package-contains-broken-symlink usr/lib/x86_64-linux-gnu/libpcl_visualization.so libpcl_visualization.so.1.7
+package-contains-broken-symlink usr/share/doc/libpcl-dev/changelog.gz ../libpcl-common1.7/changelog.gz

@@ -24,7 +24,6 @@ pcl (1.7.2-1) unstable; urgency=medium
   * Update Standards-Version (no changes).
   * Fix hidden dependencies with glut and OpenGL of pcl-tools.
   * Cosmetic changes.
-  * Deleted all unnecesary lintian overrides.
 
  -- Leopold Palomo-Avellaneda <leo@alaxarxa.net>  Mon, 06 Oct 2014 09:30:55 +0200
 
