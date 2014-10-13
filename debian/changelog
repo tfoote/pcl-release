@@ -6,29 +6,23 @@ pcl (1.7.2-1) unstable; urgency=medium
   [Leopold Palomo-Avellaneda]
   * Initial release. (Closes: #703579)
   * Worked from the initial debianization from Thomas Moulard.
-    Jochen Sprickerhof <jochen@sprickerhof.de> and myself
-    added as uploaders.
-  * Added libvtk5-qt4-dev, 
-	  libopenni-sensor-primesense-dev,
-	  python-vtk, libvtk5-qt4-dev,
-	  libqt4-opengl-dev,
- 	  python-sphinx,
- 	  libusb-1.0-0-dev
-    build dependencies.
+    Jochen Sprickerhof and myself added as uploaders.
+  * Added libvtk5-qt4-dev, libopenni-sensor-primesense-dev, python-vtk,
+    libvtk5-qt4-dev, libqt4-opengl-dev, python-sphinx, libusb-1.0-0-dev build
+    dependencies.
   * Deleted pkg-kde-tools dependency.
   * Relaxed boost dependencies.
-  * Added some applications to be build:
-       app_modeler, app_point_cloud_editor, in_hand_scanner
-    in rules.
+  * Added some applications to be build: app_modeler, app_point_cloud_editor,
+    in_hand_scanner in rules.
   * Renamed libpcl-tools to pcl-tools.
-  * Added the manpages ...
+  * Added manpages ...
   * Added libjs-jquery dependency to calm lintian.
 
   [Jochen Sprickerhof]
   * Fix license file.
   * Clean up debian/rules.
   * Update Standards-Version (no changes).
-  * Fix hide dependencies with glut and OpenGL of pcl-tools.
+  * Fix hidden dependencies with glut and OpenGL of pcl-tools.
   * Cosmetic changes.
   * Deleted all unnecesary lintian overrides.
 
