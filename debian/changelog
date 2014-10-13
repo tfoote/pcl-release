@@ -29,6 +29,7 @@ pcl (1.7.2-1) unstable; urgency=medium
   * Clean up debian/rules.
   * Update Standards-Version (no changes).
   * Fix hide dependencies with glut and OpenGL of pcl-tools.
+  * Cosmetic changes.
 
  -- Leopold Palomo-Avellaneda <leo@alaxarxa.net>  Mon, 06 Oct 2014 09:30:55 +0200
 
