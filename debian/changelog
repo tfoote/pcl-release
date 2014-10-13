@@ -1,5 +1,8 @@
 pcl (1.7.2-1) unstable; urgency=medium
 
+  [Thomas Moulard]
+  * Initial debianization.
+
   [Leopold Palomo-Avellaneda]
   * Initial release. (Closes: #703579)
   * Worked from the initial debianization from Thomas Moulard.
@@ -21,6 +24,11 @@ pcl (1.7.2-1) unstable; urgency=medium
   * Added the manpages ...
   * Added libjs-jquery dependency to calm lintian.
 
+  [Jochen Sprickerhof]
+  * Fix license file.
+  * Clean up debian/rules.
+  * Update Standards-Version (no changes).
+  * Fix hide dependencies with glut and OpenGL of pcl-tools.
 
  -- Leopold Palomo-Avellaneda <leo@alaxarxa.net>  Mon, 06 Oct 2014 09:30:55 +0200
 
