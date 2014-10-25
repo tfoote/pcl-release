@@ -5,7 +5,7 @@ Uploaders: Thomas Moulard <thomas.moulard@gmail.com>,
 	   Leopold Palomo-Avellaneda <leo@alaxarxa.net>
 Section: libs
 Priority: extra
-Build-Depends: debhelper (>= 9),
+Build-Depends: debhelper (>= 9), dh-exec (>=0.3),
                cmake,
                doxygen,
                doxygen-latex,
