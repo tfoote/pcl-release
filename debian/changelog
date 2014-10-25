@@ -1,7 +1,7 @@
 pcl (1.7.2-2) UNRELEASED; urgency=medium
 
   [Leopold Palomo-Avellaneda]
-  * Change install place for cmake files. Closes #766685.
+  * Change install place for cmake files. Closes: #766685
   * Added dh-exec (>=0.3) dependecy.
 
  -- Leopold Palomo-Avellaneda <leo@alaxarxa.net>  Sat, 25 Oct 2014 11:30:40 +0200
