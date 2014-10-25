@@ -1,11 +1,3 @@
-pcl (1.7.2-2) UNRELEASED; urgency=medium
-
-  [Leopold Palomo-Avellaneda]
-  * Changed location of installation of cmake files.
-    (Closes: #766685)
-
- -- Leopold Palomo-Avellaneda <leo@alaxarxa.net>  Sat, 25 Oct 2014 02:21:55 +0200
-
 pcl (1.7.2-1) unstable; urgency=medium
 
   [Thomas Moulard]
