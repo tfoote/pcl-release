@@ -1,6 +1,6 @@
 usr/include/*
 usr/lib/*/pkgconfig/*
-usr/share/pcl*/*.cmake
+usr/share/pcl*/*.cmake usr/lib/*/cmake/pcl/
 usr/lib/*/libpcl_common.so
 usr/lib/*/libpcl_features.so
 usr/lib/*/libpcl_filters.so
