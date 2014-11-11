@@ -1,0 +1,82 @@
+From 881e4cf919a86ebc58ab80b51ac5d154f3b8f82e Mon Sep 17 00:00:00 2001
+From: Emmanuel Durand <emmanueldurand@gmail.com>
+Date: Thu, 25 Sep 2014 16:11:47 -0400
+Subject: [PATCH 1/3] Package names for OpenNI and OpenNI2 were wrong in cmake
+ modules and in output pkgconfig file
+
+---
+ cmake/Modules/FindOpenNI.cmake  | 4 ++--
+ cmake/Modules/FindOpenNI2.cmake | 4 ++--
+ io/CMakeLists.txt               | 4 ++--
+ visualization/CMakeLists.txt    | 4 ++--
+ 4 files changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/cmake/Modules/FindOpenNI.cmake b/cmake/Modules/FindOpenNI.cmake
+index cb537be..9f772a4 100644
+--- a/cmake/Modules/FindOpenNI.cmake
++++ b/cmake/Modules/FindOpenNI.cmake
+@@ -35,9 +35,9 @@ if(NOT WIN32)
+ endif(NOT WIN32)
+ 
+ if(${CMAKE_VERSION} VERSION_LESS 2.8.2)
+-  pkg_check_modules(PC_OPENNI openni-dev)
++  pkg_check_modules(PC_OPENNI libopenni)
+ else()
+-  pkg_check_modules(PC_OPENNI QUIET openni-dev)
++  pkg_check_modules(PC_OPENNI QUIET libopenni)
+ endif()
+ 
+ set(OPENNI_DEFINITIONS ${PC_OPENNI_CFLAGS_OTHER})
+diff --git a/cmake/Modules/FindOpenNI2.cmake b/cmake/Modules/FindOpenNI2.cmake
+index 036e4e0..713099a 100644
+--- a/cmake/Modules/FindOpenNI2.cmake
++++ b/cmake/Modules/FindOpenNI2.cmake
+@@ -35,9 +35,9 @@ if(NOT WIN32)
+ endif(NOT WIN32)
+ 
+ if(${CMAKE_VERSION} VERSION_LESS 2.8.2)
+-  pkg_check_modules(PC_OPENNI2 openni2-dev)
++  pkg_check_modules(PC_OPENNI2 libopenni2)
+ else()
+-  pkg_check_modules(PC_OPENNI2 QUIET openni2-dev)
++  pkg_check_modules(PC_OPENNI2 QUIET libopenni2)
+ endif()
+ 
+ set(OPENNI2_DEFINITIONS ${PC_OPENNI_CFLAGS_OTHER})
+diff --git a/io/CMakeLists.txt b/io/CMakeLists.txt
+index 347f658..6106349 100644
+--- a/io/CMakeLists.txt
++++ b/io/CMakeLists.txt
+@@ -329,10 +329,10 @@ if(build)
+     set(EXT_DEPS eigen3)
+ 
+     if(OPENNI_FOUND)
+-      list(APPEND EXT_DEPS openni-dev)
++      list(APPEND EXT_DEPS libopenni)
+     endif(OPENNI_FOUND)
+     if(OPENNI2_FOUND)
+-      list(APPEND EXT_DEPS openni2-dev)
++      list(APPEND EXT_DEPS libopenni2)
+     endif(OPENNI2_FOUND)
+ 
+     PCL_MAKE_PKGCONFIG("${LIB_NAME}" "${SUBSYS_NAME}" "${SUBSYS_DESC}"
+diff --git a/visualization/CMakeLists.txt b/visualization/CMakeLists.txt
+index d7becc5..746a693 100644
+--- a/visualization/CMakeLists.txt
++++ b/visualization/CMakeLists.txt
+@@ -154,10 +154,10 @@ if(build)
+ 
+     set(EXT_DEPS "")
+     if(OPENNI_FOUND)
+-      list(APPEND EXT_DEPS openni-dev)
++      list(APPEND EXT_DEPS libopenni)
+     endif(OPENNI_FOUND)
+ 	if(OPENNI2_FOUND)
+-      list(APPEND EXT_DEPS openni2-dev)
++      list(APPEND EXT_DEPS libopenni2)
+     endif(OPENNI2_FOUND)
+     PCL_MAKE_PKGCONFIG("${LIB_NAME}" "${SUBSYS_NAME}" "${SUBSYS_DESC}"
+       "${SUBSYS_DEPS}" "${EXT_DEPS}" "" "" "")
+-- 
+2.1.3
+
