@@ -1,0 +1,27 @@
+From 66f767e9928f068a5a63308a7cfed52495ae420e Mon Sep 17 00:00:00 2001
+From: Jochen Sprickerhof <git@jochen.sprickerhof.de>
+Date: Thu, 13 Nov 2014 10:50:53 +0100
+Subject: [PATCH 4/4] Correct PCL_ROOT in PCLConfig.cmake
+
+Taken from http://pkgs.fedoraproject.org/cgit/pcl.git/tree/pcl-1.7.1-fedora.patch
+---
+ PCLConfig.cmake.in | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/PCLConfig.cmake.in b/PCLConfig.cmake.in
+index 5f5b07f..0dee8fb 100644
+--- a/PCLConfig.cmake.in
++++ b/PCLConfig.cmake.in
+@@ -531,8 +531,7 @@ if(WIN32 AND NOT MINGW)
+   get_filename_component(PCL_ROOT "${PCL_DIR}" PATH)
+ else(WIN32 AND NOT MINGW)
+ # PCLConfig.cmake is installed to PCL_ROOT/share/pcl-x.y
+-  get_filename_component(PCL_ROOT "${PCL_DIR}" PATH)
+-  get_filename_component(PCL_ROOT "${PCL_ROOT}" PATH)
++  set(PCL_ROOT "@CMAKE_INSTALL_PREFIX@")
+ endif(WIN32 AND NOT MINGW)
+ 
+ # check whether PCLConfig.cmake is found into a PCL installation or in a build tree
+-- 
+2.1.3
+
