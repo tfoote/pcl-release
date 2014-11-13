@@ -1,3 +1,4 @@
 0001-Package-names-for-OpenNI-and-OpenNI2-were-wrong-in-c.patch
 0002-Corrected-openni-dev-and-openni2-dev-in-PCLConfig.cm.patch
 0003-Always-build-libpcl_apps.so.patch
+0004-Correct-PCL_ROOT-in-PCLConfig.cmake.patch
