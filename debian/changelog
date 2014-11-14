@@ -3,6 +3,7 @@ pcl (1.7.2-3) unstable; urgency=medium
   [ Jochen Sprickerhof ]
   * Change openni-dev to libopenni, Closes: #768953
   * Build without OpenNI when it's not available.
+  * Fix PCLConfig.cmake (patch taken from Fedora).
 
  -- Leopold Palomo-Avellaneda <leo@alaxarxa.net>  Tue, 11 Nov 2014 15:34:43 +0100
 
