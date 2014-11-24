@@ -1,3 +1,11 @@
+pcl (1.7.2-4) unstable; urgency=medium
+
+  [Leopold Palomo-Avellaneda]
+  * Added missing Multi-arch field for libpcl-apps1.7.
+  * Removing Multi-Arch of libpcl-dev. Closes: #770503
+
+ -- Leopold Palomo-Avellaneda <leo@alaxarxa.net>  Mon, 24 Nov 2014 12:27:06 +0100
+
 pcl (1.7.2-3) unstable; urgency=medium
 
   [ Jochen Sprickerhof ]
