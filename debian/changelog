@@ -1,6 +1,6 @@
 pcl (1.7.2-5) unstable; urgency=medium
 
- [Leopold Palomo-Avellaneda]
+  [Leopold Palomo-Avellaneda]
   * Reverted Multi-arch field for libpcl-apps1.7.
 
  -- Leopold Palomo-Avellaneda <leo@alaxarxa.net>  Thu, 27 Nov 2014 18:14:40 +0100
