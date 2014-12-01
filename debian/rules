@@ -87,7 +87,7 @@ override_dh_installchangelogs:
 
 
 %:
-	dh  $@ --parallel --builddirectory=build
+	dh  $@ --builddirectory=build
 
 
 get-orig-source:

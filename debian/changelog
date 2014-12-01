@@ -1,3 +1,9 @@
+pcl (1.7.2-6) unstable; urgency=medium
+
+  * Remove --parallel from dh to fix build on i386 buildd.
+
+ -- Jochen Sprickerhof <git@jochen.sprickerhof.de>  Mon, 01 Dec 2014 10:46:10 +0100
+
 pcl (1.7.2-5) unstable; urgency=medium
 
   [Leopold Palomo-Avellaneda]
