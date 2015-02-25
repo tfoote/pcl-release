@@ -1,3 +1,9 @@
+pcl (1.7.2-7) unstable; urgency=medium
+
+  * Added patch to solve sometimes FTBFS. Closes: #779183
+
+ -- Leopold Palomo-Avellaneda <leo@alaxarxa.net>  Wed, 25 Feb 2015 16:04:35 +0100
+
 pcl (1.7.2-6) unstable; urgency=medium
 
   [ Jochen Sprickerhof ]
