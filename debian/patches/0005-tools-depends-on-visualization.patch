@@ -1,0 +1,20 @@
+From 421326315ad0f5012a58677d9f1fcb31fa82f6c3 Tue Dec 2 08:30:14 2014
+From: James Cowgill <james410@cowgill.org.uk>
+Date: Wed, 25 Feb 2015 09:22:52 +0000
+Subject: Bug#779183: pcl: sometimes FTBFS - fatal error: pcl/visualization/pcl_visualizer.h: No such file or directory
+
+See https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=779183
+---
+
+diff --git a/tools/CMakeLists.txt b/tools/CMakeLists.txt
+index d5bb290..d533471 100644
+--- a/tools/CMakeLists.txt
++++ b/tools/CMakeLists.txt
+@@ -1,6 +1,6 @@
+ set (SUBSYS_NAME tools)
+ set (SUBSYS_DESC "Useful PCL-based command line tools")
+-set (SUBSYS_DEPS common io filters sample_consensus segmentation search kdtree features surface octree registration recognition geometry keypoints)
++set (SUBSYS_DEPS common io filters sample_consensus segmentation search kdtree features surface octree registration recognition geometry keypoints visualization)
+ set (DEFAULT ON)
+ set (REASON "")
+ 
