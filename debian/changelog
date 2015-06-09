@@ -2,6 +2,7 @@ pcl (1.7.2-8) unstable; urgency=medium
 
   * Appy ggc-min-expand+disable-WITH_DOCS.diff (Closes: #780582), Thanks Dejan
     Latinovic.
+  * Update architectures on libopenni-dev dependency
 
  -- Jochen Sprickerhof <debian@jochen.sprickerhof.de>  Tue, 09 Jun 2015 10:55:56 +0200
 
