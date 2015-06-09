@@ -11,6 +11,13 @@ LDFLAGS:=$(shell dpkg-buildflags --get LDFLAGS) -Wl,--as-needed
 CFLAGS+=$(CPPFLAGS)
 CXXFLAGS+=$(CPPFLAGS)
 
+DEB_BUILD_ARCH     ?= $(shell dpkg-architecture -qDEB_BUILD_ARCH)
+ifneq (,$(filter $(DEB_BUILD_ARCH),mips mipsel))
+	CXXFLAGS+=--param ggc-min-expand=20
+endif
+
+BUILD_DOC = $(if $(shell dh_listpackages | grep libpcl-doc),-DWITH_DOCS=ON)
+
 # Multiarch.
 DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
 
@@ -32,7 +39,7 @@ override_dh_auto_configure:
 	-DBUILD_tools=ON -DBUILD_tracking=ON -DBUILD_visualization=ON   \
 	-DBUILD_apps_cloud_composer=OFF -DBUILD_apps_modeler=ON            \
 	-DBUILD_apps_point_cloud_editor=ON -DBUILD_apps_in_hand_scanner=ON \
-	-DWITH_DOCS=ON 
+	$(BUILD_DOC)
 
 override_dh_install:
 	mkdir -p debian/tmp/usr/share/doc/libpcl1.7-dbg && cp debian/README.Debug debian/tmp/usr/share/doc/libpcl1.7-dbg/
