@@ -3,3 +3,6 @@
 0003-Always-build-libpcl_apps.so.patch
 0004-Correct-PCL_ROOT-in-PCLConfig.cmake.patch
 0005-tools-depends-on-visualization.patch
+0006-fixes-for-boost-1.56-and-Qt4.patch
+0007-Fix-for-boost-1.57.patch
+0008-Fixes-manual_registration-and-segmentation-demo-for-.patch

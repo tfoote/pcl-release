@@ -1,0 +1,172 @@
+From 1d48a7588658b1c33860d1de569055432fb018ed Mon Sep 17 00:00:00 2001
+From: Francisco Facioni <fran6co@gmail.com>
+Date: Mon, 5 Jan 2015 15:38:57 -0300
+Subject: [PATCH] Fix for boost 1.57
+
+---
+ apps/include/pcl/apps/impl/dominant_plane_segmentation.hpp | 2 +-
+ common/include/pcl/common/boost.h                          | 4 ++--
+ common/include/pcl/conversions.h                           | 2 ++
+ common/include/pcl/for_each_type.h                         | 2 ++
+ common/include/pcl/register_point_struct.h                 | 4 ++--
+ tools/boost.h                                              | 4 ++--
+ visualization/include/pcl/visualization/interactor_style.h | 3 ++-
+ visualization/tools/image_viewer.cpp                       | 2 +-
+ 8 files changed, 14 insertions(+), 9 deletions(-)
+
+diff --git a/apps/include/pcl/apps/impl/dominant_plane_segmentation.hpp b/apps/include/pcl/apps/impl/dominant_plane_segmentation.hpp
+index b457862..2a3fe5b 100644
+--- a/apps/include/pcl/apps/impl/dominant_plane_segmentation.hpp
++++ b/apps/include/pcl/apps/impl/dominant_plane_segmentation.hpp
+@@ -33,9 +33,9 @@
+  *
+  */
+ 
++#ifndef Q_MOC_RUN
+ #pragma once
+ #include <boost/thread/thread.hpp>
+-#ifndef Q_MOC_RUN
+ #include <boost/date_time/posix_time/posix_time.hpp>
+ #endif
+ 
+diff --git a/common/include/pcl/common/boost.h b/common/include/pcl/common/boost.h
+index b70f098..acc70af 100644
+--- a/common/include/pcl/common/boost.h
++++ b/common/include/pcl/common/boost.h
+@@ -43,14 +43,13 @@
+ #pragma GCC system_header 
+ #endif
+ 
++#ifndef Q_MOC_RUN
+ // Marking all Boost headers as system headers to remove warnings
+ #include <boost/fusion/sequence/intrinsic/at_key.hpp>
+ #include <boost/shared_ptr.hpp>
+ #include <boost/make_shared.hpp>
+ #include <boost/mpl/size.hpp>
+-#ifndef Q_MOC_RUN
+ #include <boost/date_time/posix_time/posix_time.hpp>
+-#endif
+ #include <boost/function.hpp>
+ //#include <boost/timer.hpp>
+ #include <boost/thread.hpp>
+@@ -58,5 +57,6 @@
+ #include <boost/signals2.hpp>
+ #include <boost/signals2/slot.hpp>
+ #include <boost/algorithm/string.hpp>
++#endif
+ 
+ #endif    // PCL_COMMON_BOOST_H_
+diff --git a/common/include/pcl/conversions.h b/common/include/pcl/conversions.h
+index 13b883d..a5bf20b 100644
+--- a/common/include/pcl/conversions.h
++++ b/common/include/pcl/conversions.h
+@@ -52,7 +52,9 @@
+ #include <pcl/for_each_type.h>
+ #include <pcl/exceptions.h>
+ #include <pcl/console/print.h>
++#ifndef Q_MOC_RUN
+ #include <boost/foreach.hpp>
++#endif
+ 
+ namespace pcl
+ {
+diff --git a/common/include/pcl/for_each_type.h b/common/include/pcl/for_each_type.h
+index 4d05e04..d6973d4 100644
+--- a/common/include/pcl/for_each_type.h
++++ b/common/include/pcl/for_each_type.h
+@@ -44,6 +44,7 @@
+ #pragma GCC system_header 
+ #endif
+ 
++#ifndef Q_MOC_RUN
+ #include <boost/mpl/is_sequence.hpp>
+ #include <boost/mpl/begin_end.hpp>
+ #include <boost/mpl/next_prior.hpp>
+@@ -54,6 +55,7 @@
+ #include <boost/mpl/not.hpp>
+ #include <boost/mpl/aux_/unwrap.hpp>
+ #include <boost/type_traits/is_same.hpp>
++#endif
+ 
+ namespace pcl 
+ {
+diff --git a/common/include/pcl/register_point_struct.h b/common/include/pcl/register_point_struct.h
+index 88a8135..57a0e42 100644
+--- a/common/include/pcl/register_point_struct.h
++++ b/common/include/pcl/register_point_struct.h
+@@ -51,6 +51,8 @@
+   #pragma warning (disable: 4244)
+ #endif
+ 
++//https://bugreports.qt-project.org/browse/QTBUG-22829
++#ifndef Q_MOC_RUN
+ #include <pcl/pcl_macros.h>
+ #include <pcl/point_traits.h>
+ #include <boost/mpl/vector.hpp>
+@@ -60,8 +62,6 @@
+ #include <boost/preprocessor/cat.hpp>
+ #include <boost/preprocessor/comparison.hpp>
+ #include <boost/utility.hpp>
+-//https://bugreports.qt-project.org/browse/QTBUG-22829
+-#ifndef Q_MOC_RUN
+ #include <boost/type_traits.hpp>
+ #endif
+ #include <stddef.h> //offsetof
+diff --git a/tools/boost.h b/tools/boost.h
+index d9a3675..f1b44dc 100644
+--- a/tools/boost.h
++++ b/tools/boost.h
+@@ -45,6 +45,7 @@
+ #pragma GCC system_header 
+ #endif
+ 
++#ifndef Q_MOC_RUN
+ // Marking all Boost headers as system headers to remove warnings
+ #include <boost/random.hpp>
+ #include <boost/random/normal_distribution.hpp>
+@@ -52,12 +53,11 @@
+ #include <boost/lexical_cast.hpp>
+ #include <boost/make_shared.hpp>
+ #include <boost/date_time/gregorian/gregorian_types.hpp>
+-#ifndef Q_MOC_RUN
+ #include <boost/date_time/posix_time/posix_time.hpp>
+-#endif
+ #include <boost/date_time/posix_time/posix_time_types.hpp>
+ #include <boost/thread/thread.hpp>
+ //#include <boost/uuid/uuid.hpp>
+ //#include <boost/uuid/uuid_generators.hpp>
++#endif
+ 
+ #endif    // PCL_TOOLS_BOOST_H_
+diff --git a/visualization/include/pcl/visualization/interactor_style.h b/visualization/include/pcl/visualization/interactor_style.h
+index fa9bebb..c89bb2d 100644
+--- a/visualization/include/pcl/visualization/interactor_style.h
++++ b/visualization/include/pcl/visualization/interactor_style.h
+@@ -47,8 +47,9 @@
+ #include <pcl/visualization/mouse_event.h>
+ #include <pcl/visualization/point_picking_event.h>
+ #include <pcl/visualization/area_picking_event.h>
++#ifndef Q_MOC_RUN
+ #include <boost/signals2/signal.hpp>
+-
++#endif
+ #include <vtkInteractorStyleRubberBandPick.h>
+ 
+ class vtkRendererCollection;
+diff --git a/visualization/tools/image_viewer.cpp b/visualization/tools/image_viewer.cpp
+index db4f48d..03f35dd 100644
+--- a/visualization/tools/image_viewer.cpp
++++ b/visualization/tools/image_viewer.cpp
+@@ -36,8 +36,8 @@
+  *	
+  */
+ 
+-#include <boost/thread/thread.hpp>
+ #ifndef Q_MOC_RUN
++#include <boost/thread/thread.hpp>
+ #include <boost/date_time/posix_time/posix_time.hpp>
+ #endif
+ #include <pcl/point_cloud.h>
+-- 
+2.5.0
+

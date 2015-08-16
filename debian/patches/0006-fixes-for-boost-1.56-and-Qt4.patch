@@ -1,0 +1,112 @@
+From ccf9dab41c9f477b07d664f5a700c403d6737936 Mon Sep 17 00:00:00 2001
+From: Francisco Facioni <fran6co@gmail.com>
+Date: Wed, 1 Oct 2014 14:33:32 -0300
+Subject: [PATCH] fixes for boost 1.56 and Qt4
+
+---
+ apps/include/pcl/apps/impl/dominant_plane_segmentation.hpp | 2 ++
+ common/include/pcl/common/boost.h                          | 2 ++
+ common/include/pcl/common/time.h                           | 2 ++
+ common/include/pcl/console/time.h                          | 2 ++
+ io/include/pcl/io/boost.h                                  | 2 ++
+ tools/boost.h                                              | 2 ++
+ visualization/include/pcl/visualization/boost.h            | 2 ++
+ visualization/tools/image_viewer.cpp                       | 2 ++
+ 8 files changed, 16 insertions(+)
+
+--- a/apps/include/pcl/apps/impl/dominant_plane_segmentation.hpp
++++ b/apps/include/pcl/apps/impl/dominant_plane_segmentation.hpp
+@@ -35,7 +35,9 @@
+ 
+ #pragma once
+ #include <boost/thread/thread.hpp>
++#ifndef Q_MOC_RUN
+ #include <boost/date_time/posix_time/posix_time.hpp>
++#endif
+ 
+ #include <pcl/apps/dominant_plane_segmentation.h>
+ #include <pcl/visualization/pcl_visualizer.h>
+--- a/common/include/pcl/common/boost.h
++++ b/common/include/pcl/common/boost.h
+@@ -48,7 +48,9 @@
+ #include <boost/shared_ptr.hpp>
+ #include <boost/make_shared.hpp>
+ #include <boost/mpl/size.hpp>
++#ifndef Q_MOC_RUN
+ #include <boost/date_time/posix_time/posix_time.hpp>
++#endif
+ #include <boost/function.hpp>
+ //#include <boost/timer.hpp>
+ #include <boost/thread.hpp>
+--- a/common/include/pcl/common/time.h
++++ b/common/include/pcl/common/time.h
+@@ -45,7 +45,9 @@
+ 
+ #include <cmath>
+ #include <string>
++#ifndef Q_MOC_RUN
+ #include <boost/date_time/posix_time/posix_time.hpp>
++#endif
+ 
+ /**
+   * \file pcl/common/time.h
+--- a/common/include/pcl/console/time.h
++++ b/common/include/pcl/console/time.h
+@@ -42,7 +42,9 @@
+ #pragma GCC system_header 
+ #endif
+ 
++#ifndef Q_MOC_RUN
+ #include <boost/date_time/posix_time/posix_time.hpp>
++#endif
+ #include <pcl/console/print.h>
+ 
+ namespace pcl
+--- a/io/include/pcl/io/boost.h
++++ b/io/include/pcl/io/boost.h
+@@ -63,7 +63,9 @@
+ #include <boost/mpl/transform.hpp>
+ #include <boost/mpl/vector.hpp>
+ #include <boost/algorithm/string.hpp>
++#ifndef Q_MOC_RUN
+ #include <boost/date_time/posix_time/posix_time.hpp>
++#endif
+ #include <boost/chrono.hpp>
+ #include <boost/tokenizer.hpp>
+ #include <boost/foreach.hpp>
+--- a/tools/boost.h
++++ b/tools/boost.h
+@@ -52,7 +52,9 @@
+ #include <boost/lexical_cast.hpp>
+ #include <boost/make_shared.hpp>
+ #include <boost/date_time/gregorian/gregorian_types.hpp>
++#ifndef Q_MOC_RUN
+ #include <boost/date_time/posix_time/posix_time.hpp>
++#endif
+ #include <boost/date_time/posix_time/posix_time_types.hpp>
+ #include <boost/thread/thread.hpp>
+ //#include <boost/uuid/uuid.hpp>
+--- a/visualization/include/pcl/visualization/boost.h
++++ b/visualization/include/pcl/visualization/boost.h
+@@ -60,7 +60,9 @@
+ #include <boost/thread/mutex.hpp>
+ #include <boost/thread/thread.hpp>
+ #include <boost/foreach.hpp>
++#ifndef Q_MOC_RUN
+ #include <boost/date_time/posix_time/posix_time.hpp>
++#endif
+ #include <boost/filesystem.hpp>
+ #endif
+ 
+--- a/visualization/tools/image_viewer.cpp
++++ b/visualization/tools/image_viewer.cpp
+@@ -37,7 +37,9 @@
+  */
+ 
+ #include <boost/thread/thread.hpp>
++#ifndef Q_MOC_RUN
+ #include <boost/date_time/posix_time/posix_time.hpp>
++#endif
+ #include <pcl/point_cloud.h>
+ #include <pcl/point_types.h>
+ #include <pcl/common/time.h> //fps calculations

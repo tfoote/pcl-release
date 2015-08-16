@@ -1,0 +1,65 @@
+From f5227353551bb8cd96ba320b934c66c42c07be6f Mon Sep 17 00:00:00 2001
+From: Francisco Facioni <fran6co@gmail.com>
+Date: Mon, 5 Jan 2015 15:38:57 -0300
+Subject: [PATCH] Fixes manual_registration and segmentation demo for boost
+ 1.57
+
+---
+ apps/include/pcl/apps/manual_registration.h   | 2 ++
+ common/include/pcl/common/time_trigger.h      | 2 ++
+ segmentation/include/pcl/segmentation/boost.h | 3 ++-
+ 3 files changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/apps/include/pcl/apps/manual_registration.h b/apps/include/pcl/apps/manual_registration.h
+index 8193428..99454c1 100644
+--- a/apps/include/pcl/apps/manual_registration.h
++++ b/apps/include/pcl/apps/manual_registration.h
+@@ -42,7 +42,9 @@
+ #include <QTimer>
+ 
+ // Boost
++#ifndef Q_MOC_RUN
+ #include <boost/thread/thread.hpp>
++#endif
+ 
+ // PCL
+ #include <pcl/console/print.h>
+diff --git a/common/include/pcl/common/time_trigger.h b/common/include/pcl/common/time_trigger.h
+index 697d3af..941f96b 100644
+--- a/common/include/pcl/common/time_trigger.h
++++ b/common/include/pcl/common/time_trigger.h
+@@ -40,9 +40,11 @@
+ #define PCL_COMMON_TIME_TRIGGER_H_
+ 
+ #include <pcl/pcl_macros.h>
++#ifndef Q_MOC_RUN
+ #include <boost/function.hpp>
+ #include <boost/thread.hpp>
+ #include <boost/signals2.hpp>
++#endif
+ 
+ namespace pcl
+ {
+diff --git a/segmentation/include/pcl/segmentation/boost.h b/segmentation/include/pcl/segmentation/boost.h
+index 32135b9..f2baa9f 100644
+--- a/segmentation/include/pcl/segmentation/boost.h
++++ b/segmentation/include/pcl/segmentation/boost.h
+@@ -45,6 +45,7 @@
+ #pragma GCC system_header 
+ #endif
+ 
++#ifndef Q_MOC_RUN
+ // Marking all Boost headers as system headers to remove warnings
+ #include <boost/version.hpp>
+ #include <boost/make_shared.hpp>
+@@ -55,6 +56,6 @@
+ #if (BOOST_VERSION >= 104400) 
+   #include <boost/graph/boykov_kolmogorov_max_flow.hpp>
+ #endif 
+-
++#endif
+ 
+ #endif    // PCL_SEGMENTATION_BOOST_H_
+-- 
+2.5.0
+
