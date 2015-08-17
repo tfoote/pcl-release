@@ -1,3 +1,11 @@
+pcl (1.7.2-9) unstable; urgency=medium
+
+  * Add patches for FTBFS with gcc5 (closes #795525)
+  * Fix FTBFS on ppc64el, thanks to ChriSopht in #eigen
+  * Add mips* as supported OpenNI architectures
+
+ -- Jochen Sprickerhof <debian@jochen.sprickerhof.de>  Mon, 17 Aug 2015 12:05:12 +0200
+
 pcl (1.7.2-8) unstable; urgency=medium
 
   * Appy ggc-min-expand+disable-WITH_DOCS.diff (Closes: #780582), Thanks Dejan
