@@ -1,3 +1,9 @@
+pcl (1.7.2-10) unstable; urgency=medium
+
+  * Fix an other FTBFS on ppc64el
+
+ -- Jochen Sprickerhof <debian@jochen.sprickerhof.de>  Tue, 01 Sep 2015 09:41:28 +0200
+
 pcl (1.7.2-9) unstable; urgency=medium
 
   * Add patches for FTBFS with gcc5 (closes #795525)
