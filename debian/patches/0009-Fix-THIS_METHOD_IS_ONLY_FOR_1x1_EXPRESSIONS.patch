@@ -1,13 +1,13 @@
-From f2b6da959300acc1d0199cf3a922dae0844f7a03 Mon Sep 17 00:00:00 2001
 From: Jochen Sprickerhof <git@jochen.sprickerhof.de>
 Date: Mon, 17 Aug 2015 11:53:28 +0200
-Subject: [PATCH] Fix THIS_METHOD_IS_ONLY_FOR_1x1_EXPRESSIONS
+Subject: Fix THIS_METHOD_IS_ONLY_FOR_1x1_EXPRESSIONS
 
 see: https://buildd.debian.org/status/fetch.php?pkg=pcl&arch=ppc64el&ver=1.7.2-8&stamp=1438282347
 Thanks to ChriSopht in #eigen
 ---
- apps/in_hand_scanner/src/icp.cpp | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ apps/in_hand_scanner/src/icp.cpp                   | 2 +-
+ apps/in_hand_scanner/src/visibility_confidence.cpp | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/apps/in_hand_scanner/src/icp.cpp b/apps/in_hand_scanner/src/icp.cpp
 index fcbd45c..6bbfad3 100644
@@ -22,6 +22,16 @@ index fcbd45c..6bbfad3 100644
      {
        PointNormal pt;
        pt.getVector4fMap ()       = it->getVector4fMap ();
--- 
-2.5.0
-
+diff --git a/apps/in_hand_scanner/src/visibility_confidence.cpp b/apps/in_hand_scanner/src/visibility_confidence.cpp
+index 0b83a1b..90ebfd6 100644
+--- a/apps/in_hand_scanner/src/visibility_confidence.cpp
++++ b/apps/in_hand_scanner/src/visibility_confidence.cpp
+@@ -137,7 +137,7 @@ pcl::ihs::addDirection (const Eigen::Vector4f& normal,
+   //       acos (angle) = dot (a, b) / (norm (a) * norm (b)
+   //       m_sphere_vertices are already normalized
+   unsigned int index = 0;
+-  (aligned_direction.transpose () * pcl::ihs::dome.getVertices ()).maxCoeff (&index);
++  aligned_direction.transpose ().lazyProduct (pcl::ihs::dome.getVertices ()).maxCoeff (&index);
+ 
+   // Set the observed direction bit at 'index'
+   // http://stackoverflow.com/questions/47981/how-do-you-set-clear-and-toggle-a-single-bit-in-c/47990#47990
