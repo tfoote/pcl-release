@@ -20,6 +20,14 @@ BUILD_DOC = $(if $(shell dh_listpackages | grep libpcl-doc),-DWITH_DOCS=ON)
 
 # Multiarch.
 DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+# Num bits
+DEB_HOST_ARCH_BITS ?= $(shell dpkg-architecture -qDEB_HOST_ARCH_BITS)
+
+ifeq ($(DEB_HOST_ARCH_BITS),32)
+        PARALLEL = ""
+else
+        PARALLEL = --parallel
+endif
 
 .PHONY: override_dh_auto_configure \
 	override_dh_install \
@@ -94,7 +102,7 @@ override_dh_installchangelogs:
 
 
 %:
-	dh  $@ --builddirectory=build
+	dh  $@ $(PARALLEL) --builddirectory=build
 
 
 get-orig-source:
