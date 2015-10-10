@@ -1,9 +1,14 @@
-pcl (1.7.2-11) UNRELEASED; urgency=medium
+pcl (1.7.2-11) unstable; urgency=medium
 
+  [ Leopold Palomo-Avellaneda ]
   * Add parallel build in some Archs (!=32 bits).
     Closes: #799218
 
- -- Leopold Palomo-Avellaneda <leo@alaxarxa.net>  Wed, 23 Sep 2015 12:12:31 +0200
+  [ Jochen Sprickerhof ]
+  * Add patch for Eigen build error
+  * Switch to VTK6 (Closes: #798171).
+
+ -- Jochen Sprickerhof <debian@jochen.sprickerhof.de>  Sat, 10 Oct 2015 23:51:16 +0200
 
 pcl (1.7.2-10) unstable; urgency=medium
 
