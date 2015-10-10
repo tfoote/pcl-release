@@ -15,7 +15,7 @@ Build-Depends: debhelper (>= 9), dh-exec (>=0.3),
 	       libboost-iostreams-dev,
 	       libeigen3-dev,
 	       libflann-dev,
-	       libvtk5-dev,
+	       libvtk6-dev,
 	       libqhull-dev,
 	       libopenni-dev [amd64 arm64 armel armhf i386 mips mipsel powerpc ppc64el],
 	       libqt4-opengl-dev,
@@ -23,7 +23,7 @@ Build-Depends: debhelper (>= 9), dh-exec (>=0.3),
 	       freeglut3-dev, 
 	       libxmu-dev,
 	       libxi-dev,
-	       libvtk5-qt4-dev
+	       libvtk6-qt-dev
 Build-Depends-Indep: doxygen,
 		     doxygen-latex
 Standards-Version: 3.9.6
@@ -37,7 +37,7 @@ Section: libdevel
 Depends: libboost-all-dev,
 	 libeigen3-dev,
 	 libflann-dev,
-	 libvtk5-dev,
+	 libvtk6-dev,
 	 libqhull-dev,
 	 libopenni-dev [amd64 arm64 armel armhf i386 mips mipsel powerpc ppc64el],
          libpcl1.7 (= ${binary:Version}),
