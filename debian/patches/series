@@ -7,3 +7,4 @@
 0007-Fix-for-boost-1.57.patch
 0008-Fixes-manual_registration-and-segmentation-demo-for-.patch
 0009-Fix-THIS_METHOD_IS_ONLY_FOR_1x1_EXPRESSIONS.patch
+0010-Fix-THIS_METHOD_IS_ONLY_FOR_INNER_OR_LAZY_PRODUCTS.patch

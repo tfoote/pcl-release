@@ -1,0 +1,21 @@
+From: Jochen Sprickerhof <git@jochen.sprickerhof.de>
+Date: Sat, 10 Oct 2015 08:47:01 +0200
+Subject: Fix THIS_METHOD_IS_ONLY_FOR_INNER_OR_LAZY_PRODUCTS
+
+---
+ registration/include/pcl/registration/impl/ppf_registration.hpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/registration/include/pcl/registration/impl/ppf_registration.hpp b/registration/include/pcl/registration/impl/ppf_registration.hpp
+index fc752a4..2203862 100644
+--- a/registration/include/pcl/registration/impl/ppf_registration.hpp
++++ b/registration/include/pcl/registration/impl/ppf_registration.hpp
+@@ -317,7 +317,7 @@ pcl::PPFRegistration<PointSource, PointTarget>::posesWithinErrorBounds (Eigen::A
+                                                                         Eigen::Affine3f &pose2)
+ {
+   float position_diff = (pose1.translation () - pose2.translation ()).norm ();
+-  Eigen::AngleAxisf rotation_diff_mat (pose1.rotation ().inverse () * pose2.rotation ());
++  Eigen::AngleAxisf rotation_diff_mat (pose1.rotation ().inverse ().lazyProduct (pose2.rotation ()));
+ 
+   float rotation_diff_angle = fabsf (rotation_diff_mat.angle ());
+ 
