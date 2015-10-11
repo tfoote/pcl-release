@@ -24,9 +24,9 @@ DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
 DEB_HOST_ARCH_BITS ?= $(shell dpkg-architecture -qDEB_HOST_ARCH_BITS)
 
 ifeq ($(DEB_HOST_ARCH_BITS),32)
-        PARALLEL = ""
+  PARALLEL=
 else
-        PARALLEL = --parallel
+  PARALLEL=--parallel
 endif
 
 .PHONY: override_dh_auto_configure \
