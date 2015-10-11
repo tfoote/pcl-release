@@ -23,7 +23,7 @@ Build-Depends: debhelper (>= 9), dh-exec (>=0.3),
 	       freeglut3-dev, 
 	       libxmu-dev,
 	       libxi-dev,
-	       libvtk6-qt-dev
+	       libvtk6-qt-dev [!armel !armhf]
 Build-Depends-Indep: doxygen,
 		     doxygen-latex
 Standards-Version: 3.9.6
