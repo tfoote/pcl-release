@@ -1,3 +1,10 @@
+pcl (1.7.2-12) unstable; urgency=medium
+
+  * Fix syntax in rules file
+  * libvtk6-qt-dev is not available on arm
+
+ -- Jochen Sprickerhof <debian@jochen.sprickerhof.de>  Sun, 11 Oct 2015 16:56:06 +0200
+
 pcl (1.7.2-11) unstable; urgency=medium
 
   [ Leopold Palomo-Avellaneda ]
