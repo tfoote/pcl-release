@@ -1,0 +1,469 @@
+From: Tobias Fischer <t.fischer@imperial.ac.uk>
+Date: Tue, 28 Apr 2015 20:06:14 +0100
+Subject: Better support for QT5 & VTK 6.x - provide option which QT version
+ to use - compile more apps which were not available using VTK 6.x
+
+---
+ CMakeLists.txt                                      | 21 +++++++++++----------
+ apps/CMakeLists.txt                                 |  1 +
+ .../include/pcl/apps/cloud_composer/qt.h            |  5 +++++
+ .../cloud_composer/tool_interface/abstract_tool.h   |  1 +
+ .../cloud_composer/tool_interface/tool_factory.h    |  4 +++-
+ .../include/pcl/apps/cloud_composer/toolbox_model.h |  1 -
+ .../cloud_composer/tools/euclidean_clustering.h     |  5 ++++-
+ .../pcl/apps/cloud_composer/tools/fpfh_estimation.h |  5 ++++-
+ .../apps/cloud_composer/tools/normal_estimation.h   |  5 ++++-
+ .../cloud_composer/tools/organized_segmentation.h   |  3 +++
+ .../pcl/apps/cloud_composer/tools/sanitize_cloud.h  |  5 ++++-
+ .../tools/statistical_outlier_removal.h             |  5 ++++-
+ .../pcl/apps/cloud_composer/tools/supervoxels.h     |  3 +++
+ .../cloud_composer/tools/voxel_grid_downsample.h    |  5 ++++-
+ apps/cloud_composer/tools/euclidean_clustering.cpp  |  6 +++++-
+ apps/cloud_composer/tools/fpfh_estimation.cpp       |  8 +++++---
+ apps/cloud_composer/tools/normal_estimation.cpp     |  8 +++++---
+ .../cloud_composer/tools/organized_segmentation.cpp |  8 ++++++--
+ apps/cloud_composer/tools/sanitize_cloud.cpp        |  8 +++++---
+ .../tools/statistical_outlier_removal.cpp           |  8 +++++---
+ apps/cloud_composer/tools/supervoxels.cpp           |  8 ++++++--
+ apps/cloud_composer/tools/voxel_grid_downsample.cpp |  8 +++++---
+ apps/modeler/CMakeLists.txt                         |  2 +-
+ apps/optronic_viewer/CMakeLists.txt                 |  2 +-
+ 24 files changed, 95 insertions(+), 40 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index f0a5600..a6b6de8 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -332,16 +332,17 @@ endif(WITH_QHULL)
+ 
+ option(WITH_QT "Build QT Front-End" TRUE)
+ if(WITH_QT)
+-  # Find Qt4
+-  find_package(Qt4)
+-  if (QT4_FOUND)
+-    include("${QT_USE_FILE}")
+-  endif (QT4_FOUND)
+-
+-  # Find QT5
+-  if(NOT QT4_FOUND)
+-      include(cmake/pcl_find_qt5.cmake)
+-  endif(NOT QT4_FOUND)
++  set(PCL_QT_VERSION 5 CACHE STRING "Which QT version to use")
++  if("${PCL_QT_VERSION}" STREQUAL "4")
++    find_package(Qt4)
++    if (QT4_FOUND)
++      include("${QT_USE_FILE}")
++    endif (QT4_FOUND)
++  elseif("${PCL_QT_VERSION}" STREQUAL "5")
++    include(cmake/pcl_find_qt5.cmake)
++  else()
++    message(SEND_ERROR "PCL_QT_VERSION must be 4 or 5")
++  endif()
+ endif(WITH_QT)
+ 
+ # Find VTK
+diff --git a/apps/CMakeLists.txt b/apps/CMakeLists.txt
+index 4f7e658..e2cefb4 100644
+--- a/apps/CMakeLists.txt
++++ b/apps/CMakeLists.txt
+@@ -215,3 +215,4 @@ if(build)
+   PCL_ADD_INCLUDES("${SUBSYS_NAME}" "${SUBSYS_NAME}/impl" ${impl_incs})
+ 
+ endif(build)
++
+diff --git a/apps/cloud_composer/include/pcl/apps/cloud_composer/qt.h b/apps/cloud_composer/include/pcl/apps/cloud_composer/qt.h
+index e650078..0214cb0 100644
+--- a/apps/cloud_composer/include/pcl/apps/cloud_composer/qt.h
++++ b/apps/cloud_composer/include/pcl/apps/cloud_composer/qt.h
+@@ -65,6 +65,11 @@
+ #include <QThread>
+ #include <QMessageBox>
+ #include <QPair>
++#include <QStyledItemDelegate>
++#include <QUndoGroup>
++#include <QFileDialog>
++#include <QAction>
++#include <QGridLayout>
+ 
+ 
+ #endif // CLOUD_COMPOSER_QT_H_
+diff --git a/apps/cloud_composer/include/pcl/apps/cloud_composer/tool_interface/abstract_tool.h b/apps/cloud_composer/include/pcl/apps/cloud_composer/tool_interface/abstract_tool.h
+index 49ada15..437f647 100644
+--- a/apps/cloud_composer/include/pcl/apps/cloud_composer/tool_interface/abstract_tool.h
++++ b/apps/cloud_composer/include/pcl/apps/cloud_composer/tool_interface/abstract_tool.h
+@@ -182,6 +182,7 @@ namespace pcl
+         getToolName () const { return "MergeCloudTool";}
+         
+     };
++
+   }
+ }
+ 
+diff --git a/apps/cloud_composer/include/pcl/apps/cloud_composer/tool_interface/tool_factory.h b/apps/cloud_composer/include/pcl/apps/cloud_composer/tool_interface/tool_factory.h
+index be66a32..37e58a5 100644
+--- a/apps/cloud_composer/include/pcl/apps/cloud_composer/tool_interface/tool_factory.h
++++ b/apps/cloud_composer/include/pcl/apps/cloud_composer/tool_interface/tool_factory.h
+@@ -91,7 +91,9 @@ namespace pcl
+   }
+ }
+ 
++Q_DECLARE_METATYPE (pcl::cloud_composer::ToolFactory*);
++
+ Q_DECLARE_INTERFACE(pcl::cloud_composer::ToolFactory,
+                     "cloud_composer.ToolFactory/1.0")
+ 
+-#endif //TOOL_FACTORY_H_
+\ No newline at end of file
++#endif //TOOL_FACTORY_H_
+diff --git a/apps/cloud_composer/include/pcl/apps/cloud_composer/toolbox_model.h b/apps/cloud_composer/include/pcl/apps/cloud_composer/toolbox_model.h
+index 342b4d0..a1fee6a 100644
+--- a/apps/cloud_composer/include/pcl/apps/cloud_composer/toolbox_model.h
++++ b/apps/cloud_composer/include/pcl/apps/cloud_composer/toolbox_model.h
+@@ -118,7 +118,6 @@ namespace pcl
+ }
+ 
+ Q_DECLARE_METATYPE (pcl::cloud_composer::ToolBoxModel);
+-Q_DECLARE_METATYPE (pcl::cloud_composer::ToolFactory*);
+ Q_DECLARE_METATYPE (QStandardItemModel*);
+ 
+ #endif //TOOLBOX_MODEL_H_
+diff --git a/apps/cloud_composer/include/pcl/apps/cloud_composer/tools/euclidean_clustering.h b/apps/cloud_composer/include/pcl/apps/cloud_composer/tools/euclidean_clustering.h
+index 5c9e141..0ba6263 100644
+--- a/apps/cloud_composer/include/pcl/apps/cloud_composer/tools/euclidean_clustering.h
++++ b/apps/cloud_composer/include/pcl/apps/cloud_composer/tools/euclidean_clustering.h
+@@ -65,6 +65,9 @@ namespace pcl
+     {
+       Q_OBJECT
+       Q_INTERFACES (pcl::cloud_composer::ToolFactory)
++#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
++      Q_PLUGIN_METADATA(IID "cloud_composer.ToolFactory/1.0")
++#endif
+       public:
+         SplitItemTool*
+         createTool (PropertiesModel* parameter_model, QObject* parent = 0) 
+@@ -107,4 +110,4 @@ namespace pcl
+ 
+ 
+ 
+-#endif //EUCLIDEAN_CLUSTERING_H_
+\ No newline at end of file
++#endif //EUCLIDEAN_CLUSTERING_H_
+diff --git a/apps/cloud_composer/include/pcl/apps/cloud_composer/tools/fpfh_estimation.h b/apps/cloud_composer/include/pcl/apps/cloud_composer/tools/fpfh_estimation.h
+index 9656e86..8a6ec86 100644
+--- a/apps/cloud_composer/include/pcl/apps/cloud_composer/tools/fpfh_estimation.h
++++ b/apps/cloud_composer/include/pcl/apps/cloud_composer/tools/fpfh_estimation.h
+@@ -67,6 +67,9 @@ namespace pcl
+     {
+       Q_OBJECT
+       Q_INTERFACES (pcl::cloud_composer::ToolFactory)
++#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
++      Q_PLUGIN_METADATA(IID "cloud_composer.ToolFactory/1.0")
++#endif
+       public:
+         NewItemTool*
+         createTool (PropertiesModel* parameter_model, QObject* parent = 0) 
+@@ -110,4 +113,4 @@ namespace pcl
+ 
+ 
+ 
+-#endif //FPFH_ESTIMATION_H_
+\ No newline at end of file
++#endif //FPFH_ESTIMATION_H_
+diff --git a/apps/cloud_composer/include/pcl/apps/cloud_composer/tools/normal_estimation.h b/apps/cloud_composer/include/pcl/apps/cloud_composer/tools/normal_estimation.h
+index 685d2c6..e9c1142 100644
+--- a/apps/cloud_composer/include/pcl/apps/cloud_composer/tools/normal_estimation.h
++++ b/apps/cloud_composer/include/pcl/apps/cloud_composer/tools/normal_estimation.h
+@@ -65,6 +65,9 @@ namespace pcl
+     {
+       Q_OBJECT
+       Q_INTERFACES (pcl::cloud_composer::ToolFactory)
++#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
++      Q_PLUGIN_METADATA(IID "cloud_composer.ToolFactory/1.0")
++#endif
+       public:
+         NewItemTool*
+         createTool (PropertiesModel* parameter_model, QObject* parent = 0) 
+@@ -107,4 +110,4 @@ namespace pcl
+ 
+ 
+ 
+-#endif //NORMAL_ESTIMATION_H_
+\ No newline at end of file
++#endif //NORMAL_ESTIMATION_H_
+diff --git a/apps/cloud_composer/include/pcl/apps/cloud_composer/tools/organized_segmentation.h b/apps/cloud_composer/include/pcl/apps/cloud_composer/tools/organized_segmentation.h
+index 69a5d57..b73a634 100644
+--- a/apps/cloud_composer/include/pcl/apps/cloud_composer/tools/organized_segmentation.h
++++ b/apps/cloud_composer/include/pcl/apps/cloud_composer/tools/organized_segmentation.h
+@@ -68,6 +68,9 @@
+      {
+        Q_OBJECT
+        Q_INTERFACES (pcl::cloud_composer::ToolFactory)
++#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
++       Q_PLUGIN_METADATA(IID "cloud_composer.ToolFactory/1.0")
++#endif
+      public:
+        SplitItemTool*
+        createTool (PropertiesModel* parameter_model, QObject* parent = 0) 
+diff --git a/apps/cloud_composer/include/pcl/apps/cloud_composer/tools/sanitize_cloud.h b/apps/cloud_composer/include/pcl/apps/cloud_composer/tools/sanitize_cloud.h
+index 24bcd80..76deb94 100644
+--- a/apps/cloud_composer/include/pcl/apps/cloud_composer/tools/sanitize_cloud.h
++++ b/apps/cloud_composer/include/pcl/apps/cloud_composer/tools/sanitize_cloud.h
+@@ -65,6 +65,9 @@ namespace pcl
+       {
+         Q_OBJECT
+         Q_INTERFACES (pcl::cloud_composer::ToolFactory)
++#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
++        Q_PLUGIN_METADATA(IID "cloud_composer.ToolFactory/1.0")
++#endif
+       public:
+         ModifyItemTool*
+         createTool (PropertiesModel* parameter_model, QObject* parent = 0) 
+@@ -107,4 +110,4 @@ namespace pcl
+   
+   
+   
+-  #endif //SANITIZE_CLOUD_H_
+\ No newline at end of file
++  #endif //SANITIZE_CLOUD_H_
+diff --git a/apps/cloud_composer/include/pcl/apps/cloud_composer/tools/statistical_outlier_removal.h b/apps/cloud_composer/include/pcl/apps/cloud_composer/tools/statistical_outlier_removal.h
+index d661339..f5f11f8 100644
+--- a/apps/cloud_composer/include/pcl/apps/cloud_composer/tools/statistical_outlier_removal.h
++++ b/apps/cloud_composer/include/pcl/apps/cloud_composer/tools/statistical_outlier_removal.h
+@@ -65,6 +65,9 @@ namespace pcl
+     {
+       Q_OBJECT
+       Q_INTERFACES (pcl::cloud_composer::ToolFactory)
++#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
++      Q_PLUGIN_METADATA(IID "cloud_composer.ToolFactory/1.0")
++#endif
+       public:
+         ModifyItemTool*
+         createTool (PropertiesModel* parameter_model, QObject* parent = 0) 
+@@ -107,4 +110,4 @@ namespace pcl
+ 
+ 
+ 
+-#endif //STATISTICAL_OUTLIER_REMOVAL_H_
+\ No newline at end of file
++#endif //STATISTICAL_OUTLIER_REMOVAL_H_
+diff --git a/apps/cloud_composer/include/pcl/apps/cloud_composer/tools/supervoxels.h b/apps/cloud_composer/include/pcl/apps/cloud_composer/tools/supervoxels.h
+index 2740ace..ae4bcf2 100644
+--- a/apps/cloud_composer/include/pcl/apps/cloud_composer/tools/supervoxels.h
++++ b/apps/cloud_composer/include/pcl/apps/cloud_composer/tools/supervoxels.h
+@@ -70,6 +70,9 @@
+      {
+        Q_OBJECT
+        Q_INTERFACES (pcl::cloud_composer::ToolFactory)
++#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
++       Q_PLUGIN_METADATA(IID "cloud_composer.ToolFactory/1.0")
++#endif
+      public:
+        SplitItemTool*
+        createTool (PropertiesModel* parameter_model, QObject* parent = 0) 
+diff --git a/apps/cloud_composer/include/pcl/apps/cloud_composer/tools/voxel_grid_downsample.h b/apps/cloud_composer/include/pcl/apps/cloud_composer/tools/voxel_grid_downsample.h
+index 3a01b40..4660030 100644
+--- a/apps/cloud_composer/include/pcl/apps/cloud_composer/tools/voxel_grid_downsample.h
++++ b/apps/cloud_composer/include/pcl/apps/cloud_composer/tools/voxel_grid_downsample.h
+@@ -65,6 +65,9 @@ namespace pcl
+     {
+       Q_OBJECT
+       Q_INTERFACES (pcl::cloud_composer::ToolFactory)
++#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
++      Q_PLUGIN_METADATA(IID "cloud_composer.ToolFactory/1.0")
++#endif
+       public:
+         ModifyItemTool*
+         createTool (PropertiesModel* parameter_model, QObject* parent = 0) 
+@@ -107,4 +110,4 @@ namespace pcl
+ 
+ 
+ 
+-#endif //VOXEL_GRID_DOWNSAMPLE_H_
+\ No newline at end of file
++#endif //VOXEL_GRID_DOWNSAMPLE_H_
+diff --git a/apps/cloud_composer/tools/euclidean_clustering.cpp b/apps/cloud_composer/tools/euclidean_clustering.cpp
+index 2f7dbcb..9583b1d 100644
+--- a/apps/cloud_composer/tools/euclidean_clustering.cpp
++++ b/apps/cloud_composer/tools/euclidean_clustering.cpp
+@@ -6,7 +6,11 @@
+ #include <pcl/kdtree/kdtree.h>
+ #include <pcl/segmentation/extract_clusters.h>
+ 
+-Q_EXPORT_PLUGIN2(cloud_composer_euclidean_clustering_tool, pcl::cloud_composer::EuclideanClusteringToolFactory)
++#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
++  Q_EXPORT_PLUGIN2(cloud_composer_euclidean_clustering_tool, pcl::cloud_composer::EuclideanClusteringToolFactory)
++#else
++  Q_PLUGIN_METADATA(IID "cloud_composer.ToolFactory/1.0")
++#endif
+ 
+ pcl::cloud_composer::EuclideanClusteringTool::EuclideanClusteringTool (PropertiesModel* parameter_model, QObject* parent)
+   : SplitItemTool (parameter_model, parent)
+diff --git a/apps/cloud_composer/tools/fpfh_estimation.cpp b/apps/cloud_composer/tools/fpfh_estimation.cpp
+index 9dccc61..ec47cbc 100644
+--- a/apps/cloud_composer/tools/fpfh_estimation.cpp
++++ b/apps/cloud_composer/tools/fpfh_estimation.cpp
+@@ -8,9 +8,11 @@
+ #include <pcl/filters/filter.h>
+ 
+ 
+-
+-Q_EXPORT_PLUGIN2(cloud_composer_fpfh_estimation_tool, pcl::cloud_composer::FPFHEstimationToolFactory)
+-
++#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
++  Q_EXPORT_PLUGIN2(cloud_composer_fpfh_estimation_tool, pcl::cloud_composer::FPFHEstimationToolFactory)
++#else
++  Q_PLUGIN_METADATA(IID "cloud_composer.ToolFactory/1.0")
++#endif
+ 
+ pcl::cloud_composer::FPFHEstimationTool::FPFHEstimationTool (PropertiesModel* parameter_model, QObject* parent)
+   : NewItemTool (parameter_model, parent)
+diff --git a/apps/cloud_composer/tools/normal_estimation.cpp b/apps/cloud_composer/tools/normal_estimation.cpp
+index c0cf1d8..4dc90e0 100644
+--- a/apps/cloud_composer/tools/normal_estimation.cpp
++++ b/apps/cloud_composer/tools/normal_estimation.cpp
+@@ -4,9 +4,11 @@
+ #include <pcl/features/normal_3d.h>
+ #include <pcl/point_types.h>
+ 
+-
+-Q_EXPORT_PLUGIN2(cloud_composer_normal_estimation_tool, pcl::cloud_composer::NormalEstimationToolFactory)
+-
++#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
++  Q_EXPORT_PLUGIN2(cloud_composer_normal_estimation_tool, pcl::cloud_composer::NormalEstimationToolFactory)
++#else
++  Q_PLUGIN_METADATA(IID "cloud_composer.ToolFactory/1.0")
++#endif
+ 
+ pcl::cloud_composer::NormalEstimationTool::NormalEstimationTool (PropertiesModel* parameter_model, QObject* parent)
+   : NewItemTool (parameter_model, parent)
+diff --git a/apps/cloud_composer/tools/organized_segmentation.cpp b/apps/cloud_composer/tools/organized_segmentation.cpp
+index 83bb536..716bba1 100644
+--- a/apps/cloud_composer/tools/organized_segmentation.cpp
++++ b/apps/cloud_composer/tools/organized_segmentation.cpp
+@@ -9,7 +9,11 @@
+ 
+ #include <pcl/apps/cloud_composer/tools/impl/organized_segmentation.hpp>
+ 
+-Q_EXPORT_PLUGIN2(cloud_composer_organized_segmentation_tool, pcl::cloud_composer::OrganizedSegmentationToolFactory)
++#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
++  Q_EXPORT_PLUGIN2(cloud_composer_organized_segmentation_tool, pcl::cloud_composer::OrganizedSegmentationToolFactory)
++#else
++  Q_PLUGIN_METADATA(IID "cloud_composer.ToolFactory/1.0")
++#endif
+ 
+ pcl::cloud_composer::OrganizedSegmentationTool::OrganizedSegmentationTool (PropertiesModel* parameter_model, QObject* parent)
+ : SplitItemTool (parameter_model, parent)
+@@ -60,4 +64,4 @@ pcl::cloud_composer::OrganizedSegmentationToolFactory::createToolParameterModel
+   
+   
+   return parameter_model;
+-}
+\ No newline at end of file
++}
+diff --git a/apps/cloud_composer/tools/sanitize_cloud.cpp b/apps/cloud_composer/tools/sanitize_cloud.cpp
+index edfde18..a7886cd 100644
+--- a/apps/cloud_composer/tools/sanitize_cloud.cpp
++++ b/apps/cloud_composer/tools/sanitize_cloud.cpp
+@@ -3,9 +3,11 @@
+ #include <pcl/filters/passthrough.h>
+ 
+ 
+-
+-Q_EXPORT_PLUGIN2(cloud_composer_sanitize_cloud_tool, pcl::cloud_composer::SanitizeCloudToolFactory)
+-
++#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
++  Q_EXPORT_PLUGIN2(cloud_composer_sanitize_cloud_tool, pcl::cloud_composer::SanitizeCloudToolFactory)
++#else
++  Q_PLUGIN_METADATA(IID "cloud_composer.ToolFactory/1.0")
++#endif
+ 
+ pcl::cloud_composer::SanitizeCloudTool::SanitizeCloudTool (PropertiesModel* parameter_model, QObject* parent)
+ : ModifyItemTool (parameter_model, parent)
+diff --git a/apps/cloud_composer/tools/statistical_outlier_removal.cpp b/apps/cloud_composer/tools/statistical_outlier_removal.cpp
+index 8893953..cd5a78c 100644
+--- a/apps/cloud_composer/tools/statistical_outlier_removal.cpp
++++ b/apps/cloud_composer/tools/statistical_outlier_removal.cpp
+@@ -4,9 +4,11 @@
+ #include <pcl/filters/statistical_outlier_removal.h>
+ #include <pcl/point_types.h>
+ 
+-
+-Q_EXPORT_PLUGIN2(cloud_composer_statistical_outlier_removal_tool, pcl::cloud_composer::StatisticalOutlierRemovalToolFactory)
+-
++#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
++  Q_EXPORT_PLUGIN2(cloud_composer_statistical_outlier_removal_tool, pcl::cloud_composer::StatisticalOutlierRemovalToolFactory)
++#else
++  Q_PLUGIN_METADATA(IID "cloud_composer.ToolFactory/1.0")
++#endif
+ 
+ pcl::cloud_composer::StatisticalOutlierRemovalTool::StatisticalOutlierRemovalTool (PropertiesModel* parameter_model, QObject* parent)
+   : ModifyItemTool (parameter_model, parent)
+diff --git a/apps/cloud_composer/tools/supervoxels.cpp b/apps/cloud_composer/tools/supervoxels.cpp
+index c385fa8..92b0781 100644
+--- a/apps/cloud_composer/tools/supervoxels.cpp
++++ b/apps/cloud_composer/tools/supervoxels.cpp
+@@ -7,7 +7,11 @@
+ 
+ #include <pcl/apps/cloud_composer/tools/impl/supervoxels.hpp>
+ 
+-Q_EXPORT_PLUGIN2(cloud_composer_voxel_superpixels_tool, pcl::cloud_composer::SupervoxelsToolFactory)
++#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
++  Q_EXPORT_PLUGIN2(cloud_composer_voxel_superpixels_tool, pcl::cloud_composer::SupervoxelsToolFactory)
++#else
++  Q_PLUGIN_METADATA(IID "cloud_composer.ToolFactory/1.0")
++#endif
+ 
+ pcl::cloud_composer::SupervoxelsTool::SupervoxelsTool (PropertiesModel* parameter_model, QObject* parent)
+ : SplitItemTool (parameter_model, parent)
+@@ -58,4 +62,4 @@ pcl::cloud_composer::SupervoxelsToolFactory::createToolParameterModel (QObject*
+   parameter_model->addProperty ("Spatial Weight", 0.4,  Qt::ItemIsEditable | Qt::ItemIsEnabled);
+   
+   return parameter_model;
+-}
+\ No newline at end of file
++}
+diff --git a/apps/cloud_composer/tools/voxel_grid_downsample.cpp b/apps/cloud_composer/tools/voxel_grid_downsample.cpp
+index 59ef098..0e81f53 100644
+--- a/apps/cloud_composer/tools/voxel_grid_downsample.cpp
++++ b/apps/cloud_composer/tools/voxel_grid_downsample.cpp
+@@ -5,9 +5,11 @@
+ #include <pcl/point_types.h>
+ 
+ 
+-
+-Q_EXPORT_PLUGIN2(cloud_composer_voxel_grid_downsample_tool, pcl::cloud_composer::VoxelGridDownsampleToolFactory)
+-
++#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
++  Q_EXPORT_PLUGIN2(cloud_composer_voxel_grid_downsample_tool, pcl::cloud_composer::VoxelGridDownsampleToolFactory)
++#else
++  Q_PLUGIN_METADATA(IID "cloud_composer.ToolFactory/1.0")
++#endif
+ 
+ pcl::cloud_composer::VoxelGridDownsampleTool::VoxelGridDownsampleTool (PropertiesModel* parameter_model, QObject* parent)
+   : ModifyItemTool (parameter_model, parent)
+diff --git a/apps/modeler/CMakeLists.txt b/apps/modeler/CMakeLists.txt
+index 7181cd4..711c4d3 100644
+--- a/apps/modeler/CMakeLists.txt
++++ b/apps/modeler/CMakeLists.txt
+@@ -30,7 +30,7 @@ PCL_ADD_DOC("${SUBSUBSYS_NAME}")
+ if(build)
+   include_directories("${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/include")
+ 
+-  # Set Qt files and resources here  
++  # Set Qt files and resources here 
+   set(uis main_window.ui)
+   set(moc_incs "include/pcl/${SUBSYS_NAME}/${SUBSUBSYS_NAME}/main_window.h"
+                "include/pcl/${SUBSYS_NAME}/${SUBSUBSYS_NAME}/scene_tree.h"
+diff --git a/apps/optronic_viewer/CMakeLists.txt b/apps/optronic_viewer/CMakeLists.txt
+index 24f9b5d..5767aa7 100644
+--- a/apps/optronic_viewer/CMakeLists.txt
++++ b/apps/optronic_viewer/CMakeLists.txt
+@@ -48,7 +48,7 @@ if(build)
+ 
+   include_directories("${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/include")
+ 
+-  # Set Qt files and resources here  
++  # Set Qt files and resources here 
+ #  set(uis main_window.ui)
+   set(moc_incs "include/pcl/${SUBSYS_NAME}/${SUBSUBSYS_NAME}/main_window.h"
+                "include/pcl/${SUBSYS_NAME}/${SUBSUBSYS_NAME}/filter_window.h"

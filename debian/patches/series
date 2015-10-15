@@ -9,3 +9,4 @@
 0009-Fix-THIS_METHOD_IS_ONLY_FOR_1x1_EXPRESSIONS.patch
 0010-Fix-THIS_METHOD_IS_ONLY_FOR_INNER_OR_LAZY_PRODUCTS.patch
 0011-Only-set-QVTK_FOUND-if-it-s-actually-found.patch
+0012-Better-support-for-QT5-VTK-6.x-provide-option-which-.patch
