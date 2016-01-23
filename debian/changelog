@@ -1,3 +1,9 @@
+pcl (1.7.2-14) unstable; urgency=medium
+
+  * Add patch for gcc6 (Closes: #812015)
+
+ -- Jochen Sprickerhof <debian@jochen.sprickerhof.de>  Sat, 23 Jan 2016 19:30:45 +0100
+
 pcl (1.7.2-13) unstable; urgency=medium
 
   * Fix dependencies
