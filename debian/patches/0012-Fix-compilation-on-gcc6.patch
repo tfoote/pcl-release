@@ -1,0 +1,35 @@
+From: Jochen Sprickerhof <git@jochen.sprickerhof.de>
+Date: Sat, 23 Jan 2016 18:16:24 +0100
+Subject: Fix compilation on gcc6
+
+---
+ .../include/pcl/registration/correspondence_estimation_backprojection.h | 2 +-
+ .../pcl/registration/correspondence_estimation_normal_shooting.h        | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/registration/include/pcl/registration/correspondence_estimation_backprojection.h b/registration/include/pcl/registration/correspondence_estimation_backprojection.h
+index 9be0043..0a96c58 100644
+--- a/registration/include/pcl/registration/correspondence_estimation_backprojection.h
++++ b/registration/include/pcl/registration/correspondence_estimation_backprojection.h
+@@ -184,7 +184,7 @@ namespace pcl
+           * cloud for computing correspondences. By default we use k = 10 nearest 
+           * neighbors.
+           */
+-        inline void
++        inline unsigned int
+         getKSearch () const { return (k_); }
+         
+         /** \brief Clone and cast to CorrespondenceEstimationBase */
+diff --git a/registration/include/pcl/registration/correspondence_estimation_normal_shooting.h b/registration/include/pcl/registration/correspondence_estimation_normal_shooting.h
+index 84e7b32..4c5e0ab 100644
+--- a/registration/include/pcl/registration/correspondence_estimation_normal_shooting.h
++++ b/registration/include/pcl/registration/correspondence_estimation_normal_shooting.h
+@@ -180,7 +180,7 @@ namespace pcl
+           * cloud for computing correspondences. By default we use k = 10 nearest 
+           * neighbors.
+           */
+-        inline void
++        inline unsigned int
+         getKSearch () const { return (k_); }
+ 
+         /** \brief Clone and cast to CorrespondenceEstimationBase */
