@@ -1,3 +1,10 @@
+pcl (1.7.2-14build10+osrf1) xenial; urgency=medium
+
+  * A change to trigger a rebuild in my Ubuntu PPA
+    Re: https://github.com/ros/rosdistro/issues/11583
+    
+ -- Tully Foote <tfoote@osrfoundation.org>  Wed, 8 Aug 2016 02:24:44 +0100
+
 pcl (1.7.2-14) unstable; urgency=medium
 
   * Add patch for gcc6 (Closes: #812015)
@@ -128,4 +135,3 @@ pcl (1.7.2-1) unstable; urgency=medium
   * Cosmetic changes.
 
  -- Leopold Palomo-Avellaneda <leo@alaxarxa.net>  Mon, 06 Oct 2014 09:30:55 +0200
-
