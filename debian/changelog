@@ -1,8 +1,15 @@
+pcl (1.7.2-14build10+osrf2) xenial; urgency=medium
+
+  * A remove opengl dependency
+    Re: https://github.com/ros/rosdistro/issues/11583
+
+ -- Tully Foote <tfoote@osrfoundation.org>  Wed, 8 Aug 2016 02:24:44 +0100
+
 pcl (1.7.2-14build10+osrf1) xenial; urgency=medium
 
   * A change to trigger a rebuild in my Ubuntu PPA
     Re: https://github.com/ros/rosdistro/issues/11583
-    
+
  -- Tully Foote <tfoote@osrfoundation.org>  Wed, 8 Aug 2016 02:24:44 +0100
 
 pcl (1.7.2-14) unstable; urgency=medium
